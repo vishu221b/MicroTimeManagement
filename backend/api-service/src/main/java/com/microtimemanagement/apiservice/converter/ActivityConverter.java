@@ -11,7 +11,10 @@ import org.springframework.stereotype.Component;
 public class ActivityConverter {
 
     public ActivityDTO toDTO(Activity activity){
-        return ActivityDTO.builder().activityName(activity.getActivityName())
+        log.info("Converting activity to DTO: {}", activity);
+        return ActivityDTO.builder()
+                .id(activity.getId())
+                .activityName(activity.getActivityName())
                 .activityDescription(activity.getActivityDescription())
                 .activityStartTime(
                         processActivityHourMinuteValueToString(activity.getStartHourValue()

@@ -4,6 +4,7 @@ import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.converter.ActivityConverter;
 import com.microtimemanagement.apiservice.converter.TimeRecordConverter;
 import com.microtimemanagement.apiservice.dto.ActivityDTO;
+import com.microtimemanagement.apiservice.dto.response.RecordLogActivityListResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementException;
 import com.microtimemanagement.apiservice.model.Activity;
@@ -14,12 +15,14 @@ import com.microtimemanagement.apiservice.repository.TimeRecordRepository;
 import com.microtimemanagement.apiservice.service.ActivityService;
 import com.microtimemanagement.apiservice.service.TimeRecordService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 @Slf4j
@@ -53,16 +56,6 @@ public class TimeRecordServiceImpl implements TimeRecordService {
         return timeRecordRepository.findByRecordForDate(recordDate).orElse(null);
     }
     private void saveMultipleRecords(List<TimeRecord> records){
-//        records = records.stream().map(timeRecord -> {
-//            TimeRecord dbRecord = getByRecordDate(timeRecord.getRecordForDate());
-//            if(null!=dbRecord && dbRecord.getRecordForDate().equals(timeRecord.getRecordForDate())){
-//
-//                dbRecord.getActivities().add(timeRecord.getActivities().get(0));
-//                return dbRecord;
-//            }
-//            return timeRecord;
-//        }).toList();
-
         timeRecordRepository.saveAll(records);
     }
 
@@ -73,23 +66,8 @@ public class TimeRecordServiceImpl implements TimeRecordService {
             Date parsed = simpleDateFormat.parse(recordRequestBody.getRecordDate());
             log.info("Parsed Record Date: {}", parsed);
             log.info("Parsed Record Date: {}", parsed.getTime());
-//            TimeRecord timeRecord = timeRecordRepository.findByRecordForDate(recordRequestBody.getRecordDate()).orElse(null);
-//            if(null!=timeRecord){
-//                Long lastActivityEpoch = timeRecord.getLastActivityEndTimeEpoch();
-//                long startMillis = activityService.buildCalendarInstanceFromDateAndTime(
-//                        recordRequestBody.getRecordDate(),
-//                        activityService.generateTimeComponentsListFromHourMinuteString(
-//                                recordRequestBody.getActivityStartHourMinutes()
-//                        )
-//                ).getTimeInMillis();
-//                if(startMillis <= lastActivityEpoch){
-//                    throw new MicroTimeManagementBadRequestException(
-//                            ErrorConstants.OVERLAPPING_NEW_ACTIVITY_TIME_WITH_PREVIOUS_ACTIVITY
-//                    );
-//                }
-//            }
             List<TimeRecord> timeRecords = makeFromRecordLogRequestDTO(recordRequestBody);
-            saveMultipleRecords(timeRecords);
+            saveMultipleRecords(timeRecords.stream().filter(r -> null!=r.getRecordForDate()).toList());
             return convertToRecordLogResponseDTO(timeRecords);
         }
         catch (Exception ex){
@@ -111,82 +89,182 @@ public class TimeRecordServiceImpl implements TimeRecordService {
         }
     }
 
-    private void insertActivityInTimeRecordAtLocation(Activity activity, TimeRecord timeRecord, int position){
+    @Override
+    public RecordLogActivityListResponseDTO getActivitiesForDate(String date) {
+        TimeRecord timeRecord = timeRecordRepository.findByRecordForDate(date).orElse(null);
+        if(null == timeRecord){
+            throw new MicroTimeManagementBadRequestException(String.format("No record found for date %s", date));
+        }
+        return RecordLogActivityListResponseDTO.builder()
+                .recordDate(timeRecord.getRecordForDate())
+                .createdAt(timeRecord.getCreatedAt())
+                .lastUpdatedAt(timeRecord.getLastUpdatedAt())
+                .activities(timeRecord.getActivities().stream().map(activity -> activityConverter.toDTO(activity)).toList())
+                .build();
+    }
+
+    private TimeRecord insertActivityInTimeRecordAtLocation(
+            Activity activity, TimeRecord timeRecord, int position, AtomicBoolean activityUpdateStatus
+    ){
         log.info("Adding activity to record list at position: {}", position);
+        setUniqueIdForActivity(activity);
         timeRecord.getActivities().add(position, activity);
+        setActivityUpdatedToTrue(activityUpdateStatus);
+        return timeRecord;
+    }
+
+    private void setUniqueIdForActivity(Activity activity){
+        activity.setId(UUID.randomUUID().toString());
+    }
+
+    private void setActivityUpdatedToTrue(AtomicBoolean status){
+        status.set(Boolean.TRUE);
     }
     public List<TimeRecord> makeFromRecordLogRequestDTO(RecordLogRequestDTO recordLogRequestDTO){
         List<Activity> activities = activityService.makeFromRecordLogRequestDTO(recordLogRequestDTO);
         log.info("Processing activities to Time Records....");
         log.info("{}", activities);
         log.info("{}", activities.size());
-        return activities.stream().map(
+        AtomicBoolean activityUpdated = new AtomicBoolean(Boolean.FALSE);
+        var ref = new Object() {
+            TimeRecord existingTimeRecord = null;
+        };
+        List<TimeRecord> timeRecordList = new ArrayList<>(activities.stream().map(
                 newActivity -> {
-                    log.info("Processing: {}", newActivity);
+                    log.info("Processing new: {}", newActivity);
+
                     TimeRecord timeRecord = getByRecordDate(newActivity.getActivityDate());
+
+                    Long newActivityStartTime = newActivity.getStartTimeEpoch();
+                    Long newActivityEndTime = newActivity.getEndTimeEpoch();
+
                     if (null!= timeRecord){
                         log.info("Processing existing time record: {}", timeRecord);
 
+                        ref.existingTimeRecord =timeRecord;
+
                         List<Activity> recordActivityList = timeRecord.getActivities();
-                        Calendar dateOffset = activityService.buildCalendarInstanceFromDateAndTime(newActivity.getActivityDate(), Arrays.asList(0, 0,0));
-                        int recordActivityListSize= recordActivityList.size();
-                        boolean isError = Boolean.FALSE;
-                        int counter= 0;
 
-                        while(counter < recordActivityListSize &!isError){
+                        Iterator<Activity> activityIterator = recordActivityList.iterator();
 
-                            Activity current = recordActivityList.get(counter);
+                        Activity current = null, next = null;
+                        while(activityIterator.hasNext()){
+                            current = null != current ? current : activityIterator.next();
+                            log.info("Current activity: {}", current);
 
-                            // New activity after first activity
-                            if(current.getStartTimeEpoch().equals(dateOffset.getTimeInMillis())
-                                    && newActivity.getStartTimeEpoch() > current.getEndTimeEpoch()){
-                                insertActivityInTimeRecordAtLocation(newActivity, timeRecord, counter+1);
-                                return timeRecord;
+                            Long currentActivityStartTime = current.getStartTimeEpoch();
+                            Long currentActivityEndTime = current.getEndTimeEpoch();
+
+                            if(currentActivityStartTime.equals(newActivityStartTime)
+                                    && currentActivityEndTime.equals(newActivityEndTime)){
+                                throw new MicroTimeManagementBadRequestException("Record already exists for the set time.");
                             }
 
-                            // New Activity can be anywhere, First/Last/Between
-                            if(current.getStartTimeEpoch() > dateOffset.getTimeInMillis()){
-                                // Between
-                                if ((counter + 1) < recordActivityListSize){
-                                    Activity next = recordActivityList.get(counter+1);
-                                    if (next.getStartTimeEpoch() > newActivity.getEndTimeEpoch()
-                                            && current.getEndTimeEpoch() < newActivity.getStartTimeEpoch()){
-                                        insertActivityInTimeRecordAtLocation(newActivity, timeRecord, counter);
-                                        return timeRecord;
-                                    }
-                                } else if (
-                                        current.getStartTimeEpoch() > newActivity.getEndTimeEpoch()
-                                                && (counter == recordActivityListSize-1)
-                                ) { // Last
-                                    insertActivityInTimeRecordAtLocation(newActivity, timeRecord, counter);
-                                    return timeRecord;
-                                } else if (
-                                        current.getEndTimeEpoch() < newActivity.getStartTimeEpoch()
-                                                && counter == 0
-                                ) { // First
-                                    insertActivityInTimeRecordAtLocation(newActivity, timeRecord, counter+1);
-                                    return timeRecord;
+                            if((newActivityStartTime >= currentActivityStartTime && newActivityStartTime < currentActivityEndTime)
+                                    || (newActivityEndTime > currentActivityStartTime && newActivityEndTime <= currentActivityEndTime)
+                            ){
+                                throw new MicroTimeManagementBadRequestException(ErrorConstants.OVERLAPPING_NEW_ACTIVITY_TIME_WITH_PREVIOUS_ACTIVITY);
+                            }
+
+                            Long nextActivityStartTime = 0L;
+                            Long nextActivityEndTime = 0L;
+
+                            if(activityIterator.hasNext()){
+                                log.info("Handling the in-between case for the list.");
+                                next = activityIterator.next();
+
+                                nextActivityStartTime = next.getStartTimeEpoch();
+                                nextActivityEndTime = next.getEndTimeEpoch();
+
+                                log.info("Next activity: {}", next);
+
+                                if(newActivityEndTime <= nextActivityStartTime
+                                        && newActivityStartTime >= currentActivityEndTime){
+                                    log.info("If the current element is first " +
+                                            "element and new activity time range lies within this and next activity.");
+                                    return insertActivityInTimeRecordAtLocation(
+                                            newActivity, timeRecord, recordActivityList.indexOf(next), activityUpdated
+                                    );
+                                }
+                                if(newActivityEndTime <= currentActivityStartTime && !(
+                                        current.getStartHourValue().equals(0) && current.getStartMinutesValue().equals(0)
+                                )){
+                                    log.info("Inserting at first position w.r.t current activity...");
+                                    return insertActivityInTimeRecordAtLocation(
+                                            newActivity, timeRecord, recordActivityList.indexOf(current), activityUpdated);
                                 }
                             }
-                            counter++;
+                            if(!activityIterator.hasNext()){
+                                log.info("Iterator does not have next...");
+                                if(null!=next){
+                                    if(newActivityStartTime >= nextActivityEndTime){
+                                        log.info("Inserting at last position w.r.t next activity...");
+                                        return insertActivityInTimeRecordAtLocation(
+                                                newActivity, timeRecord, recordActivityList.indexOf(next)+1, activityUpdated);
+                                    }
+                                    if(newActivityEndTime <= currentActivityStartTime && !(
+                                            current.getStartHourValue().equals(0) && current.getStartMinutesValue().equals(0)
+                                            )){
+                                        log.info("Inserting at first position w.r.t current activity...");
+                                        return insertActivityInTimeRecordAtLocation(
+                                                newActivity, timeRecord, recordActivityList.indexOf(current), activityUpdated);
+                                    }
+                                }
+                                else if(newActivityStartTime >= currentActivityEndTime){
+                                    log.info("Inserting at last position w.r.t current activity...");
+                                    return insertActivityInTimeRecordAtLocation(
+                                            newActivity, timeRecord, recordActivityList.indexOf(current)+1, activityUpdated);
+                                }else if(
+                                        newActivityEndTime <= currentActivityStartTime
+                                                && !(current.getStartHourValue().equals(0) && current.getStartMinutesValue().equals(0))
+                                ){
+                                    log.info("Inserting at first position...");
+                                    return insertActivityInTimeRecordAtLocation(
+                                            newActivity, timeRecord, recordActivityList.indexOf(current), activityUpdated);
+                                }
+
+                            }
+                            if(null!=next){
+                                log.info("Current -> Start: {},End: {}",
+                                        formatEpoch(currentActivityStartTime), formatEpoch(currentActivityEndTime));
+                                log.info("New -> Start: {}, End: {}",
+                                        formatEpoch(newActivityStartTime), formatEpoch(newActivityEndTime));
+                                log.info("Next -> Start: {}, End: {}",
+                                        formatEpoch(nextActivityStartTime), formatEpoch(nextActivityEndTime));
+                                log.info("################################");
+                                log.info("Assigning 'Next' to 'Current'...");
+                                log.info("################################");
+                                current = next;
+                                next = null;
+                            }
                         }
+                        timeRecord.setLastUpdatedAt(new Date());
+                    }
+                    log.info("Ref: Status: {}, Record: {}", activityUpdated.get(), ref.existingTimeRecord);
+                    if(null!=ref.existingTimeRecord && !activityUpdated.get()){
                         throw new MicroTimeManagementBadRequestException(
                                 ErrorConstants.OVERLAPPING_NEW_ACTIVITY_TIME_WITH_PREVIOUS_ACTIVITY);
                     }
                     return TimeRecord.builder()
                             .recordForDate(newActivity.getActivityDate())
-                            .lastActivityEndTimeEpoch(newActivity.getEndTimeEpoch())
                             .activities(List.of(newActivity)).build();
-                }).toList();
+                }).toList());
+        timeRecordList.add(TimeRecord.builder().activities(activities).recordForDate(null).build());
+        return timeRecordList;
+    }
+
+    private String formatEpoch(Long epoch){
+        return DateFormatUtils.format(epoch, "yyyy-MM-dd HH:mm:ss");
     }
     public RecordLogResponseDTO convertToRecordLogResponseDTO(List<TimeRecord> timeRecords){
         List<ActivityDTO> activities = new ArrayList<>();
-        timeRecords.forEach(
-                timeRecord -> {
-                    Activity activity = timeRecord.getActivities().get(timeRecord.getActivities().size() - 1);
-                    activities.add(activityConverter.toDTO(activity));
-                }
-        );
+        timeRecords.stream()
+                .filter(timeRecord -> null == timeRecord.getRecordForDate())
+                .findFirst()
+                .ifPresent(
+                        timeRecord -> timeRecord.getActivities()
+                                .forEach(activity -> activities.add(activityConverter.toDTO(activity)))
+                );
         return RecordLogResponseDTO.builder().activities(activities).build();
 
     }

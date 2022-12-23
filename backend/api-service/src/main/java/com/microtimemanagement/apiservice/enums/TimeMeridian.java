@@ -22,12 +22,4 @@ public enum TimeMeridian {
             }
         }return null;
     }
-
-    public static TimeMeridian getOppositeOf(Integer input){
-        if(input.equals(TimeMeridian.AM.getValue())){
-            return TimeMeridian.PM;
-        }
-        return TimeMeridian.AM;
-
-    }
 }

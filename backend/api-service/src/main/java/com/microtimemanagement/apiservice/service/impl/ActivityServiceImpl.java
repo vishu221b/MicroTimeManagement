@@ -9,10 +9,13 @@ import com.microtimemanagement.apiservice.model.Activity;
 import com.microtimemanagement.apiservice.service.ActivityService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -21,13 +24,17 @@ import java.util.concurrent.TimeUnit;
 public class ActivityServiceImpl implements ActivityService {
 
     public List<Integer> generateTimeComponentsListFromHourMinuteString(String hourMinute){
-        return new java.util.ArrayList<>(Arrays.stream(StringUtils.split(
+        List<Integer> timeComponent = new java.util.ArrayList<>(Arrays.stream(StringUtils.split(
                 hourMinute, ":"
         )).map(Integer::parseInt).toList());
+        filterMeridianForTimeComponentList(timeComponent);
+        updateHoursInTimeListForMeridianIfApplicable(timeComponent);
+        return timeComponent;
     }
 
     @Override
     public List<Activity> makeFromRecordLogRequestDTO(RecordLogRequestDTO recordLogRequestDTO) {
+
         List<Integer> startHourMinuteList = generateTimeComponentsListFromHourMinuteString(
                 recordLogRequestDTO.getActivityStartHourMinutes()
         );
@@ -36,8 +43,7 @@ public class ActivityServiceImpl implements ActivityService {
                 recordLogRequestDTO.getActivityEndHourMinutes()
         );
 
-        log.info("Time components - Start: {} | End: {}", startHourMinuteList, endHourMinuteList);
-        compareAndFilterAndUpdateHourMinutesTimeComponentList(startHourMinuteList, endHourMinuteList);
+        log.info("Time components list - Start: {} | End: {}", startHourMinuteList, endHourMinuteList);
 
         String recordDate = recordLogRequestDTO.getRecordDate();
 
@@ -47,28 +53,37 @@ public class ActivityServiceImpl implements ActivityService {
 
         long difference = endDayCalendar.getTimeInMillis() - startDayCalendar.getTimeInMillis();
 
-        if(difference > 12*60*60*1000){
-            throw new MicroTimeManagementBadRequestException("A Single activity cannot be more than 12 hours.");
+        log.info("Got time difference: {}", difference);
+        log.info("Calendar Date Start: {}", startDayCalendar.getTime());
+        log.info("Calendar Date End: {}", endDayCalendar.getTime());
+
+        boolean isNextDay = isNextDayDateUseRequired(startHourMinuteList, endHourMinuteList) || recordLogRequestDTO.getIsNextDaySpan();
+
+        if(difference < 0 && !isNextDay){
+            throw new MicroTimeManagementBadRequestException("Activity cannot start after it's end time. Invalid time selected.");
         }
 
-        if(isNextDayDateUseRequired(startHourMinuteList, endHourMinuteList)){
+        if(difference > 12*60*60*1000){
+            throw new MicroTimeManagementBadRequestException("An activity should be a maximum of 12 hours.");
+        }
+
+        if(difference==0){
+            throw new MicroTimeManagementBadRequestException("Invalid time selected.");
+        }
+
+        if(isNextDay){
             // Offset is used to divide activities according to respective dates
             log.info("Using next day date::setting offset value");
 
-            endDayCalendar.add(Calendar.DATE, 1);
-
-            if(startDayCalendar.getTimeInMillis() > endDayCalendar.getTimeInMillis()){
-                throw new MicroTimeManagementBadRequestException(ErrorConstants.ACTIVITY_STARTING_MORE_THAN_ENDING_ERROR);
-            }
-
-            String endDayDate = String.format("%4d-%2d-%2d",
-                    endDayCalendar.get(Calendar.YEAR),
-                    endDayCalendar.get(Calendar.MONTH),
-                    endDayCalendar.get(Calendar.DATE)
-            );
-
             Long nextDayOffsetMillis = getNextDayCalendarInstanceForDateString(recordDate)
                     .getTimeInMillis();
+
+            endDayCalendar.setTimeInMillis(endDayCalendar.getTimeInMillis() + DateUtils.MILLIS_PER_DAY);
+
+            log.info("Formatted end date to: {}", endDayCalendar.getTime());
+            log.info("Formatted end date to: {}", endDayCalendar.getTimeInMillis());
+
+            String formattedEndDate = DateFormatUtils.format(endDayCalendar.getTimeInMillis(),"yyyy-MM-dd");
 
             Long activityFirstDayDurationMillis = calculateActivityDurationEpochWithOffsetUsingAction(
                     startDayCalendar.getTimeInMillis(), nextDayOffsetMillis, NextDayOffsetAction.SUBTRACT_FROM
@@ -117,7 +132,7 @@ public class ActivityServiceImpl implements ActivityService {
                     .totalDurationInHours(
                             calculateActivityHourDurationStringFromMilliseconds(activitySecondDayDurationMillis)
                     )
-                    .activityDate(endDayDate)
+                    .activityDate(formattedEndDate)
                     .build();
 
             return List.of(activityDayOne, activityDayTwo);
@@ -157,15 +172,16 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     public Calendar buildCalendarInstanceFromDateAndTime(String recordDate, List<Integer> timeComponents){
-        Calendar instance = buildCalendarInstanceForDateString(recordDate);
-        instance.set(Calendar.HOUR, timeComponents.get(0));
-        instance.set(Calendar.MINUTE, timeComponents.get(1));
-        instance.set(Calendar.AM_PM, timeComponents.get(2));
+        List<Integer> date = getComponentsListForDate(recordDate);
+        Calendar instance = new Calendar.Builder().setDate(
+                date.get(0),date.get(1)-1, date.get(2)
+        ).setTimeOfDay(timeComponents.get(0), timeComponents.get(1), 0).build();
+        log.info("Built: ( {} ) from {} and {}", instance.getTime(), recordDate, timeComponents);
         return instance;
     }
     private Long calculateEpochFromHourMinuteInTimeComponentList(List<Integer> timeComponentList){
-        return buildCalendarInstanceFromHourMinute(
-                timeComponentList.get(0), timeComponentList.get(1)
+        return buildCalendarInstanceFromTimeComponents(
+                timeComponentList
         ).getTimeInMillis();
     }
 
@@ -209,10 +225,6 @@ public class ActivityServiceImpl implements ActivityService {
                 +"Hr:"+ actualDurationInMinutes+"Min"
                 : "0Hr:"+activityDurationInMinutes+"Min";
     }
-    public void compareAndFilterAndUpdateHourMinutesTimeComponentList(List<Integer> startHM, List<Integer> endHM){
-        filterMeridianForTimeComponentList(startHM);
-        filterMeridianForTimeComponentList(endHM);
-    }
     private void updateHoursInTimeListForMeridianIfApplicable(List<Integer> timeComponentsList){
         if(timeComponentsList.get(2).equals(Calendar.AM) && timeComponentsList.get(0) == 12 ){
             timeComponentsList.set(0, 0);
@@ -231,28 +243,22 @@ public class ActivityServiceImpl implements ActivityService {
         log.info("Current date string: {}", date);
         Calendar calendarDate = buildCalendarInstanceForDateString(date);
         log.info("Calendar date current: {}", calendarDate.getTime());
-        calendarDate.add(Calendar.DATE, 1);
+        calendarDate.setTimeInMillis(calendarDate.getTimeInMillis() + DateUtils.MILLIS_PER_DAY);
         log.info("Added one to calendar date current: {}", calendarDate.getTime());
         return calendarDate;
     }
 
     private boolean isNextDayDateUseRequired(List<Integer> startHourMinuteList, List<Integer> endHourMinuteList){
-        return (endHourMinuteList.get(2).equals(Calendar.AM) && startHourMinuteList.get(2).equals(Calendar.PM))
-                || (
-                endHourMinuteList.get(2).equals(Calendar.AM)
-                        && startHourMinuteList.get(2).equals(Calendar.AM)
-                        && startHourMinuteList.get(0) < endHourMinuteList.get(0))
-                || (
-                endHourMinuteList.get(2).equals(Calendar.PM)
-                        && startHourMinuteList.get(2).equals(Calendar.PM)
-                        && startHourMinuteList.get(0) > endHourMinuteList.get(0));
+        return (endHourMinuteList.get(2).equals(Calendar.AM) && startHourMinuteList.get(2).equals(Calendar.PM));
     }
 
-    private Calendar buildCalendarInstanceFromHourMinute(int hour, int minute){
+    private Calendar buildCalendarInstanceFromTimeComponents(List<Integer> timeComponents){
         return new Calendar.Builder()
                 .setTimeOfDay(
-                        hour, minute, 0
-                ).build();
+                        timeComponents.get(0),timeComponents.get(1), 0
+                )
+                .set(Calendar.AM_PM, timeComponents.get(2))
+                .build();
     }
     public List<Integer> getComponentsListForDate(String date){
         return Arrays.stream(date.split("-")).map(Integer::parseInt).toList();
@@ -265,8 +271,9 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     /**
-     * @param timeComponentsList : List of Integers containing Hours, Minutes and Meridian(according to Calendar class)
-     * validates the values according to the meridians and sets the correct time format according to the 24-hour format
+     * @param timeComponentsList : List of Integers containing Hours, Minutes and Meridian from { Calendar.AM, Calendar.PM }
+     * This method validates the values according to the meridian and sets the correct
+     * hour value according to the 24-hour format
      */
     private void filterMeridianForTimeComponentList(List<Integer> timeComponentsList){
         if(timeComponentsList.get(2).equals(Calendar.AM) && timeComponentsList.get(0)>12){
@@ -274,12 +281,6 @@ public class ActivityServiceImpl implements ActivityService {
                     "Invalid date time received. Hour value cannot be greater than 12 for AM."
             );
         }
-        if(timeComponentsList.get(2).equals(Calendar.PM) && timeComponentsList.get(0)<12){
-            throw new MicroTimeManagementBadRequestException(
-                    "Invalid date time received. Hour value cannot be less than 12 for PM."
-            );
-        }
-        updateHoursInTimeListForMeridianIfApplicable(timeComponentsList);
     }
 
 }

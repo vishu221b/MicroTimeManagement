@@ -15,12 +15,10 @@ public class RecordLogRequestDTO {
 
     private String activityDescription;
 
-    private Long startTimeEpoch;
-
-    private Long endTimeEpoch;
-
     private String activityStartHourMinutes;
 
     private String activityEndHourMinutes;
+
+    private Boolean isNextDaySpan = Boolean.FALSE;
 
 }

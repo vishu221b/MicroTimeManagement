@@ -1,6 +1,5 @@
 package com.microtimemanagement.apiservice.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.microtimemanagement.apiservice.enums.TimeMeridian;
 import lombok.*;
 
@@ -8,8 +7,9 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonIgnoreProperties({"totalDurationEpoch"})
 public class Activity {
+
+    private String id;
 
     private String activityName;
 
@@ -19,13 +19,13 @@ public class Activity {
 
     private Long endTimeEpoch;
 
-    private int startHourValue;
+    private Integer startHourValue;
 
-    private int startMinutesValue;
+    private Integer startMinutesValue;
 
-    private int endHourValue;
+    private Integer endHourValue;
 
-    private int endMinutesValue;
+    private Integer endMinutesValue;
 
     private Long totalDurationInEpoch;
 

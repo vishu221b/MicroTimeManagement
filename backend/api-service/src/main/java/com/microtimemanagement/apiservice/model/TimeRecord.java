@@ -28,6 +28,4 @@ public class TimeRecord {
 
     private Date lastUpdatedAt;
 
-    private Long lastActivityEndTimeEpoch;
-
 }

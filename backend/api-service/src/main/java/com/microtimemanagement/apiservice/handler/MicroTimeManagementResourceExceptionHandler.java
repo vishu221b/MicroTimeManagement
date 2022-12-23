@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.ServletWebRequest;
 
+import java.util.Arrays;
 import java.util.Date;
 
 @Slf4j
@@ -23,12 +24,34 @@ public class MicroTimeManagementResourceExceptionHandler {
         System.out.println(webRequest);
         System.out.println(webRequest.getRequest().getServletPath());
         System.out.println(webRequest.getParameterMap());
+        log.error("{}", getBuilderForStackTrace(ex.getStackTrace()));
         return ExceptionDTO.builder().error(MicroTimeManagementExceptionDTO.builder()
                 .errorMessage(ex.getMessage())
                 .timestamp(new Date().getTime())
                 .requestPath(webRequest.getRequest().getServletPath())
                 .statusCode(HttpStatus.BAD_REQUEST.value())
                 .build()).build();
+    }
+
+    @ExceptionHandler(value = {Exception.class})
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    private @ResponseBody ExceptionDTO<?> handleInternalServerException(RuntimeException ex, ServletWebRequest webRequest){
+//        System.out.println(webRequest);
+//        System.out.println(webRequest.getRequest().getServletPath());
+//        System.out.println(webRequest.getParameterMap());
+        log.error("{}", getBuilderForStackTrace(ex.getStackTrace()));
+        return ExceptionDTO.builder().error(MicroTimeManagementExceptionDTO.builder()
+                .errorMessage(ex.getMessage())
+                .timestamp(new Date().getTime())
+                .requestPath(webRequest.getRequest().getServletPath())
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .build()).build();
+    }
+
+    private StringBuilder getBuilderForStackTrace(StackTraceElement[] ex){
+        StringBuilder stringBuilder = new StringBuilder();
+        Arrays.stream(ex).forEach(s -> stringBuilder.append("\n").append(s));
+        return stringBuilder;
     }
 
 }

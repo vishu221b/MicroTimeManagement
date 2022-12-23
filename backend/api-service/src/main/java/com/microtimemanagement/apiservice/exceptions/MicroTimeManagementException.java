@@ -11,7 +11,7 @@ public class MicroTimeManagementException extends RuntimeException{
 
     public MicroTimeManagementException(String message){
         super(message);
-        log.info("MicroTimeManagementException : {}", message);
+//        log.info("MicroTimeManagementException : {}", message);
     }
     public MicroTimeManagementException(){
         super();

@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ActivityDTO {
 
+    private String id;
+
     private String activityName;
 
     private String activityDescription;
