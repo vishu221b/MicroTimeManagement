@@ -1,6 +1,8 @@
 package com.microtimemanagement.apiservice.exceptions;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -9,24 +11,24 @@ import java.util.List;
 @Setter
 @ToString
 @Slf4j
-public class MicroTimeManagementBadRequestException extends MicroTimeManagementException{
+public class MicroTimeManagementNotFoundException extends MicroTimeManagementException{
 
-    public MicroTimeManagementBadRequestException(String message){
+    public MicroTimeManagementNotFoundException(String message){
         super(message);
         log.info("MicroTimeManagementBadRequestException: {}", message);
     }
 
-    public MicroTimeManagementBadRequestException(String message, Class<?> className){
+    public MicroTimeManagementNotFoundException(String message, Class<?> className){
         super(message);
         log.info("MicroTimeManagementBadRequestException: {} at: {}", message, className);
     }
 
-    public MicroTimeManagementBadRequestException(String message, List<String> errors){
+    public MicroTimeManagementNotFoundException(String message, List<String> errors){
         super(message, errors);
         log.info("MicroTimeManagementBadRequestException: {} with multiple errors: {}", message, errors);
     }
 
-    public MicroTimeManagementBadRequestException(String customMessage, String originalMessage, Class<?> className){
+    public MicroTimeManagementNotFoundException(String customMessage, String originalMessage, Class<?> className){
         super(customMessage);
         log.info("MicroTimeManagementBadRequestException with, custom message: {}, original message {}, at: {}",
                 customMessage,
@@ -35,7 +37,7 @@ public class MicroTimeManagementBadRequestException extends MicroTimeManagementE
         );
     }
 
-    public MicroTimeManagementBadRequestException(){
+    public MicroTimeManagementNotFoundException(){
         super();
     }
 }

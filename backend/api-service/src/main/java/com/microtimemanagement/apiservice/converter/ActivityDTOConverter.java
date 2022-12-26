@@ -8,8 +8,9 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public class ActivityConverter {
+public class ActivityDTOConverter implements BaseDTOConverter<Activity, ActivityDTO> {
 
+    @Override
     public ActivityDTO toDTO(Activity activity){
         log.info("Converting activity to DTO: {}", activity);
         return ActivityDTO.builder()
@@ -35,6 +36,14 @@ public class ActivityConverter {
     private String processActivityHourMinuteValueToString(int hourMinuteValue){
         String value = Integer.toString(hourMinuteValue);
         return value.length() == 1 ? "0"+value : value;
+    }
+
+    @Override
+    public Activity fromDTO(ActivityDTO baseDTO) {
+        return Activity.builder()
+                .activityName(baseDTO.getActivityName())
+                .activityDescription(baseDTO.getActivityDescription())
+                .build();
     }
 
 }

@@ -2,6 +2,8 @@ package com.microtimemanagement.apiservice.dto;
 
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Builder
@@ -9,12 +11,8 @@ import lombok.*;
 @AllArgsConstructor
 public class MicroTimeManagementExceptionDTO {
 
-    private String errorMessage;
+    private String message;
 
-    private Long timestamp;
-
-    private String requestPath;
-
-    private int statusCode;
+    private List<String> errors;
 
 }

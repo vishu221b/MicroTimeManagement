@@ -1,6 +1,5 @@
 package com.microtimemanagement.apiservice.service.impl;
 
-import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.dto.request.RecordLogRequestDTO;
 import com.microtimemanagement.apiservice.enums.NextDayOffsetAction;
 import com.microtimemanagement.apiservice.enums.TimeMeridian;
@@ -15,8 +14,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -108,6 +107,7 @@ public class ActivityServiceImpl implements ActivityService {
                             calculateActivityHourDurationStringFromMilliseconds(activityFirstDayDurationMillis)
                     )
                     .activityDate(recordDate)
+                    .uid(UUID.randomUUID().toString())
                     .build();
 
             Long activitySecondDayDurationMillis = calculateActivityDurationEpochWithOffsetUsingAction(
@@ -133,6 +133,7 @@ public class ActivityServiceImpl implements ActivityService {
                             calculateActivityHourDurationStringFromMilliseconds(activitySecondDayDurationMillis)
                     )
                     .activityDate(formattedEndDate)
+                    .uid(UUID.randomUUID().toString())
                     .build();
 
             return List.of(activityDayOne, activityDayTwo);
@@ -167,6 +168,7 @@ public class ActivityServiceImpl implements ActivityService {
                         calculateActivityHourDurationStringFromMilliseconds(activityDurationInEpoch)
                 )
                 .activityDate(recordDate)
+                .uid(UUID.randomUUID().toString())
                 .build());
 
     }

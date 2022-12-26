@@ -2,12 +2,14 @@ package com.microtimemanagement.apiservice.model;
 
 import com.microtimemanagement.apiservice.enums.TimeMeridian;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Data
-@Builder
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Activity {
+@EqualsAndHashCode(callSuper = true)
+public class Activity extends BaseModel{
 
     private String id;
 
@@ -38,5 +40,7 @@ public class Activity {
     private TimeMeridian endTimeMeridian;
 
     private String activityDate;
+
+    private String uid;
 
 }

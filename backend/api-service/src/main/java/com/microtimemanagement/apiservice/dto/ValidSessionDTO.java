@@ -1,5 +1,6 @@
 package com.microtimemanagement.apiservice.dto;
 
+import com.microtimemanagement.apiservice.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,15 +10,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExceptionDTO<T> {
+public class ValidSessionDTO {
 
-    private T error;
+    private Boolean isValidSession;
 
-    private Long code;
+    private User principal;
 
-    private String path;
-
-    private int statusCode;
-
+    private String error;
 
 }

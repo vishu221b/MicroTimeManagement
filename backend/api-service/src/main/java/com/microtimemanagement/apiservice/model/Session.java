@@ -5,21 +5,19 @@ import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.List;
-
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
+@Document("mtm_session")
 @EqualsAndHashCode(callSuper = true)
-@Document(collection = "micro_time_record")
-public class TimeRecord extends BaseModel{
+public class Session extends BaseModel{
 
     @Id
     private String id;
 
-    private String recordForDate;
+    private String token;
 
-    private List<Activity> activities;
+    private String userId;
 
 }

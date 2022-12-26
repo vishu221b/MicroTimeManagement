@@ -1,7 +1,7 @@
 package com.microtimemanagement.apiservice.service.impl;
 
 import com.microtimemanagement.apiservice.constants.ErrorConstants;
-import com.microtimemanagement.apiservice.converter.ActivityConverter;
+import com.microtimemanagement.apiservice.converter.ActivityDTOConverter;
 import com.microtimemanagement.apiservice.converter.TimeRecordConverter;
 import com.microtimemanagement.apiservice.dto.ActivityDTO;
 import com.microtimemanagement.apiservice.dto.response.RecordLogActivityListResponseDTO;
@@ -39,7 +39,7 @@ public class TimeRecordServiceImpl implements TimeRecordService {
     ActivityService activityService;
 
     @Autowired
-    ActivityConverter activityConverter;
+    ActivityDTOConverter activityConverter;
 
     @Override
     public void saveRecord(TimeRecord timeRecord) {
@@ -91,6 +91,13 @@ public class TimeRecordServiceImpl implements TimeRecordService {
 
     @Override
     public RecordLogActivityListResponseDTO getActivitiesForDate(String date) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        try{
+            dateFormat.parse(date);
+        }catch (ParseException e){
+            e.printStackTrace();
+            throw new MicroTimeManagementBadRequestException(ErrorConstants.INVALID_DATE_VALUE);
+        }
         TimeRecord timeRecord = timeRecordRepository.findByRecordForDate(date).orElse(null);
         if(null == timeRecord){
             throw new MicroTimeManagementBadRequestException(String.format("No record found for date %s", date));
@@ -141,7 +148,7 @@ public class TimeRecordServiceImpl implements TimeRecordService {
                     if (null!= timeRecord){
                         log.info("Processing existing time record: {}", timeRecord);
 
-                        ref.existingTimeRecord =timeRecord;
+                        ref.existingTimeRecord = timeRecord;
 
                         List<Activity> recordActivityList = timeRecord.getActivities();
 
@@ -231,9 +238,9 @@ public class TimeRecordServiceImpl implements TimeRecordService {
                                         formatEpoch(newActivityStartTime), formatEpoch(newActivityEndTime));
                                 log.info("Next -> Start: {}, End: {}",
                                         formatEpoch(nextActivityStartTime), formatEpoch(nextActivityEndTime));
-                                log.info("################################");
-                                log.info("Assigning 'Next' to 'Current'...");
-                                log.info("################################");
+                                log.info("#################################");
+                                log.info("| Assigning 'Next' to 'Current' |");
+                                log.info("#################################");
                                 current = next;
                                 next = null;
                             }

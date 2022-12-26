@@ -4,22 +4,18 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.util.List;
+import org.springframework.security.core.GrantedAuthority;
 
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
+@Document(collection = "mtm_role")
 @EqualsAndHashCode(callSuper = true)
-@Document(collection = "micro_time_record")
-public class TimeRecord extends BaseModel{
+public class Role extends BaseModel{
 
     @Id
     private String id;
 
-    private String recordForDate;
-
-    private List<Activity> activities;
-
+    private String name;
 }
