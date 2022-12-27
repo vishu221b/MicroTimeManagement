@@ -57,11 +57,11 @@ public class UserController {
         return userService.updateUserDetails(userDTO);
     }
 
-    @RequestMapping(value = ApiPathConstants.DELETE_USER, method = RequestMethod.DELETE)
+    @RequestMapping(value = ApiPathConstants.DELETE_CURRENT_USER, method = RequestMethod.DELETE)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
-    public GenericMessageResponseDTO deleteUserById(@RequestParam String userId){
-        return userService.deleteUserById(userId);
+    public GenericMessageResponseDTO deleteUserById(Principal principal){
+        return userService.deleteUserByUsername(principal.getName());
     }
 
     @RequestMapping(value = ApiPathConstants.RESET_PASSWORD, method = RequestMethod.POST)

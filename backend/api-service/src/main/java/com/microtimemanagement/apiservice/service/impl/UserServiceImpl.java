@@ -168,8 +168,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public GenericMessageResponseDTO deleteUserById(String userId) {
-        User user = findById(userId);
+    public GenericMessageResponseDTO deleteUserByUsername(String username) {
+        User user = findByUsername(username);
         user.setIsActive(Boolean.FALSE);
         userRepository.save(user);
         return GenericMessageResponseDTO.builder()
