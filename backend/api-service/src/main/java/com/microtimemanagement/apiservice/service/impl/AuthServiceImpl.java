@@ -6,10 +6,8 @@ import com.microtimemanagement.apiservice.dto.SessionDTO;
 import com.microtimemanagement.apiservice.dto.ValidSessionDTO;
 import com.microtimemanagement.apiservice.dto.request.AuthenticationRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.AuthenticationLoginResponseDTO;
-import com.microtimemanagement.apiservice.dto.response.AuthenticationLogoutResponseDTO;
+import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
-import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementException;
-import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
 import com.microtimemanagement.apiservice.model.User;
 import com.microtimemanagement.apiservice.service.AuthService;
 import com.microtimemanagement.apiservice.service.SessionService;
@@ -40,9 +38,9 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthenticationLogoutResponseDTO expireToken(String token) {
+    public GenericMessageResponseDTO expireToken(String token) {
         sessionService.destroySession(token);
-        return AuthenticationLogoutResponseDTO.builder().message(ResponseMessages.LOGOUT_SUCCESS).build();
+        return GenericMessageResponseDTO.builder().message(ResponseMessages.LOGOUT_SUCCESS).build();
     }
 
     @Override

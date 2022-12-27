@@ -2,6 +2,8 @@ package com.microtimemanagement.apiservice.service;
 
 import com.microtimemanagement.apiservice.dto.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.NewUserRequestDTO;
+import com.microtimemanagement.apiservice.dto.request.PasswordChangeRequestDTO;
+import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.NewUserResponseDTO;
 import com.microtimemanagement.apiservice.model.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -22,4 +24,8 @@ public interface UserService extends UserDetailsService {
     UserDTO saveUserFromDTO(UserDTO userDTO, Boolean isUpdateRequest);
 
     UserDTO updateUserDetails(UserDTO userDTO);
+
+    GenericMessageResponseDTO deleteUserById(String userId);
+
+    GenericMessageResponseDTO changeUserPassword(PasswordChangeRequestDTO passwordChangeRequestDTO);
 }

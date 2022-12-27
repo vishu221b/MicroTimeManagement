@@ -5,7 +5,8 @@ import lombok.Data;
 
 @Data
 @Builder
-public class AuthenticationLogoutResponseDTO {
+public class GenericMessageResponseDTO {
 
     private String message;
+
 }

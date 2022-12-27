@@ -1,11 +1,13 @@
 package com.microtimemanagement.apiservice.service.impl;
 
 import com.microtimemanagement.apiservice.constants.ErrorConstants;
+import com.microtimemanagement.apiservice.constants.ResponseMessages;
 import com.microtimemanagement.apiservice.converter.UserDTOConverter;
 import com.microtimemanagement.apiservice.dto.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.NewUserRequestDTO;
+import com.microtimemanagement.apiservice.dto.request.PasswordChangeRequestDTO;
+import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.NewUserResponseDTO;
-import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementUserException;
@@ -19,7 +21,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.security.auth.login.AccountNotFoundException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -164,6 +165,29 @@ public class UserServiceImpl implements UserService {
         validateIfUserAlreadyExistsByUsernameOrEmail(userDTO, Boolean.TRUE);
         log.info("Updating user with id {} to : {}", userDTO.getId(), userDTO);
         return saveUserFromDTO(userDTO, Boolean.TRUE);
+    }
+
+    @Override
+    public GenericMessageResponseDTO deleteUserById(String userId) {
+        User user = findById(userId);
+        user.setIsActive(Boolean.FALSE);
+        userRepository.save(user);
+        return GenericMessageResponseDTO.builder()
+                .message(ResponseMessages.ACCOUNT_DELETED_SUCCESSFULLY)
+                .build();
+    }
+
+    @Override
+    public GenericMessageResponseDTO changeUserPassword(PasswordChangeRequestDTO passwordChangeRequestDTO) {
+        User user = findByUsername(passwordChangeRequestDTO.getUsername());
+        String message = ErrorConstants.SOMETHING_WENT_WRONG;
+        if(bCryptPasswordEncoder.matches(passwordChangeRequestDTO.getOldPassword(), user.getPassword())){
+            user.setPassword(bCryptPasswordEncoder.encode(passwordChangeRequestDTO.getNewPassword()));
+            message = ResponseMessages.PASSWORD_CHANGED_SUCCESSFULLY;
+        }
+        return GenericMessageResponseDTO.builder()
+                .message(message)
+                .build();
     }
 
 }

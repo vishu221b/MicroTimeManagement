@@ -14,4 +14,6 @@ public class ApiPathConstants {
     public static final String UPDATE_USER = "/update";
     public static final String ADD_ROLE_TO_USER = ROLE_BASE + "/addToUser";
 
+    public static final String DELETE_USER = "/delete";
+    public static final String RESET_PASSWORD = "/resetPassword";
 }
