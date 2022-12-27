@@ -30,9 +30,8 @@ public class UserController {
      * Update Users
      * Delete Users
      * Read Users
+     * Update Password
      * */
-
-    //TODO: Delete, Read Users, Change Password
 
     private final UserService userService;
 
@@ -71,5 +70,11 @@ public class UserController {
             @RequestBody PasswordChangeRequestDTO passwordChangeRequestDTO, Principal principal){
         passwordChangeRequestDTO.setUsername(principal.getName());
         return userService.changeUserPassword(passwordChangeRequestDTO);
+    }
+
+    @RequestMapping(value = ApiPathConstants.GET_USER_BY_UID, method = RequestMethod.GET)
+    @ResponseBody
+    public UserDTO getUserByUid(@RequestParam String id){
+        return userService.getUserByUid(id);
     }
 }

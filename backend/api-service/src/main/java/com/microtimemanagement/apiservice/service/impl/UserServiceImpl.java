@@ -106,14 +106,14 @@ public class UserServiceImpl implements UserService {
         return user.get();
     }
     private User findByUsername(String username){
-        Optional<User> user = userRepository.findByUsername(username);
+        Optional<User> user = userRepository.findByUsernameAndIsActiveTrue(username);
         if(user.isEmpty()){
             throw new MicroTimeManagementUserException(ErrorConstants.USER_NOT_FOUND);
         }
         return user.get();
     }
     private User findByEmail(String email){
-        Optional<User> user = userRepository.findByEmail(email);
+        Optional<User> user = userRepository.findByEmailAndIsActiveTrue(email);
         if(user.isEmpty()){
             throw new MicroTimeManagementUserException(ErrorConstants.USER_NOT_FOUND);
         }
@@ -188,6 +188,11 @@ public class UserServiceImpl implements UserService {
         return GenericMessageResponseDTO.builder()
                 .message(message)
                 .build();
+    }
+
+    @Override
+    public UserDTO getUserByUid(String id) {
+        return userConverter.toDTO(userRepository.findByUidAndIsActiveTrue(id));
     }
 
 }
