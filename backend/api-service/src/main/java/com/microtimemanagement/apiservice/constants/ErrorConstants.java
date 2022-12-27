@@ -22,4 +22,5 @@ public class ErrorConstants {
     public static final String ACCOUNT_NOT_FOUND_FOR_USERNAME = "No account found for username: %s";
     public static final String SESSION_EXPIRED = "Your session has expired. Please login again.";
     public static final String SESSION_TOKEN_INVALID = "Invalid session token.";
+    public static final String ACTIVITY_NOT_FOUND = "No activity found.";
 }

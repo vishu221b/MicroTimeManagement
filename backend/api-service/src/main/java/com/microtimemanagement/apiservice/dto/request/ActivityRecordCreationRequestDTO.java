@@ -1,5 +1,7 @@
 package com.microtimemanagement.apiservice.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.microtimemanagement.apiservice.dto.UserDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class RecordLogRequestDTO {
+public class ActivityRecordCreationRequestDTO {
 
     private String recordDate;
 
@@ -19,6 +21,10 @@ public class RecordLogRequestDTO {
 
     private String activityEndHourMinutes;
 
+    @JsonIgnore
     private Boolean isNextDaySpan = Boolean.FALSE;
+
+    @JsonIgnore
+    private UserDTO user;
 
 }

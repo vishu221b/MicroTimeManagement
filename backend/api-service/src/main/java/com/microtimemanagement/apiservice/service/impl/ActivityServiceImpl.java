@@ -1,6 +1,6 @@
 package com.microtimemanagement.apiservice.service.impl;
 
-import com.microtimemanagement.apiservice.dto.request.RecordLogRequestDTO;
+import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequestDTO;
 import com.microtimemanagement.apiservice.enums.NextDayOffsetAction;
 import com.microtimemanagement.apiservice.enums.TimeMeridian;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
@@ -32,19 +32,19 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public List<Activity> makeFromRecordLogRequestDTO(RecordLogRequestDTO recordLogRequestDTO) {
+    public List<Activity> makeFromRecordLogRequestDTO(ActivityRecordCreationRequestDTO activityRecordCreationRequestDTO) {
 
         List<Integer> startHourMinuteList = generateTimeComponentsListFromHourMinuteString(
-                recordLogRequestDTO.getActivityStartHourMinutes()
+                activityRecordCreationRequestDTO.getActivityStartHourMinutes()
         );
 
         List<Integer> endHourMinuteList = generateTimeComponentsListFromHourMinuteString(
-                recordLogRequestDTO.getActivityEndHourMinutes()
+                activityRecordCreationRequestDTO.getActivityEndHourMinutes()
         );
 
         log.info("Time components list - Start: {} | End: {}", startHourMinuteList, endHourMinuteList);
 
-        String recordDate = recordLogRequestDTO.getRecordDate();
+        String recordDate = activityRecordCreationRequestDTO.getRecordDate();
 
         Calendar startDayCalendar = buildCalendarInstanceFromDateAndTime(recordDate, startHourMinuteList);
 
@@ -56,7 +56,7 @@ public class ActivityServiceImpl implements ActivityService {
         log.info("Calendar Date Start: {}", startDayCalendar.getTime());
         log.info("Calendar Date End: {}", endDayCalendar.getTime());
 
-        boolean isNextDay = isNextDayDateUseRequired(startHourMinuteList, endHourMinuteList) || recordLogRequestDTO.getIsNextDaySpan();
+        boolean isNextDay = isNextDayDateUseRequired(startHourMinuteList, endHourMinuteList) || activityRecordCreationRequestDTO.getIsNextDaySpan();
 
         if(difference < 0 && !isNextDay){
             throw new MicroTimeManagementBadRequestException("Activity cannot start after it's end time. Invalid time selected.");
@@ -89,8 +89,8 @@ public class ActivityServiceImpl implements ActivityService {
             );
 
             Activity activityDayOne = Activity.builder()
-                    .activityName(recordLogRequestDTO.getActivityName())
-                    .activityDescription(recordLogRequestDTO.getActivityDescription())
+                    .activityName(activityRecordCreationRequestDTO.getActivityName())
+                    .activityDescription(activityRecordCreationRequestDTO.getActivityDescription())
                     .startTimeEpoch(startDayCalendar.getTimeInMillis())
                     .endTimeEpoch(nextDayOffsetMillis)
                     .startHourValue(startHourMinuteList.get(0))
@@ -107,7 +107,7 @@ public class ActivityServiceImpl implements ActivityService {
                             calculateActivityHourDurationStringFromMilliseconds(activityFirstDayDurationMillis)
                     )
                     .activityDate(recordDate)
-                    .uid(UUID.randomUUID().toString())
+                    .id(UUID.randomUUID().toString())
                     .build();
 
             Long activitySecondDayDurationMillis = calculateActivityDurationEpochWithOffsetUsingAction(
@@ -115,8 +115,8 @@ public class ActivityServiceImpl implements ActivityService {
             );
 
             Activity activityDayTwo = Activity.builder()
-                    .activityName(recordLogRequestDTO.getActivityName())
-                    .activityDescription(recordLogRequestDTO.getActivityDescription())
+                    .activityName(activityRecordCreationRequestDTO.getActivityName())
+                    .activityDescription(activityRecordCreationRequestDTO.getActivityDescription())
                     .startTimeEpoch(nextDayOffsetMillis)
                     .endTimeEpoch(endDayCalendar.getTimeInMillis())
                     .startHourValue(0)
@@ -133,7 +133,7 @@ public class ActivityServiceImpl implements ActivityService {
                             calculateActivityHourDurationStringFromMilliseconds(activitySecondDayDurationMillis)
                     )
                     .activityDate(formattedEndDate)
-                    .uid(UUID.randomUUID().toString())
+                    .id(UUID.randomUUID().toString())
                     .build();
 
             return List.of(activityDayOne, activityDayTwo);
@@ -146,8 +146,8 @@ public class ActivityServiceImpl implements ActivityService {
         log.info("Split -> Start: {} | End: {}", startHourMinuteList, endHourMinuteList);
 
         return List.of(Activity.builder()
-                .activityName(recordLogRequestDTO.getActivityName())
-                .activityDescription(recordLogRequestDTO.getActivityDescription())
+                .activityName(activityRecordCreationRequestDTO.getActivityName())
+                .activityDescription(activityRecordCreationRequestDTO.getActivityDescription())
                 .startTimeEpoch(
                         buildCalendarInstanceFromDateAndTime(recordDate, startHourMinuteList).getTimeInMillis()
                 )
@@ -168,7 +168,7 @@ public class ActivityServiceImpl implements ActivityService {
                         calculateActivityHourDurationStringFromMilliseconds(activityDurationInEpoch)
                 )
                 .activityDate(recordDate)
-                .uid(UUID.randomUUID().toString())
+                .id(UUID.randomUUID().toString())
                 .build());
 
     }

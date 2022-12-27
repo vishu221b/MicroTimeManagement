@@ -1,9 +1,9 @@
 package com.microtimemanagement.apiservice.service;
 
 import com.microtimemanagement.apiservice.dto.RoleDTO;
-import com.microtimemanagement.apiservice.dto.response.UserRoleResponseDTO;
 import com.microtimemanagement.apiservice.dto.request.RoleRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.UserRoleRequestDTO;
+import com.microtimemanagement.apiservice.dto.response.UserRoleResponseDTO;
 import com.microtimemanagement.apiservice.model.Role;
 
 public interface AdminService {

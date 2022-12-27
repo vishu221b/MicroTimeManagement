@@ -37,13 +37,13 @@ public class SecurityConfig {
                                 .requestMatchers(
                                         "/swagger-ui/**",
                                         "/v3/api-docs/**",
-                                        "/api/v1/auth/**",
+                                        "/api/v1/auth/login",
                                         "/actuator/**",
                                         "/error",
                                         "/api/v1/users/register"
                                 ).permitAll()
                                 .requestMatchers("/api/v1/admin/**").hasRole("MTM_ADMIN")
-                                .requestMatchers("/api/v1/**").hasRole("MTM_USER")
+                                .requestMatchers("/api/v1/**", "api/v1/auth/logout").hasRole("MTM_USER")
                 ).authorizeHttpRequests().anyRequest().denyAll()
                 .and().addFilterBefore(mtmSessionFilter, UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)

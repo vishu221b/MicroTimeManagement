@@ -12,7 +12,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RecordLogResponseDTO {
+public class ActivityRecordCreationdResponseDTO {
 
     List<ActivityDTO> activities;
 

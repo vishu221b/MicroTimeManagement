@@ -5,9 +5,9 @@ import com.microtimemanagement.apiservice.constants.ResponseMessages;
 import com.microtimemanagement.apiservice.converter.RoleConverter;
 import com.microtimemanagement.apiservice.dto.RoleDTO;
 import com.microtimemanagement.apiservice.dto.UserDTO;
-import com.microtimemanagement.apiservice.dto.response.UserRoleResponseDTO;
 import com.microtimemanagement.apiservice.dto.request.RoleRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.UserRoleRequestDTO;
+import com.microtimemanagement.apiservice.dto.response.UserRoleResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementException;
 import com.microtimemanagement.apiservice.model.Role;
@@ -16,7 +16,6 @@ import com.microtimemanagement.apiservice.service.AdminService;
 import com.microtimemanagement.apiservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;

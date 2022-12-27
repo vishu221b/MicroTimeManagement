@@ -2,7 +2,6 @@ package com.microtimemanagement.apiservice.handler;
 
 import com.microtimemanagement.apiservice.dto.ExceptionDTO;
 import com.microtimemanagement.apiservice.dto.MicroTimeManagementExceptionDTO;
-import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementAuthenticationException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
@@ -34,15 +33,6 @@ public class MicroTimeManagementResourceExceptionHandler {
         return buildExceptionDTO(ex, webRequest, HttpStatus.BAD_REQUEST);
     }
 
-//    @ExceptionHandler(value = {MicroTimeManagementAuthenticationException.class})
-//    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-//    private @ResponseBody ExceptionDTO<?> handleAuthException(MicroTimeManagementAuthenticationException ex, ServletWebRequest webRequest){
-//        System.out.println(webRequest.getRequest().getRequestURI());
-//        System.out.println(webRequest.getUserPrincipal());
-//        System.out.println(webRequest.getRequest().getServletPath());
-//        log.error("{}", getBuilderForStackTrace(ex.getStackTrace()));
-//        return buildExceptionDTO(ex, webRequest, HttpStatus.NOT_FOUND);
-//    }
     @ExceptionHandler(value = {MicroTimeManagementNotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
     private @ResponseBody ExceptionDTO<?> handleNotFoundException(MicroTimeManagementNotFoundException ex, ServletWebRequest webRequest){
@@ -87,7 +77,7 @@ public class MicroTimeManagementResourceExceptionHandler {
             return ExceptionDTO.builder()
                     .error(
                             MicroTimeManagementExceptionDTO.builder()
-                                    .message(ex.getMessage() + " Please contact dev.")
+                                    .message(ex.getMessage())
                                     .errors(
                                             null!= exc.getErrors() && exc.getErrors().size() > 0
                                             ? exc.getErrors() : Collections.emptyList())

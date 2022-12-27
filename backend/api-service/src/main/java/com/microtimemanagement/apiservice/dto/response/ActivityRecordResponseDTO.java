@@ -13,7 +13,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RecordLogActivityListResponseDTO {
+public class ActivityRecordResponseDTO {
 
     private String recordDate;
 

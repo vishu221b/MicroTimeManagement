@@ -31,4 +31,5 @@ public interface UserService extends UserDetailsService {
 
     UserDTO getUserByUid(String id);
 
+    UserDTO loadUserDTOByUsername(String username);
 }

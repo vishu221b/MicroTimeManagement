@@ -2,21 +2,24 @@ package com.microtimemanagement.apiservice.service.impl;
 
 import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.converter.ActivityDTOConverter;
-import com.microtimemanagement.apiservice.converter.TimeRecordConverter;
 import com.microtimemanagement.apiservice.dto.ActivityDTO;
-import com.microtimemanagement.apiservice.dto.response.RecordLogActivityListResponseDTO;
+import com.microtimemanagement.apiservice.dto.UserDTO;
+import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequestDTO;
+import com.microtimemanagement.apiservice.dto.response.ActivityRecordCreationdResponseDTO;
+import com.microtimemanagement.apiservice.dto.response.ActivityRecordResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementException;
+import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
 import com.microtimemanagement.apiservice.model.Activity;
-import com.microtimemanagement.apiservice.model.TimeRecord;
-import com.microtimemanagement.apiservice.dto.request.RecordLogRequestDTO;
-import com.microtimemanagement.apiservice.dto.response.RecordLogResponseDTO;
-import com.microtimemanagement.apiservice.repository.TimeRecordRepository;
+import com.microtimemanagement.apiservice.model.ActivityRecord;
+import com.microtimemanagement.apiservice.repository.ActivityRecordRepository;
+import com.microtimemanagement.apiservice.service.ActivityRecordService;
 import com.microtimemanagement.apiservice.service.ActivityService;
-import com.microtimemanagement.apiservice.service.TimeRecordService;
+import com.microtimemanagement.apiservice.service.UserService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateFormatUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
@@ -27,48 +30,53 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @Service
-public class TimeRecordServiceImpl implements TimeRecordService {
+@RequiredArgsConstructor
+public class ActivityRecordServiceImpl implements ActivityRecordService {
 
-    @Autowired
-    TimeRecordRepository timeRecordRepository;
+    private final ActivityRecordRepository activityRecordRepository;
 
-    @Autowired
-    TimeRecordConverter timeRecordConverter;
+    private final ActivityService activityService;
 
-    @Autowired
-    ActivityService activityService;
+    private final ActivityDTOConverter activityConverter;
 
-    @Autowired
-    ActivityDTOConverter activityConverter;
+    private final UserService userService;
 
     @Override
-    public void saveRecord(TimeRecord timeRecord) {
-        TimeRecord dbTimeRecord = getByRecordDate(timeRecord.getRecordForDate());
-        log.info("Record:{}", dbTimeRecord);
-        if(null != dbTimeRecord){
-            dbTimeRecord.getActivities().add(timeRecord.getActivities().get(0));
-            timeRecord = dbTimeRecord;
+    public void saveRecordWithFirstActivity(ActivityRecord activityRecord) {
+        ActivityRecord dbActivityRecord = getByRecordDate(activityRecord.getRecordDate());
+        log.info("Record:{}", dbActivityRecord);
+        if(null != dbActivityRecord){
+            dbActivityRecord.getActivities().add(activityRecord.getActivities().get(0));
+            activityRecord = dbActivityRecord;
         }
-        timeRecordRepository.save(timeRecord);
+        activityRecordRepository.save(activityRecord);
     }
 
-    public TimeRecord getByRecordDate(String recordDate){
-        return timeRecordRepository.findByRecordForDate(recordDate).orElse(null);
+    private ActivityRecord saveRecord(ActivityRecord record){
+        return activityRecordRepository.save(record);
     }
-    private void saveMultipleRecords(List<TimeRecord> records){
-        timeRecordRepository.saveAll(records);
+
+    public ActivityRecord getByRecordDate(String recordDate){
+        return activityRecordRepository.findByRecordDate(recordDate).orElse(null);
+    }
+    private void saveMultipleRecords(List<ActivityRecord> records){
+        activityRecordRepository.saveAll(records);
     }
 
     @Override
-    public RecordLogResponseDTO processCreateUpdateRequest(RecordLogRequestDTO recordRequestBody) throws MicroTimeManagementException, ParseException {
+    public ActivityRecordCreationdResponseDTO processCreateUpdateRequest(ActivityRecordCreationRequestDTO recordRequestBody) throws MicroTimeManagementException, ParseException {
         try{
+            log.info("Security Context holder is: {}", SecurityContextHolder.getContext().getAuthentication().getName());
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
             Date parsed = simpleDateFormat.parse(recordRequestBody.getRecordDate());
             log.info("Parsed Record Date: {}", parsed);
             log.info("Parsed Record Date: {}", parsed.getTime());
-            List<TimeRecord> timeRecords = makeFromRecordLogRequestDTO(recordRequestBody);
-            saveMultipleRecords(timeRecords.stream().filter(r -> null!=r.getRecordForDate()).toList());
-            return convertToRecordLogResponseDTO(timeRecords);
+            recordRequestBody.setUser(userService.loadUserDTOByUsername(
+                    SecurityContextHolder.getContext().getAuthentication().getName()
+            ));
+            List<ActivityRecord> activityRecords = makeFromRecordLogRequestDTO(recordRequestBody);
+            saveMultipleRecords(activityRecords.stream().filter(r -> null!=r.getRecordDate()).toList());
+            return convertToRecordLogResponseDTO(activityRecords);
         }
         catch (Exception ex){
             if(ex.getClass().equals(ParseException.class)){
@@ -89,35 +97,88 @@ public class TimeRecordServiceImpl implements TimeRecordService {
         }
     }
 
+    private String formatDateToCorrectStringValue(String date){
+        String[] splitDate = date.split("-");
+        return Arrays.stream(splitDate).map(
+                part -> {
+                    if(date.indexOf(part) != 0 && part.length() == 1){
+                        return "0" + part;
+                    }
+                    return part;
+                }
+        ).reduce((current, next) -> current+"-"+next).toString()
+                .replaceAll("Optional\\[", "")
+                .replaceAll("]", "");
+    }
     @Override
-    public RecordLogActivityListResponseDTO getActivitiesForDate(String date) {
+    public ActivityRecordResponseDTO getActivitiesForDate(String date) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         try{
             dateFormat.parse(date);
+            date = formatDateToCorrectStringValue(date);
         }catch (ParseException e){
             e.printStackTrace();
             throw new MicroTimeManagementBadRequestException(ErrorConstants.INVALID_DATE_VALUE);
         }
-        TimeRecord timeRecord = timeRecordRepository.findByRecordForDate(date).orElse(null);
-        if(null == timeRecord){
+        log.info("Processing activities get request for date: {}", date);
+        UserDTO userDTO = userService.loadUserDTOByUsername(
+                SecurityContextHolder.getContext().getAuthentication().getName()
+        );
+        ActivityRecord activityRecord = activityRecordRepository.findByRecordDateAndCreatedBy(
+                date, userDTO.getUid()
+        ).orElse(null);
+        if(null == activityRecord){
             throw new MicroTimeManagementBadRequestException(String.format("No record found for date %s", date));
         }
-        return RecordLogActivityListResponseDTO.builder()
-                .recordDate(timeRecord.getRecordForDate())
-                .createdAt(timeRecord.getCreatedAt())
-                .lastUpdatedAt(timeRecord.getLastUpdatedAt())
-                .activities(timeRecord.getActivities().stream().map(activity -> activityConverter.toDTO(activity)).toList())
+        return ActivityRecordResponseDTO.builder()
+                .recordDate(activityRecord.getRecordDate())
+                .createdAt(activityRecord.getCreatedAt())
+                .lastUpdatedAt(activityRecord.getLastUpdatedAt())
+                .activities(activityRecord.getActivities().stream()
+                        .map(activity -> activityConverter.toDTO(activity))
+                        .toList()
+                )
                 .build();
     }
 
-    private TimeRecord insertActivityInTimeRecordAtLocation(
-            Activity activity, TimeRecord timeRecord, int position, AtomicBoolean activityUpdateStatus
+    @Override
+    public ActivityRecordResponseDTO deleteActivity(String date, String recordId) {
+        Optional<ActivityRecord> activityRecord = activityRecordRepository.findByRecordDateAndCreatedBy(
+                date,
+                userService.loadUserDTOByUsername(
+                        SecurityContextHolder.getContext().getAuthentication().getName()
+                ).getUid()
+        );
+        if(activityRecord.isEmpty()){
+            throw new MicroTimeManagementNotFoundException(ErrorConstants.ACTIVITY_NOT_FOUND);
+        }
+        List<Activity> activities = activityRecord.get().getActivities();
+        activities.remove(
+                activities.stream()
+                        .filter(activity -> activity.getId().equals(recordId))
+                        .findFirst()
+                        .orElseThrow(() -> new MicroTimeManagementNotFoundException(ErrorConstants.ACTIVITY_NOT_FOUND))
+        );
+        activityRecord.get().setActivities(activities);
+        saveRecord(activityRecord.get());
+        return ActivityRecordResponseDTO.builder()
+                .recordDate(activityRecord.get().getRecordDate())
+                .activities(
+                        activityRecord.get().getActivities().stream().map(activityConverter::toDTO).toList()
+                )
+                .createdAt(activityRecord.get().getCreatedAt())
+                .lastUpdatedAt(activityRecord.get().getLastUpdatedAt())
+                .build();
+    }
+
+    private ActivityRecord insertActivityInTimeRecordAtLocation(
+            Activity activity, ActivityRecord activityRecord, int position, AtomicBoolean activityUpdateStatus
     ){
         log.info("Adding activity to record list at position: {}", position);
         setUniqueIdForActivity(activity);
-        timeRecord.getActivities().add(position, activity);
+        activityRecord.getActivities().add(position, activity);
         setActivityUpdatedToTrue(activityUpdateStatus);
-        return timeRecord;
+        return activityRecord;
     }
 
     private void setUniqueIdForActivity(Activity activity){
@@ -127,30 +188,30 @@ public class TimeRecordServiceImpl implements TimeRecordService {
     private void setActivityUpdatedToTrue(AtomicBoolean status){
         status.set(Boolean.TRUE);
     }
-    public List<TimeRecord> makeFromRecordLogRequestDTO(RecordLogRequestDTO recordLogRequestDTO){
-        List<Activity> activities = activityService.makeFromRecordLogRequestDTO(recordLogRequestDTO);
-        log.info("Processing activities to Time Records....");
+    public List<ActivityRecord> makeFromRecordLogRequestDTO(ActivityRecordCreationRequestDTO activityRecordCreationRequestDTO){
+        List<Activity> activities = activityService.makeFromRecordLogRequestDTO(activityRecordCreationRequestDTO);
+        log.info("Processing activities to Records....");
         log.info("{}", activities);
         log.info("{}", activities.size());
         AtomicBoolean activityUpdated = new AtomicBoolean(Boolean.FALSE);
         var ref = new Object() {
-            TimeRecord existingTimeRecord = null;
+            ActivityRecord existingTimeRecord = null;
         };
-        List<TimeRecord> timeRecordList = new ArrayList<>(activities.stream().map(
+        List<ActivityRecord> activityRecordList = new ArrayList<>(activities.stream().map(
                 newActivity -> {
                     log.info("Processing new: {}", newActivity);
 
-                    TimeRecord timeRecord = getByRecordDate(newActivity.getActivityDate());
+                    ActivityRecord activityRecord = getByRecordDate(newActivity.getActivityDate());
 
                     Long newActivityStartTime = newActivity.getStartTimeEpoch();
                     Long newActivityEndTime = newActivity.getEndTimeEpoch();
 
-                    if (null!= timeRecord){
-                        log.info("Processing existing time record: {}", timeRecord);
+                    if (null!= activityRecord){
+                        log.info("Processing existing time record: {}", activityRecord);
 
-                        ref.existingTimeRecord = timeRecord;
+                        ref.existingTimeRecord = activityRecord;
 
-                        List<Activity> recordActivityList = timeRecord.getActivities();
+                        List<Activity> recordActivityList = activityRecord.getActivities();
 
                         Iterator<Activity> activityIterator = recordActivityList.iterator();
 
@@ -190,7 +251,7 @@ public class TimeRecordServiceImpl implements TimeRecordService {
                                     log.info("If the current element is first " +
                                             "element and new activity time range lies within this and next activity.");
                                     return insertActivityInTimeRecordAtLocation(
-                                            newActivity, timeRecord, recordActivityList.indexOf(next), activityUpdated
+                                            newActivity, activityRecord, recordActivityList.indexOf(next), activityUpdated
                                     );
                                 }
                                 if(newActivityEndTime <= currentActivityStartTime && !(
@@ -198,7 +259,7 @@ public class TimeRecordServiceImpl implements TimeRecordService {
                                 )){
                                     log.info("Inserting at first position w.r.t current activity...");
                                     return insertActivityInTimeRecordAtLocation(
-                                            newActivity, timeRecord, recordActivityList.indexOf(current), activityUpdated);
+                                            newActivity, activityRecord, recordActivityList.indexOf(current), activityUpdated);
                                 }
                             }
                             if(!activityIterator.hasNext()){
@@ -207,27 +268,27 @@ public class TimeRecordServiceImpl implements TimeRecordService {
                                     if(newActivityStartTime >= nextActivityEndTime){
                                         log.info("Inserting at last position w.r.t next activity...");
                                         return insertActivityInTimeRecordAtLocation(
-                                                newActivity, timeRecord, recordActivityList.indexOf(next)+1, activityUpdated);
+                                                newActivity, activityRecord, recordActivityList.indexOf(next)+1, activityUpdated);
                                     }
                                     if(newActivityEndTime <= currentActivityStartTime && !(
                                             current.getStartHourValue().equals(0) && current.getStartMinutesValue().equals(0)
                                             )){
                                         log.info("Inserting at first position w.r.t current activity...");
                                         return insertActivityInTimeRecordAtLocation(
-                                                newActivity, timeRecord, recordActivityList.indexOf(current), activityUpdated);
+                                                newActivity, activityRecord, recordActivityList.indexOf(current), activityUpdated);
                                     }
                                 }
                                 else if(newActivityStartTime >= currentActivityEndTime){
                                     log.info("Inserting at last position w.r.t current activity...");
                                     return insertActivityInTimeRecordAtLocation(
-                                            newActivity, timeRecord, recordActivityList.indexOf(current)+1, activityUpdated);
+                                            newActivity, activityRecord, recordActivityList.indexOf(current)+1, activityUpdated);
                                 }else if(
                                         newActivityEndTime <= currentActivityStartTime
                                                 && !(current.getStartHourValue().equals(0) && current.getStartMinutesValue().equals(0))
                                 ){
                                     log.info("Inserting at first position...");
                                     return insertActivityInTimeRecordAtLocation(
-                                            newActivity, timeRecord, recordActivityList.indexOf(current), activityUpdated);
+                                            newActivity, activityRecord, recordActivityList.indexOf(current), activityUpdated);
                                 }
 
                             }
@@ -245,34 +306,35 @@ public class TimeRecordServiceImpl implements TimeRecordService {
                                 next = null;
                             }
                         }
-                        timeRecord.setLastUpdatedAt(new Date());
+                        activityRecord.setLastUpdatedAt(new Date());
                     }
                     log.info("Ref: Status: {}, Record: {}", activityUpdated.get(), ref.existingTimeRecord);
                     if(null!=ref.existingTimeRecord && !activityUpdated.get()){
                         throw new MicroTimeManagementBadRequestException(
                                 ErrorConstants.OVERLAPPING_NEW_ACTIVITY_TIME_WITH_PREVIOUS_ACTIVITY);
                     }
-                    return TimeRecord.builder()
-                            .recordForDate(newActivity.getActivityDate())
-                            .activities(List.of(newActivity)).build();
+                    return ActivityRecord.builder()
+                            .recordDate(newActivity.getActivityDate())
+                            .activities(List.of(newActivity))
+                            .createdBy(activityRecordCreationRequestDTO.getUser().getUid()).build();
                 }).toList());
-        timeRecordList.add(TimeRecord.builder().activities(activities).recordForDate(null).build());
-        return timeRecordList;
+        activityRecordList.add(ActivityRecord.builder().activities(activities).recordDate(null).build());
+        return activityRecordList;
     }
 
     private String formatEpoch(Long epoch){
         return DateFormatUtils.format(epoch, "yyyy-MM-dd HH:mm:ss");
     }
-    public RecordLogResponseDTO convertToRecordLogResponseDTO(List<TimeRecord> timeRecords){
+    public ActivityRecordCreationdResponseDTO convertToRecordLogResponseDTO(List<ActivityRecord> activityRecords){
         List<ActivityDTO> activities = new ArrayList<>();
-        timeRecords.stream()
-                .filter(timeRecord -> null == timeRecord.getRecordForDate())
+        activityRecords.stream()
+                .filter(timeRecord -> null == timeRecord.getRecordDate())
                 .findFirst()
                 .ifPresent(
                         timeRecord -> timeRecord.getActivities()
                                 .forEach(activity -> activities.add(activityConverter.toDTO(activity)))
                 );
-        return RecordLogResponseDTO.builder().activities(activities).build();
+        return ActivityRecordCreationdResponseDTO.builder().activities(activities).build();
 
     }
 

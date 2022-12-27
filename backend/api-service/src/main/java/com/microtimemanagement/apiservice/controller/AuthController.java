@@ -12,7 +12,7 @@ import org.springframework.web.context.request.ServletWebRequest;
 
 @RestController
 @RequestMapping("/api/v1/auth")
-@Tag(name = "Authentication", description = "Authentication Endpoints")
+@Tag(name = "Authentication", description = "Authentication Operations")
 public class AuthController {
     /**
      * Authenticate users - Generate Tokens

@@ -1,7 +1,10 @@
 package com.microtimemanagement.apiservice.model;
 
 import com.microtimemanagement.apiservice.enums.TimeMeridian;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Data
@@ -40,7 +43,5 @@ public class Activity extends BaseModel{
     private TimeMeridian endTimeMeridian;
 
     private String activityDate;
-
-    private String uid;
 
 }

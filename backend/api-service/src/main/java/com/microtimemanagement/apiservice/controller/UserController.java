@@ -10,6 +10,7 @@ import com.microtimemanagement.apiservice.dto.response.NewUserResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.service.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,12 +25,13 @@ import java.util.stream.Collectors;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(ApiPathConstants.USER_BASE_ROUTE_V1)
+@Tag(name = "Users", description = "User Operations")
 public class UserController {
     /**
      * Create Users - Registration
      * Update Users
      * Delete Users
-     * Read Users
+     * Read User by UID
      * Update Password
      * */
 
@@ -56,6 +58,9 @@ public class UserController {
         return userService.updateUserDetails(userDTO);
     }
 
+    /**
+     * Deletes user from current session user
+     * */
     @RequestMapping(value = ApiPathConstants.DELETE_CURRENT_USER, method = RequestMethod.DELETE)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
@@ -63,6 +68,9 @@ public class UserController {
         return userService.deleteUserByUsername(principal.getName());
     }
 
+    /**
+     * Resets password for current session user
+     * */
     @RequestMapping(value = ApiPathConstants.RESET_PASSWORD, method = RequestMethod.POST)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")

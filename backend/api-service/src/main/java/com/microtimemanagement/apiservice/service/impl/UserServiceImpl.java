@@ -39,16 +39,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        Optional<User> opUser = userRepository.findByEmailOrUsernameAndIsActiveTrue(username, username);
-        User user;
-        if(opUser.isEmpty()){
-            log.error("Account not found for username '{}'. Could not authenticate user.", username);
-            throw new MicroTimeManagementUserException(
-                    String.format(ErrorConstants.ACCOUNT_NOT_FOUND_FOR_USERNAME, username)
-            );
-        }else{
-            user = opUser.get();
-        }
+        User user = findActiveUserByEmailOrUsername(username);;
         user.setRoles(user.getRoles().stream()
                 .map(r -> roleRepository.findByIdAndIsActiveTrue(r).getName()).collect(Collectors.toSet()));
         return user;
@@ -105,6 +96,10 @@ public class UserServiceImpl implements UserService {
         }
         return user.get();
     }
+
+    private User findActiveById(String id){
+        return userRepository.findByIdAndIsActiveTrue(id);
+    }
     private User findByUsername(String username){
         Optional<User> user = userRepository.findByUsernameAndIsActiveTrue(username);
         if(user.isEmpty()){
@@ -147,7 +142,12 @@ public class UserServiceImpl implements UserService {
             log.info("Saving from user DTO with isUpdateRequest {}: {}", isUpdateRequest, userDTO);
             User saveUser = userConverter.fromDTO(userDTO);
             if(!isUpdateRequest)
+                // Used for saving new roles from Admin Controller
                 return userConverter.toDTO(userRepository.save(saveUser));
+            // Only change the allowed fields in update request
+            saveUser = findActiveById(userDTO.getId());
+            if(null == saveUser)
+                throw new MicroTimeManagementNotFoundException(ErrorConstants.USER_NOT_FOUND);
             saveUser.setFirstName(userDTO.getFirstName());
             saveUser.setLastName(userDTO.getLastName());
             saveUser.setEmail(userDTO.getEmail());
@@ -177,9 +177,16 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
+    private User findActiveUserByEmailOrUsername(String username){
+        Optional<User> user = userRepository.findByEmailOrUsernameAndIsActiveTrue(username, username);
+        if(user.isEmpty())
+            throw new MicroTimeManagementNotFoundException(
+                    String.format(ErrorConstants.ACCOUNT_NOT_FOUND_FOR_USERNAME, username));
+        return user.get();
+    }
     @Override
     public GenericMessageResponseDTO changeUserPassword(PasswordChangeRequestDTO passwordChangeRequestDTO) {
-        User user = findByUsername(passwordChangeRequestDTO.getUsername());
+        User user = findActiveUserByEmailOrUsername(passwordChangeRequestDTO.getUsername());
         String message = ErrorConstants.SOMETHING_WENT_WRONG;
         if(bCryptPasswordEncoder.matches(passwordChangeRequestDTO.getOldPassword(), user.getPassword())){
             user.setPassword(bCryptPasswordEncoder.encode(passwordChangeRequestDTO.getNewPassword()));
@@ -192,7 +199,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTO getUserByUid(String id) {
-        return userConverter.toDTO(userRepository.findByUidAndIsActiveTrue(id));
+        User user = userRepository.findByUidAndIsActiveTrue(id);
+        if(null == user)
+            throw new MicroTimeManagementNotFoundException(ErrorConstants.USER_NOT_FOUND);
+        return userConverter.toDTO(user);
+    }
+
+    @Override
+    public UserDTO loadUserDTOByUsername(String username) {
+        return userConverter.toDTO(findActiveUserByEmailOrUsername(username));
     }
 
 }

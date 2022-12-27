@@ -1,7 +1,7 @@
 package com.microtimemanagement.apiservice.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.microtimemanagement.apiservice.model.TimeRecord;
+import com.microtimemanagement.apiservice.model.ActivityRecord;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -41,7 +41,7 @@ public class UserDTO {
 
     private Set<String> roles;
 
-    private List<TimeRecord> timeRecords;
+    private List<ActivityRecord> activityRecords;
 
     private Boolean isActive;
 
