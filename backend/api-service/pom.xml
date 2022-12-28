@@ -20,6 +20,7 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -83,6 +84,6 @@
 				</configuration>
 			</plugin>
 		</plugins>
+		<finalName>MTM-Api-Service-${project.version}</finalName>
 	</build>
-
 </project>

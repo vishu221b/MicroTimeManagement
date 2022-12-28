@@ -1,0 +1,16 @@
+server:
+  servlet:
+    context-path: /mtm
+  port: 18080
+spring:
+  data:
+    mongodb:
+      uri: mongodb+srv://${MTM_MONGO_USERNAME}:${MTM_MONGO_PASSWORD}@${MONGO_STORE_CLUSTER}.mongodb.net/${MONGO_STORE_DATABASE}?retryWrites=true&w=majority
+springdoc:
+  swagger-ui:
+    default-model-expand-depth: 5
+    default-models-expand-depth: -1
+  show-actuator: true
+logging:
+  file:
+    name: ${LOG_FILE_PROPERTIES}

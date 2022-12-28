@@ -1,0 +1,22 @@
+server:
+  servlet:
+    context-path: /mtm-dev
+  port: 8080
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/mtm_dev
+springdoc:
+  swagger-ui:
+    default-model-expand-depth: 5
+    default-models-expand-depth: -1
+    use-root-path: true
+  show-actuator: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+logging:
+  file:
+    name: /log/mtm_test.log
