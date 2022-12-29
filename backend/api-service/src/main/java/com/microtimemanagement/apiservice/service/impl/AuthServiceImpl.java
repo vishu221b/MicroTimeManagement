@@ -14,9 +14,11 @@ import com.microtimemanagement.apiservice.service.SessionService;
 import com.microtimemanagement.apiservice.service.UserService;
 import com.microtimemanagement.apiservice.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -61,6 +63,7 @@ public class AuthServiceImpl implements AuthService {
         if(isValidToken && !isExpired){
             SessionDTO sessionDTO = sessionService.getByToken(token);
             if(null == sessionDTO){
+                log.error("No session found for token: {}, giving error", token);
                 return ValidSessionDTO.builder()
                         .isValidSession(Boolean.FALSE)
                         .principal(null)
@@ -72,7 +75,7 @@ public class AuthServiceImpl implements AuthService {
             error = ErrorConstants.SESSION_TOKEN_INVALID;
         }
         final Boolean isValid = !isExpired && null!=username && isValidToken;
-
+        log.info("isValidSession for isValid: {} and user: {} with error: {}", isValid, user, error);
         return ValidSessionDTO.builder()
                 .isValidSession(isValid)
                 .principal(user)

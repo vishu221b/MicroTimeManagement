@@ -67,7 +67,7 @@ public class MtmSessionFilter extends OncePerRequestFilter {
                 }
             }
             filterChain.doFilter(request, response);
-        }catch (MicroTimeManagementAuthenticationException e){
+        }catch (Exception e){
             e.printStackTrace();
             Map<String, String> errors = new HashMap<>();
             errors.put("message", e.getMessage());
