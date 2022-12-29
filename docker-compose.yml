@@ -3,7 +3,7 @@ services:
   mtm_test:
     container_name: "mtm_compose_test"
     ports:
-      - "8000:9000"
+      - "80:9000"
     build:
       context: ./backend/api-service
       dockerfile: Dockerfile
