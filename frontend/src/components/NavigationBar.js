@@ -44,14 +44,22 @@ function NavigationBar() {
       </Navbar.Toggle>
       <Navbar.Collapse id="responsive-navbar-nav">
         <Nav className="mtm-ml-auto mtm-py-10 sm:mtm-py-0">
-          <Nav.Link eventKey={2} className="mtm-mx-auto mtm-my-4 md:mtm-my-0">
+          <Nav.Link
+            eventKey={2}
+            className="mtm-mx-auto mtm-my-4 md:mtm-my-0"
+            as={"div"}
+          >
             <Link to={"/login"}>
               <Button variant="warning" size="md" className={twButton}>
                 <span className="mtm-tracking-widest">Sign in</span>
               </Button>
             </Link>
           </Nav.Link>
-          <Nav.Link eventKey={2} className="mtm-mx-auto mtm-my-4 md:mtm-my-0">
+          <Nav.Link
+            eventKey={2}
+            className="mtm-mx-auto mtm-my-4 md:mtm-my-0"
+            as={"div"}
+          >
             <Link to={"/register"}>
               <Button variant="warning" size="md" className={twButton}>
                 <span className="mtm-tracking-widest">Try Now!</span>

@@ -68,25 +68,27 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public NewUserResponseDTO createNewUser(NewUserRequestDTO requestDTO) {
+    public GenericMessageResponseDTO<?> createNewUser(NewUserRequestDTO requestDTO) {
         User newUser = User.builder()
                 .email(requestDTO.getEmail())
                 .password(bCryptPasswordEncoder.encode(requestDTO.getPassword()))
                 .firstName(requestDTO.getFirstName())
                 .lastName(requestDTO.getLastName())
                 .username(requestDTO.getUsername())
+                .dateOfBirth(requestDTO.getDateOfBirth())
                 .roles(
                         Set.of(roleRepository.findByNameAndIsActiveTrue("ROLE_MTM_USER").getId()))
                 .build();
         validateIfUserAlreadyExistsByUsernameOrEmail(userConverter.toDTO(newUser), Boolean.FALSE);
         userRepository.save(newUser);
-        return NewUserResponseDTO.builder()
+        return GenericMessageResponseDTO.builder().payload(NewUserResponseDTO.builder()
                 .emailAddress(newUser.getEmail())
                 .username(newUser.getUsername())
                 .firstName(newUser.getFirstName())
                 .lastName(newUser.getLastName())
                 .createdAt(newUser.getCreatedAt())
-                .build();
+                .dateOfBirth(newUser.getDateOfBirth())
+                .build()).message(ResponseMessages.USER_REGISTRATION_SUCCESS).build();
     }
 
     private User findById(String id){
@@ -161,10 +163,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO updateUserDetails(UserDTO userDTO) {
+    public GenericMessageResponseDTO<?> updateUserDetails(UserDTO userDTO) {
         validateIfUserAlreadyExistsByUsernameOrEmail(userDTO, Boolean.TRUE);
         log.info("Updating user with id {} to : {}", userDTO.getId(), userDTO);
-        return saveUserFromDTO(userDTO, Boolean.TRUE);
+        return  GenericMessageResponseDTO.builder()
+                .payload(saveUserFromDTO(userDTO, Boolean.TRUE))
+                .message(ResponseMessages.USER_DETAILS_UPDATED)
+                .build();
     }
 
     @Override

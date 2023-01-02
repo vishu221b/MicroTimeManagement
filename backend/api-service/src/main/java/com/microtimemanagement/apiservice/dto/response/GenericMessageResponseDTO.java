@@ -5,7 +5,9 @@ import lombok.Data;
 
 @Data
 @Builder
-public class GenericMessageResponseDTO {
+public class GenericMessageResponseDTO<T> {
+
+    private T payload;
 
     private String message;
 

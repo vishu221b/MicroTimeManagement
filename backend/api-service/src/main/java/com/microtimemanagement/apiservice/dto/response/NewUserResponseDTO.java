@@ -19,4 +19,6 @@ public class NewUserResponseDTO {
 
     private Date createdAt;
 
+    private String dateOfBirth;
+
 }

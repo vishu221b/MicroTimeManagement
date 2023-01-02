@@ -36,6 +36,8 @@ public class User extends BaseModel implements UserDetails {
 
     private String username;
 
+    private String dateOfBirth;
+
     private String uid;
 
     private Set<String> roles;

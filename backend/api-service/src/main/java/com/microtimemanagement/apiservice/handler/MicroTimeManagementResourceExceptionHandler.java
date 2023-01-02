@@ -6,6 +6,7 @@ import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadReque
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -52,7 +53,10 @@ public class MicroTimeManagementResourceExceptionHandler {
 
     @ExceptionHandler(value = {RuntimeException.class})
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    private @ResponseBody ExceptionDTO<?> handleInternalServerException(RuntimeException ex, ServletWebRequest webRequest){
+    private @ResponseBody ExceptionDTO<?> handleInternalServerException(
+            RuntimeException ex,
+            ServletWebRequest webRequest
+    ){
         log.error("{}", getBuilderForStackTrace(ex.getStackTrace()));
         return buildExceptionDTO(ex, webRequest, HttpStatus.INTERNAL_SERVER_ERROR);
     }

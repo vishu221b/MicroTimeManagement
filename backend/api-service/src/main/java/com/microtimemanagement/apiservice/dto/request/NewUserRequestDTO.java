@@ -16,22 +16,26 @@ import lombok.NoArgsConstructor;
 public class NewUserRequestDTO {
 
     @NotNull
-    @NotEmpty(message = "Username cannot not be empty.")
+    @NotEmpty(message = "Username cannot be empty.")
     private String username;
 
     @NotNull
-    @NotEmpty(message = "Password cannot not be empty.")
+    @NotEmpty(message = "Password cannot be empty.")
     private String password;
 
 
     @NotNull
     @Email(message = ErrorConstants.EMAIL_NOT_VALID)
-    @NotEmpty(message = "Email cannot not be empty.")
+    @NotEmpty(message = "Email cannot be empty.")
     private String email;
 
     @NotNull
-    @NotEmpty(message = "First name cannot not be empty.")
+    @NotEmpty(message = "First name cannot be empty.")
     private String firstName;
+
+    @NotNull
+    @NotEmpty(message = "Date of Birth cannot be empty.")
+    private String dateOfBirth;
 
     private String lastName;
 

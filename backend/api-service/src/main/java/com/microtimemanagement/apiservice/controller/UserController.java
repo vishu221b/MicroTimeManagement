@@ -39,11 +39,12 @@ public class UserController {
 
     @RequestMapping(value = ApiPathConstants.REGISTER_USER, method = RequestMethod.POST)
     @ResponseBody
-    public NewUserResponseDTO createNewUser(@Valid @RequestBody NewUserRequestDTO requestDTO, BindingResult bindingResult){
+    public GenericMessageResponseDTO<?> createNewUser(@Valid @RequestBody NewUserRequestDTO requestDTO, BindingResult bindingResult){
+        log.info("Received request: {}", requestDTO);
         if(bindingResult.hasErrors()){
             log.info("Has binding errors: {}", bindingResult.getAllErrors());
             throw new MicroTimeManagementBadRequestException(
-                    ErrorConstants.ERROR_ENCOUNTERED_DURING_REQUEST,
+                    ErrorConstants.PLEASE_FIX_THE_FOLLOWING_ERRORS,
                     bindingResult.getAllErrors().stream().map(DefaultMessageSourceResolvable::getDefaultMessage)
                             .collect(Collectors.toList()));
         }else{
@@ -54,7 +55,7 @@ public class UserController {
     @RequestMapping(value = ApiPathConstants.UPDATE_USER, method = RequestMethod.PUT)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
-    public UserDTO updateUser(@Valid UserDTO userDTO){
+    public GenericMessageResponseDTO<?> updateUser(@Valid UserDTO userDTO){
         return userService.updateUserDetails(userDTO);
     }
 
@@ -64,7 +65,7 @@ public class UserController {
     @RequestMapping(value = ApiPathConstants.DELETE_CURRENT_USER, method = RequestMethod.DELETE)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
-    public GenericMessageResponseDTO deleteUserById(Principal principal){
+    public GenericMessageResponseDTO<?> deleteUserById(Principal principal){
         return userService.deleteUserByUsername(principal.getName());
     }
 
@@ -74,7 +75,7 @@ public class UserController {
     @RequestMapping(value = ApiPathConstants.RESET_PASSWORD, method = RequestMethod.POST)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
-    public GenericMessageResponseDTO updatePasswordForUser(
+    public GenericMessageResponseDTO<?> updatePasswordForUser(
             @RequestBody PasswordChangeRequestDTO passwordChangeRequestDTO, Principal principal){
         passwordChangeRequestDTO.setUsername(principal.getName());
         return userService.changeUserPassword(passwordChangeRequestDTO);
@@ -82,6 +83,7 @@ public class UserController {
 
     @RequestMapping(value = ApiPathConstants.GET_USER_BY_UID, method = RequestMethod.GET)
     @ResponseBody
+    @SecurityRequirement(name = "MTM Auth")
     public UserDTO getUserByUid(@RequestParam String id){
         return userService.getUserByUid(id);
     }

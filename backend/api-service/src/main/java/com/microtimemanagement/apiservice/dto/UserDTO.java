@@ -45,4 +45,6 @@ public class UserDTO {
 
     private Boolean isActive;
 
+    private String dateOfBirth;
+
 }

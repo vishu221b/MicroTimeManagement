@@ -1,124 +1,225 @@
-import React from "react";
-import { Container, Form, FormCheck } from "react-bootstrap";
+import axios from "axios";
+import React, { useState } from "react";
+import { Alert, Container, Toast, ToastContainer } from "react-bootstrap";
+import MtmForm from "../components/forms/MtmForm";
+import { registerUser } from "../service/ApiService";
 
 function Registration() {
+  let defaultToastState = {
+    value: false,
+    messages: [],
+  };
+  const [error, setError] = useState(defaultToastState);
+  const [success, setSuccess] = useState(defaultToastState);
+  const [showError, setShowError] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   return (
-    <div className="mtm-min-h-screen mtm-p-10">
-      <Container className="">
-        <div class="mtm-py-12 mtm-border-2">
-          <h2 class="mtm-text-2xl mtm-font-bold">Solid</h2>
-          <div class="mtm-mt-8 mtm-max-w-md mtm-mx-auto">
-            <div class="mtm-grid mtm-grid-cols-1 mtm-gap-6">
-              <label class="mtm-block">
-                <span class="mtm-text-gray-700">Full name</span>
-                <input
-                  type="text"
-                  class="
-                    mtm-mt-1
-                    mtm-block
-                    mtm-w-full
-                    mtm-rounded-md
-                    mtm-bg-gray-100
-                    mtm-border-transparent
-                    focus:mtm-border-gray-500 focus:mtm-bg-white focus:mtm-ring-0
-                  "
-                  placeholder=""
-                />
-              </label>
-              <label class="mtm-block">
-                <span class="mtm-text-gray-700">Email address</span>
-                <input
-                  type="email"
-                  class="
-                    mtm-mt-1
-                    mtm-block
-                    mtm-w-full
-                    mtm-rounded-md
-                    mtm-bg-gray-100
-                    mtm-border-transparent
-                    focus:mtm-border-gray-500 focus:mtm-bg-white focus:mtm-ring-0
-                  "
-                  placeholder="john@example.com"
-                />
-              </label>
-              <label class="mtm-block">
-                <span class="mtm-text-gray-700">When is your event?</span>
-                <input
-                  type="date"
-                  class="
-                    mtm-mt-1
-                    mtm-p-2
-                    mtm-block
-                    mtm-w-full
-                    mtm-rounded-md
-                    mtm-bg-gray-100
-                    mtm-border-transparent
-                    focus:mtm-border-gray-500 focus:mtm-bg-white focus:mtm-ring-0
-                  "
-                />
-              </label>
-              <label class="mtm-block">
-                <span class="mtm-text-gray-700">What type of event is it?</span>
-                <select
-                  class="
-                    mtm-block
-                    mtm-w-full
-                    mtm-mt-1
-                    mtm-rounded-md
-                    mtm-bg-gray-100
-                    mtm-border-transparent
-                    focus:mtm-border-gray-500 focus:mtm-bg-white focus:mtm-ring-0
-                  "
+    <div
+      className="mtm-min-h-screen mtm-p-0  mtm-bg-cover mtm-bg-center"
+      style={{
+        backgroundImage:
+          //   "url('https://gifdb.com/images/high/superhero-batman-under-the-rain-sb576a6je2k3mdet.gif')",
+          "url('https://i.gifer.com/100p.gif')",
+      }}
+    >
+      <Container className="mtm-min-w-full mtm-min-h-screen mtm-p-1 mtm-bg-black/70 mtm-z-0">
+        <div className="mtm-z-40 mtm-fixed mtm-right-1">
+          {error.value ? (
+            error.messages && error.messages.length > 0 ? (
+              <>
+                <Toast
+                  delay={2500}
+                  animation
+                  show={showError}
+                  onClick={() => setShowError(false)}
+                  autohide={false}
+                  className="mtm-bg-red-300/90 mtm-shadow-xl mtm-rounded-xl mtm-shadow-red-500/80 mtm-py-2 mtm-border-red-400 mtm-bordered-2"
                 >
-                  <option>Corporate event</option>
-                  <option>Wedding</option>
-                  <option>Birthday</option>
-                  <option>Other</option>
-                </select>
-              </label>
-              <label class="mtm-block">
-                <span class="mtm-text-gray-700">Additional details</span>
-                <textarea
-                  class="
-                    mtm-mt-1
-                    mtm-block
-                    mtm-w-full
-                    mtm-rounded-md
-                    mtm-bg-gray-100
-                    mtm-border-transparent
-                    focus:mtm-border-gray-500 focus:mtm-bg-white focus:mtm-ring-0
-                  "
-                  rows="3"
-                ></textarea>
-              </label>
-              <div class="mtm-block">
-                <div class="mtm-mt-2">
-                  <div>
-                    <label class="mtm-inline-flex mtm-items-center">
-                      <input
-                        type="mtm-checkbox"
-                        class="
-                          mtm-rounded
-                          mtm-bg-gray-200
-                          mtm-border-transparent
-                          focus:mtm-border-transparent focus:mtm-bg-gray-200
-                          mtm-text-gray-700
-                          focus:mtm-ring-1 focus:mtm-ring-offset-2 focus:mtm-ring-gray-500
-                        "
-                      />
-                      <span class="mtm-ml-2">
-                        Email me news and special offers
-                      </span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+                  <Toast.Body
+                    className="
+                      mtm-text-justify
+                      mtm-text-lg 
+                      mtm-font-sans 
+                      mtm-tracking-wider 
+                      mtm-text-red-600
+                      mtm-rounded-xl
+                      mtm-pl-[16%]
+                      "
+                  >
+                    {error.messages.map((m, i) => (
+                      <>
+                        <span className="mtm-text-red-700/90">
+                          {error.messages.length === 1 ? "Error:" : ""}
+                        </span>
+                        {i !== 0 ? i + ". " : " "}
+                        {m}
+                        <br />
+                      </>
+                    ))}
+                  </Toast.Body>
+                </Toast>
+              </>
+            ) : (
+              ""
+            )
+          ) : (
+            ""
+          )}
+          {success.value ? (
+            success.messages && success.messages.length > 0 ? (
+              <>
+                <Toast
+                  delay={2500}
+                  animation
+                  show={showSuccess}
+                  onClick={() => setShowSuccess(false)}
+                  autohide={false}
+                  className="mtm-bg-green-300/90 mtm-shadow-xl mtm-rounded-xl mtm-shadow-green-500/80 mtm-py-2 mtm-border-green-400 mtm-bordered-2"
+                >
+                  <Toast.Body
+                    className="
+                      mtm-text-justify 
+                      mtm-text-lg 
+                      mtm-font-sans 
+                      mtm-tracking-wider 
+                      mtm-text-green-800
+                      mtm-rounded-xl
+                      mtm-pl-[16%]
+                      "
+                  >
+                    {success.messages.map((m, i) => (
+                      <>
+                        <span className="mtm-text-green-700/90">Success: </span>
+                        {i !== 0 ? i + ". " : " "}
+                        {m}
+                        <br />
+                      </>
+                    ))}
+                    Redirecting to Login...
+                  </Toast.Body>
+                </Toast>
+              </>
+            ) : (
+              ""
+            )
+          ) : (
+            ""
+          )}
         </div>
-        <Form>
-          <Form.Label>Name</Form.Label>
-        </Form>
+
+        <MtmForm
+          onFormSubmit={async (e) => {
+            e.preventDefault();
+            setShowSuccess(false);
+            setShowError(false);
+            let request = {};
+            for (let I = 0; I < e.target.length; I++) {
+              if (e.target[I].name)
+                request[e.target[I].name] = e.target[I].value;
+            }
+            await registerUser(request, (response, errorResponse) => {
+              console.log(response);
+              if (response) {
+                setSuccess({
+                  value: true,
+                  messages: [response.message],
+                });
+                setShowSuccess(true);
+                setTimeout(() => (window.location = "/login"), 2000);
+              }
+              console.log(errorResponse);
+              if (errorResponse) {
+                let finalErrors = [errorResponse.error.message];
+                if (
+                  errorResponse.error.errors &&
+                  errorResponse.error.errors.length > 0
+                ) {
+                  errorResponse.error.errors.forEach((e) =>
+                    finalErrors.push(e)
+                  );
+                }
+                setError({
+                  value: true,
+                  alert: "danger",
+                  messages: finalErrors,
+                });
+                setShowError(true);
+              }
+            });
+          }}
+        >
+          <div className="mtm-text-center mtm-mb-4">
+            <span
+              style={{ textShadow: "0px 0px 25px green" }}
+              className="
+            mtm-tracking-widest mtm-text-2xl md:mtm-text-3xl mtm-text-red-500 mtm-underline mtm-animate-pulse"
+            >
+              {" "}
+              Registration
+            </span>
+          </div>
+          <hr className="mtm-max-w-[90%] md:mtm-max-w-full mtm-mx-auto" />
+          <div className="mtm-grid mtm-grid-cols-1 mtm-gap-6 mtm-mt-8">
+            <MtmForm.Input
+              labelName={"First name"}
+              type={"text"}
+              name={"firstName"}
+              placeholder={"John"}
+              required
+            />
+            <MtmForm.Input
+              labelName={"Last name"}
+              name={"lastName"}
+              type={"text"}
+              placeholder={"Doe"}
+            />
+            <MtmForm.Input
+              name={"dateOfBirth"}
+              labelName={"Date of Birth"}
+              type={"date"}
+              max={"2015-12-31"}
+            />
+            <MtmForm.Input
+              labelName={"Username"}
+              type={"text"}
+              name={"username"}
+              placeholder={"Doe2211"}
+            />
+            <MtmForm.Input
+              labelName={"Email Address"}
+              type={"email"}
+              name={"email"}
+              placeholder={"john@doe.com"}
+            />
+            <MtmForm.Input
+              name={"password"}
+              labelName={"Password"}
+              type={"password"}
+            />
+            <button
+              type="submit"
+              className="
+              mtm-border-0 
+              mtm-rounded-lg 
+              mtm-w-[30%] 
+              mtm-mx-auto 
+              mtm-mt-4
+              mtm-p-2
+              mtm-text-lg 
+              sm:mtm-text-xl 
+              mtm-ring-1
+              mtm-text-white/100
+              mtm-bg-green-500 
+              hover:mtm-bg-green-600
+              active:mtm-bg-green-700
+              hover:mtm-ring-1
+              mtm-tracking-wider
+              "
+            >
+              Register Now!
+            </button>
+          </div>
+        </MtmForm>
       </Container>
     </div>
   );

@@ -13,7 +13,7 @@ public interface UserService extends UserDetailsService {
 
     User loadUserByUsername(String username) throws UsernameNotFoundException;
 
-    NewUserResponseDTO createNewUser(NewUserRequestDTO requestDTO);
+    GenericMessageResponseDTO<?> createNewUser(NewUserRequestDTO requestDTO);
 
     UserDTO findDTOById(String userId);
 
@@ -23,11 +23,11 @@ public interface UserService extends UserDetailsService {
 
     UserDTO saveUserFromDTO(UserDTO userDTO, Boolean isUpdateRequest);
 
-    UserDTO updateUserDetails(UserDTO userDTO);
+    GenericMessageResponseDTO<?> updateUserDetails(UserDTO userDTO);
 
-    GenericMessageResponseDTO deleteUserByUsername(String userId);
+    GenericMessageResponseDTO<?> deleteUserByUsername(String userId);
 
-    GenericMessageResponseDTO changeUserPassword(PasswordChangeRequestDTO passwordChangeRequestDTO);
+    GenericMessageResponseDTO<?> changeUserPassword(PasswordChangeRequestDTO passwordChangeRequestDTO);
 
     UserDTO getUserByUid(String id);
 

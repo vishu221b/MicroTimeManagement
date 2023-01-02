@@ -7,8 +7,8 @@ public class ErrorConstants {
     
     public static final String ROLE_NOT_FOUND_WTH_NAME_ERROR = "No role found with name %s.";
     public static final String ACTIVE_ROLE_ALREADY_EXISTS_ERROR = "An active role already exists with the same name.";
-    public static final String USER_ALREADY_EXISTS_FOR_USERNAME = "User with the same username already exists!";
-    public static final String USER_ALREADY_EXISTS_FOR_EMAIL = "User with the same email already exists!";
+    public static final String USER_ALREADY_EXISTS_FOR_USERNAME = "User with same username already exists!";
+    public static final String USER_ALREADY_EXISTS_FOR_EMAIL = "User with same email already exists!";
     public static final String ROLE_NAME_SHOULD_NOT_START_WITH_ROLE = "Role name should not start with 'ROLE' or 'ROLE_'";
     public static final String INVALID_USER_IDENTIFIER = "Invalid user identifier. Please provide a valid user identifier.";
     public static final String USER_NOT_FOUND_FOR_IDENTIFIER = "No user found for identifier: %s";
@@ -23,4 +23,5 @@ public class ErrorConstants {
     public static final String SESSION_EXPIRED = "Your session has expired. Please login again.";
     public static final String SESSION_TOKEN_INVALID = "Invalid session token.";
     public static final String ACTIVITY_NOT_FOUND = "No activity found.";
+    public static final String PLEASE_FIX_THE_FOLLOWING_ERRORS = "Please fix the following errors:";
 }

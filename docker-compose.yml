@@ -14,12 +14,10 @@ services:
       - "SPRING_DATA_MONGODB_URI=mongodb://mtm_mongo:27017/mtm_dev"
       - "SERVER_PORT=9000"
       - "SPRING_APPLICATION_NAME=mtm_test_deployment"
-      - "SPRING_PROFILES_ACTIVE=${MTM_ACTIVE_PROFILE}"
+      - "SPRING_PROFILES_ACTIVE=${MTM_ACTIVE_PROFILE-dev}"
     image: mtm_compose_test:0.1
   mtm_mongo:
     container_name: "mtm_compose_mongo"
-    ports:
-      - "27017:27017"
     image: mongo
   mtm_mongo_express:
     image: mongo-express
