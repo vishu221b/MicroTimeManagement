@@ -5,7 +5,8 @@ import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
 import { Button } from "react-bootstrap";
 import { AiOutlineAlignCenter } from "react-icons/ai";
-import { BsCapslock, BsCaretUpFill } from "react-icons/bs";
+import { BsCaretUpFill } from "react-icons/bs";
+import Home from "../Pages/Home";
 
 const twButton =
   "mtm-animate-pulse mtm-text-white mtm-w-[130px] mtm-mt-[1%] sm:mtm-my-[0px] hover:mtm-bg-yellow-300 hover:mtm-text-black hover:mtm-animate-none";
@@ -23,14 +24,14 @@ function NavigationBar() {
       onToggle={(val) => setToggled(val)}
     >
       <Navbar.Brand className="hover:animate-bounce">
-        <Link to={"/"}>
+        <Link to={"/"} preventScrollReset={false}>
           <img src={mtm} width={200} alt="" />
         </Link>
       </Navbar.Brand>
       <Navbar.Toggle aria-controls="responsive-navbar-nav">
         {toggled ? (
           <BsCaretUpFill
-            className="mtm-bg-yeallow-100 mtm-rounded-lg m-1 mtm-min-w-[40px] mtm-min-h-[33px] mtm-animate-none"
+            className="mtm-bg-yeallow-100 mtm-rounded-lg m-1 mtm-min-w-[40px] mtm-min-h-[33px] mtm-animate-bounce"
             size={23}
             color={"#6DE7B2"}
           />
@@ -49,7 +50,7 @@ function NavigationBar() {
             className="mtm-mx-auto mtm-my-4 md:mtm-my-0"
             as={"div"}
           >
-            <Link to={"/login"}>
+            <Link to={"/login"} preventScrollReset>
               <Button variant="warning" size="md" className={twButton}>
                 <span className="mtm-tracking-widest">Sign in</span>
               </Button>

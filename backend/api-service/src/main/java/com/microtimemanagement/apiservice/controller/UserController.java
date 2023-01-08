@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.util.stream.Collectors;
 
+//@CrossOrigin(maxAge = 3600, originPatterns = {"*"})
 @Slf4j
 @RestController
 @RequiredArgsConstructor

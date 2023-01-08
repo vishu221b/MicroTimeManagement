@@ -1,134 +1,89 @@
-import axios from "axios";
-import React, { useState } from "react";
-import { Alert, Container, Toast, ToastContainer } from "react-bootstrap";
+import React, { useRef } from "react";
+import Container from "react-bootstrap/Container";
+import Button from "../components/Button";
 import MtmForm from "../components/forms/MtmForm";
 import { registerUser } from "../service/ApiService";
 
-function Registration() {
-  let defaultToastState = {
-    value: false,
-    messages: [],
+function Registration({ toastState, setToastState }) {
+  // let defaultToastState = {
+  //   display: false,
+  //   variant: "",
+  //   messages: [],
+  //   includePrefix: false,
+  //   includeSuffix: false,
+  //   suffix: "",
+  // };
+  const refCollection = {
+    firstName: useRef(),
+    lastName: useRef(),
+    dateOfBirth: useRef(),
+    username: useRef(),
+    email: useRef(),
+    password: useRef(),
   };
-  const [error, setError] = useState(defaultToastState);
-  const [success, setSuccess] = useState(defaultToastState);
-  const [showError, setShowError] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
+  // const [toastState, setToastState] = useState(defaultToastState);
   return (
     <div
       className="mtm-min-h-screen mtm-p-0  mtm-bg-cover mtm-bg-center"
       style={{
-        backgroundImage:
-          //   "url('https://gifdb.com/images/high/superhero-batman-under-the-rain-sb576a6je2k3mdet.gif')",
-          "url('https://i.gifer.com/100p.gif')",
+        backgroundImage: "url('https://i.gifer.com/100p.gif')",
       }}
     >
       <Container className="mtm-min-w-full mtm-min-h-screen mtm-p-1 mtm-bg-black/70 mtm-z-0">
-        <div className="mtm-z-40 mtm-fixed mtm-right-1">
-          {error.value ? (
-            error.messages && error.messages.length > 0 ? (
-              <>
-                <Toast
-                  delay={2500}
-                  animation
-                  show={showError}
-                  onClick={() => setShowError(false)}
-                  autohide={false}
-                  className="mtm-bg-red-300/90 mtm-shadow-xl mtm-rounded-xl mtm-shadow-red-500/80 mtm-py-2 mtm-border-red-400 mtm-bordered-2"
-                >
-                  <Toast.Body
-                    className="
-                      mtm-text-justify
-                      mtm-text-lg 
-                      mtm-font-sans 
-                      mtm-tracking-wider 
-                      mtm-text-red-600
-                      mtm-rounded-xl
-                      mtm-pl-[16%]
-                      "
-                  >
-                    {error.messages.map((m, i) => (
-                      <>
-                        <span className="mtm-text-red-700/90">
-                          {error.messages.length === 1 ? "Error:" : ""}
-                        </span>
-                        {i !== 0 ? i + ". " : " "}
-                        {m}
-                        <br />
-                      </>
-                    ))}
-                  </Toast.Body>
-                </Toast>
-              </>
-            ) : (
-              ""
-            )
+        {/* <div className="mtm-z-40 mtm-w-[60%] sm:mtm-w-[45%] md:mtm-w-[35%] lg:mtm-w-[25%] mtm-fixed mtm-right-1 mtm-flex mtm-flex-col mtm-pr-0">
+          {toastState.display ? (
+            toastState.messages.map((message, index) => (
+              <Toast
+                variant={toastState.variant}
+                key={index}
+                show={true}
+                autoHide
+                autoHideDelayInMs={5000}
+                includePrefix={toastState.variant === "success" ? true : false}
+                includeSuffix={toastState.includeSuffix}
+                suffix={toastState.suffix}
+              >
+                {message}
+              </Toast>
+            ))
           ) : (
-            ""
+            <></>
           )}
-          {success.value ? (
-            success.messages && success.messages.length > 0 ? (
-              <>
-                <Toast
-                  delay={2500}
-                  animation
-                  show={showSuccess}
-                  onClick={() => setShowSuccess(false)}
-                  autohide={false}
-                  className="mtm-bg-green-300/90 mtm-shadow-xl mtm-rounded-xl mtm-shadow-green-500/80 mtm-py-2 mtm-border-green-400 mtm-bordered-2"
-                >
-                  <Toast.Body
-                    className="
-                      mtm-text-justify 
-                      mtm-text-lg 
-                      mtm-font-sans 
-                      mtm-tracking-wider 
-                      mtm-text-green-800
-                      mtm-rounded-xl
-                      mtm-pl-[16%]
-                      "
-                  >
-                    {success.messages.map((m, i) => (
-                      <>
-                        <span className="mtm-text-green-700/90">Success: </span>
-                        {i !== 0 ? i + ". " : " "}
-                        {m}
-                        <br />
-                      </>
-                    ))}
-                    Redirecting to Login...
-                  </Toast.Body>
-                </Toast>
-              </>
-            ) : (
-              ""
-            )
-          ) : (
-            ""
-          )}
-        </div>
+        </div> */}
 
         <MtmForm
           onFormSubmit={async (e) => {
             e.preventDefault();
-            setShowSuccess(false);
-            setShowError(false);
+            setToastState({
+              display: false,
+            });
             let request = {};
-            for (let I = 0; I < e.target.length; I++) {
-              if (e.target[I].name)
-                request[e.target[I].name] = e.target[I].value;
-            }
+            Object.keys(refCollection).forEach((ref) => {
+              request[ref] =
+                refCollection[ref].current && refCollection[ref].current.value
+                  ? refCollection[ref].current.value
+                  : "";
+            });
+            // console.log(request);
+            // for (let I = 0; I < e.target.length; I++) {
+            //   if (e.target[I].name)
+            //     request[e.target[I].name] = e.target[I].value;
+            // }
             await registerUser(request, (response, errorResponse) => {
               console.log(response);
               if (response) {
-                setSuccess({
-                  value: true,
+                setToastState({
+                  display: true,
+                  variant: "success",
                   messages: [response.message],
+                  includePrefix: true,
+                  includeSuffix: true,
+                  suffix: "Redirecting to Login...",
                 });
-                setShowSuccess(true);
                 setTimeout(() => (window.location = "/login"), 2000);
               }
               console.log(errorResponse);
-              if (errorResponse) {
+              if (errorResponse && errorResponse.error) {
                 let finalErrors = [errorResponse.error.message];
                 if (
                   errorResponse.error.errors &&
@@ -138,12 +93,12 @@ function Registration() {
                     finalErrors.push(e)
                   );
                 }
-                setError({
-                  value: true,
-                  alert: "danger",
+                setToastState({
+                  display: true,
+                  variant: "error",
                   messages: finalErrors,
+                  includePrefix: true,
                 });
-                setShowError(true);
               }
             });
           }}
@@ -161,6 +116,7 @@ function Registration() {
           <hr className="mtm-max-w-[90%] md:mtm-max-w-full mtm-mx-auto" />
           <div className="mtm-grid mtm-grid-cols-1 mtm-gap-6 mtm-mt-8">
             <MtmForm.Input
+              inputRef={refCollection.firstName}
               labelName={"First name"}
               type={"text"}
               name={"firstName"}
@@ -168,56 +124,40 @@ function Registration() {
               required
             />
             <MtmForm.Input
+              inputRef={refCollection.lastName}
               labelName={"Last name"}
               name={"lastName"}
               type={"text"}
               placeholder={"Doe"}
             />
             <MtmForm.Input
+              inputRef={refCollection.dateOfBirth}
               name={"dateOfBirth"}
               labelName={"Date of Birth"}
               type={"date"}
               max={"2015-12-31"}
             />
             <MtmForm.Input
+              inputRef={refCollection.username}
               labelName={"Username"}
               type={"text"}
               name={"username"}
               placeholder={"Doe2211"}
             />
             <MtmForm.Input
+              inputRef={refCollection.email}
               labelName={"Email Address"}
               type={"email"}
               name={"email"}
               placeholder={"john@doe.com"}
             />
             <MtmForm.Input
+              inputRef={refCollection.password}
               name={"password"}
               labelName={"Password"}
               type={"password"}
             />
-            <button
-              type="submit"
-              className="
-              mtm-border-0 
-              mtm-rounded-lg 
-              mtm-w-[30%] 
-              mtm-mx-auto 
-              mtm-mt-4
-              mtm-p-2
-              mtm-text-lg 
-              sm:mtm-text-xl 
-              mtm-ring-1
-              mtm-text-white/100
-              mtm-bg-green-500 
-              hover:mtm-bg-green-600
-              active:mtm-bg-green-700
-              hover:mtm-ring-1
-              mtm-tracking-wider
-              "
-            >
-              Register Now!
-            </button>
+            <Button type={"submit"} label={"Register Now!"} bgColor={"green"} />
           </div>
         </MtmForm>
       </Container>

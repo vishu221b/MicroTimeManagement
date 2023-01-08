@@ -5,12 +5,21 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.core.GrantedAuthorityDefaults;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -25,11 +34,32 @@ public class SecurityConfig {
     }
 
     @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.applyPermitDefaultValues();
+        configuration.setAllowedOriginPatterns(List.of("http://localhost:3000"));
+        configuration.setMaxAge(Duration.ofHours(12));
+        configuration.setAllowedMethods(List.of(
+                HttpMethod.HEAD.name(),
+                HttpMethod.GET.name(),
+                HttpMethod.POST.name()
+        ));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+
+    @Bean
     @Profile("dev")
     SecurityFilterChain devSecurityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
-                .httpBasic().disable().csrf().disable().cors()
-                .and()
+                .httpBasic()
+                .disable()
+                .csrf().disable()
+                .cors(httpSecurityCorsConfigurer ->
+                        httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource())
+                )
                 .authorizeHttpRequests(
                         auth -> auth
                                 .requestMatchers(
@@ -44,7 +74,8 @@ public class SecurityConfig {
                                 ).permitAll()
                                 .requestMatchers("/api/v1/admin/**").hasRole("MTM_ADMIN")
                                 .requestMatchers("/api/v1/**", "api/v1/auth/logout").hasRole("MTM_USER")
-                ).authorizeHttpRequests().anyRequest().denyAll()
+                ).authorizeHttpRequests()
+                .anyRequest().denyAll()
                 .and().addFilterBefore(mtmSessionFilter, UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and().build();

@@ -1,6 +1,16 @@
 import React from "react";
 
 function MtmStyleWrap(ComponentToStyle) {
+  const processStyleProps = (
+    inputStyle,
+    processedStyle,
+    defaultStyle,
+    styleClass
+  ) => {
+    processedStyle[styleClass] = inputStyle[styleClass].override
+      ? inputStyle[styleClass].style
+      : `${defaultStyle[styleClass]} ${inputStyle[styleClass].style}`;
+  };
   const labelStyle = "mtm-block mtm-tracking-widest";
   const labelTextStyle = "mtm-mx-[5%] md:mtm-mx-auto mtm-text-black/70";
   const inputSelectTextAreaStyle = `
@@ -28,9 +38,23 @@ function MtmStyleWrap(ComponentToStyle) {
     textArea: inputSelectTextAreaStyle,
   };
   return (props) => {
-    let finalStyle = twStyles;
+    let finalStyle = { ...twStyles };
     if (props.twStyles) {
-      finalStyle = { twStyles, ...props.twStyles };
+      if (props.twStyles.input) {
+        processStyleProps(props.twStyles, finalStyle, twStyles, "input");
+      }
+      if (props.twStyles.label) {
+        processStyleProps(props.twStyles, finalStyle, twStyles, "label");
+      }
+      if (props.twStyles.labelText) {
+        processStyleProps(props.twStyles, finalStyle, twStyles, "labelText");
+      }
+      if (props.twStyles.select) {
+        processStyleProps(props.twStyles, finalStyle, twStyles, "select");
+      }
+      if (props.twStyles.textArea) {
+        processStyleProps(props.twStyles, finalStyle, twStyles, "textArea");
+      }
     }
     return <ComponentToStyle {...props} twStyles={finalStyle} />;
   };

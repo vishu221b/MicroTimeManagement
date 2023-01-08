@@ -15,6 +15,7 @@ function MtmInput({
   required,
   max,
   min,
+  inputRef,
 }) {
   const inputProps = {
     type: type,
@@ -24,6 +25,9 @@ function MtmInput({
     onChange: onInputChange,
     required: required,
   };
+  if (inputRef) {
+    inputProps.ref = inputRef;
+  }
   if (value) {
     inputProps.value = value;
   }
