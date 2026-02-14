@@ -6,7 +6,6 @@ import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadReque
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
 import io.swagger.v3.oas.annotations.Hidden;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;

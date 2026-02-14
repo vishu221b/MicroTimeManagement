@@ -3,12 +3,11 @@ package com.microtimemanagement.apiservice.service.impl;
 import com.microtimemanagement.apiservice.service.ActivityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ActivityServiceImplTest {
 

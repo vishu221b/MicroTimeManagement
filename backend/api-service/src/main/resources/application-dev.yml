@@ -19,4 +19,6 @@ management:
         include: '*'
 logging:
   file:
-    name: /log/mtm_test.log
+    name: log/mtm_test.log
+jwt:
+  secret: "SECRET_MTM_DEV_KEY"

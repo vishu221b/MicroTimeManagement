@@ -6,7 +6,6 @@ import com.microtimemanagement.apiservice.dto.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.NewUserRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.PasswordChangeRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
-import com.microtimemanagement.apiservice.dto.response.NewUserResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.service.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
