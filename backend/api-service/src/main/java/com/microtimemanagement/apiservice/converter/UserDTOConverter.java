@@ -6,6 +6,8 @@ import com.microtimemanagement.apiservice.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -45,7 +47,7 @@ public class UserDTOConverter implements BaseDTOConverter<User, UserDTO> {
                 .password(user.getPassword())
                 .dateOfBirth(user.getDateOfBirth())
                 .roles(user.getRoles().stream()
-                        .map(r -> roleRepository.findById(r).get().getName())
+                        .map(r -> roleRepository.findByIdOrNameAndIsActiveTrue(r, r).get().getName())
                         .collect(Collectors.toSet())
                 )
                 .build();

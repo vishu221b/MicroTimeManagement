@@ -38,8 +38,7 @@ public class UserController {
      * Update Password
      * */
 
-    private final UserSes
-    rvice userService;
+    private final UserService userService;
 
     /**
      * Creates a new user
