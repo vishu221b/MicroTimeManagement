@@ -103,7 +103,7 @@ public class UserController {
     @RequestMapping(value = ApiPathConstants.USER_PROFILE, method = RequestMethod.GET)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
-    public UserDTO getUserProfile(){
-        return userService.getUserByUid("");
+    public UserDTO getUserProfile(Principal principal){
+        return userService.getUserBySession(principal);
     }
 }

@@ -8,6 +8,8 @@ import com.microtimemanagement.apiservice.model.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+import java.security.Principal;
+
 public interface UserService extends UserDetailsService {
 
     User loadUserByUsername(String username) throws UsernameNotFoundException;
@@ -29,6 +31,8 @@ public interface UserService extends UserDetailsService {
     GenericMessageResponseDTO<?> changeUserPassword(PasswordChangeRequestDTO passwordChangeRequestDTO);
 
     UserDTO getUserByUid(String id);
+
+    UserDTO getUserBySession(Principal principal);
 
     UserDTO loadUserDTOByUsername(String username);
 }

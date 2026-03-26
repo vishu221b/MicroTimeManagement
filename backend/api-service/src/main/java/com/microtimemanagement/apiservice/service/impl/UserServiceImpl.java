@@ -22,6 +22,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -191,7 +192,7 @@ public class UserServiceImpl implements UserService {
         return user.get();
     }
     @Override
-    public GenericMessageResponseDTO changeUserPassword(PasswordChangeRequestDTO passwordChangeRequestDTO) {
+    public GenericMessageResponseDTO<?> changeUserPassword(PasswordChangeRequestDTO passwordChangeRequestDTO) {
         User user = findActiveUserByEmailOrUsername(passwordChangeRequestDTO.getUsername());
         String message = ErrorConstants.SOMETHING_WENT_WRONG;
         if(bCryptPasswordEncoder.matches(passwordChangeRequestDTO.getOldPassword(), user.getPassword())){
@@ -209,6 +210,11 @@ public class UserServiceImpl implements UserService {
         if(null == user)
             throw new MicroTimeManagementNotFoundException(ErrorConstants.USER_NOT_FOUND);
         return userConverter.toDTO(user);
+    }
+
+    @Override
+    public UserDTO getUserBySession(Principal principal) {
+        return UserDTO.builder().firstName(principal.getName()).build();
     }
 
     @Override
