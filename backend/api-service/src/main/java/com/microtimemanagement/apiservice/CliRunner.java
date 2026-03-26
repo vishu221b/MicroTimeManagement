@@ -1,5 +1,6 @@
 package com.microtimemanagement.apiservice;
 
+import com.microtimemanagement.apiservice.constants.RoleConstants;
 import com.microtimemanagement.apiservice.model.Role;
 import com.microtimemanagement.apiservice.model.User;
 import com.microtimemanagement.apiservice.repository.RoleRepository;
@@ -28,11 +29,18 @@ public class CliRunner implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         List<Role> roles = new ArrayList<>();
-        if(null==roleRepository.findByName("ROLE_MTM_USER")){
-            roles.add(Role.builder().name("ROLE_MTM_USER").build());
+        if(null==roleRepository.findByName(RoleConstants.USER_OPS_ROLE_WITH_PREFIX)){
+            roles.add(Role.builder().name(RoleConstants.USER_OPS_ROLE_WITH_PREFIX).build());
         }
-        if(null==roleRepository.findByName("ROLE_MTM_ADMIN")){
-            roles.add(Role.builder().name("ROLE_MTM_ADMIN").build());
+        if(null==roleRepository.findByName(RoleConstants.ADMIN_OPS_ROLE_WITH_PREFIX)){
+            roles.add(Role.builder().name(RoleConstants.ADMIN_OPS_ROLE_WITH_PREFIX).build());
+        }
+
+        if(null==roleRepository.findByName(RoleConstants.ROLE_CRUD_WITH_PREFIX)){
+            roles.add(Role.builder().name(RoleConstants.ROLE_CRUD_WITH_PREFIX).build());
+        }
+        if(null==roleRepository.findByName(RoleConstants.ACTIVITY_CRUD_WITH_PREFIX)){
+            roles.add(Role.builder().name(RoleConstants.ACTIVITY_CRUD_WITH_PREFIX).build());
         }
 
         if(!roles.isEmpty())
