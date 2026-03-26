@@ -27,10 +27,11 @@ public class SecurityConfig {
 
     private final MtmSessionFilter mtmSessionFilter;
 
-    @Bean
-    public static GrantedAuthorityDefaults authorityDefaults(){
-        return new GrantedAuthorityDefaults("_");
-    }
+//    @Bean
+//    public static GrantedAuthorityDefaults authorityDefaults(){
+////        return new GrantedAuthorityDefaults("_");
+//        return new GrantedAuthorityDefaults("");
+//    }
 
     @Bean
     @Profile("dev")

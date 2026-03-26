@@ -21,4 +21,4 @@ logging:
   file:
     name: log/mtm_test.log
 jwt:
-  secret: "SECRET_MTM_DEV_KEY"
+  secret: "jnv89h4qp98hon98q34opf0934ur0f2iqk40if0935ut09843u908fu4309gh03589rjf0934j0fj304jf930j094f0934o"

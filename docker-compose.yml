@@ -1,24 +1,26 @@
 version: "3.9"
 services: 
-  mtm_test:
-    container_name: "mtm_compose_test"
-    ports:
-      - "80:9000"
-    build:
-      context: ./backend/api-service
-      dockerfile: Dockerfile
-    depends_on:
-      - mtm_mongo
-    environment:
-      - "JAVA_OPTS=-Xms128m -Xmx256m"
-      - "SPRING_DATA_MONGODB_URI=mongodb://mtm_mongo:27017/mtm_dev"
-      - "SERVER_PORT=9000"
-      - "SPRING_APPLICATION_NAME=mtm_test_deployment"
-      - "SPRING_PROFILES_ACTIVE=${MTM_ACTIVE_PROFILE-dev}"
-    image: mtm_compose_test:0.1
+#  mtm_test:
+#    container_name: "mtm_compose_test"
+#    ports:
+#      - "80:9000"
+#    build:
+#      context: ./backend/api-service
+#      dockerfile: Dockerfile
+#    depends_on:
+#      - mtm_mongo
+#    environment:
+#      - "JAVA_OPTS=-Xms128m -Xmx256m"
+#      - "SPRING_DATA_MONGODB_URI=mongodb://mtm_mongo:27017/mtm_dev"
+#      - "SERVER_PORT=9000"
+#      - "SPRING_APPLICATION_NAME=mtm_test_deployment"
+#      - "SPRING_PROFILES_ACTIVE=${MTM_ACTIVE_PROFILE-dev}"
+#    image: mtm_compose_test:0.1
   mtm_mongo:
     container_name: "mtm_compose_mongo"
     image: mongo
+    ports:
+      - "27017:27017"
   mtm_mongo_express:
     image: mongo-express
     container_name: "m_express"
