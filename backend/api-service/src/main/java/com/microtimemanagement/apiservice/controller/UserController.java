@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,11 +33,15 @@ public class UserController {
      * Update Users
      * Delete Users
      * Read User by UID
+     * Get User Profile
      * Update Password
      * */
 
     private final UserService userService;
 
+    /**
+     * Creates a new user
+     * */
     @RequestMapping(value = ApiPathConstants.REGISTER_USER, method = RequestMethod.POST)
     @ResponseBody
     public GenericMessageResponseDTO<?> createNewUser(@Valid @RequestBody NewUserRequestDTO requestDTO, BindingResult bindingResult){
@@ -52,6 +57,9 @@ public class UserController {
         }
     }
 
+    /**
+     * Updates the currently logged-in user details
+     * */
     @RequestMapping(value = ApiPathConstants.UPDATE_USER, method = RequestMethod.PUT)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
@@ -60,7 +68,7 @@ public class UserController {
     }
 
     /**
-     * Deletes user from current session user
+     * Deletes the currently logged-in user
      * */
     @RequestMapping(value = ApiPathConstants.DELETE_CURRENT_USER, method = RequestMethod.DELETE)
     @ResponseBody
@@ -70,7 +78,7 @@ public class UserController {
     }
 
     /**
-     * Resets password for current session user
+     * Resets password for the currently logged-in user
      * */
     @RequestMapping(value = ApiPathConstants.RESET_PASSWORD, method = RequestMethod.POST)
     @ResponseBody
@@ -81,10 +89,21 @@ public class UserController {
         return userService.changeUserPassword(passwordChangeRequestDTO);
     }
 
+    /**
+     * Gets user details for any user by id
+     * Ideally should be accessible by Admin only
+     * */
     @RequestMapping(value = ApiPathConstants.GET_USER_BY_UID, method = RequestMethod.GET)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
     public UserDTO getUserByUid(@RequestParam String id){
         return userService.getUserByUid(id);
+    }
+
+    @RequestMapping(value = ApiPathConstants.USER_PROFILE, method = RequestMethod.GET)
+    @ResponseBody
+    @SecurityRequirement(name = "MTM Auth")
+    public UserDTO getUserProfile(){
+        return userService.getUserByUid("");
     }
 }

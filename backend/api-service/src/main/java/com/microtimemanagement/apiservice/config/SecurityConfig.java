@@ -28,11 +28,6 @@ public class SecurityConfig {
 
     private final MtmSessionFilter mtmSessionFilter;
 
-//    @Bean
-//    public static GrantedAuthorityDefaults authorityDefaults(){
-//        return new GrantedAuthorityDefaults("_");
-//    }
-
     @Bean
     @Profile("dev")
     CorsConfigurationSource corsConfigurationDevSource() {

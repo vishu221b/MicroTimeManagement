@@ -17,4 +17,5 @@ public class ApiPathConstants {
     public static final String DELETE_CURRENT_USER = "/delete";
     public static final String RESET_PASSWORD = "/resetPassword";
     public static final String GET_USER_BY_UID = "/getByUserId";
+    public static final String USER_PROFILE = "/profile";
 }
