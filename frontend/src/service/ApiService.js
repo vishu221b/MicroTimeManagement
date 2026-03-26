@@ -4,7 +4,8 @@ const headers = {
   "content-type": "application/json",
 };
 
-const registrationUrl = "http://localhost:8080/mtm-dev/api/v1/users/register";
+const registrationUrl = "http://localhost/mtm-dev/api/v1/users/register";
+// const registrationUrl = "http://localhost:8080/mtm-dev/api/v1/users/register";
 // const registrationUrl = "http://170.64.128.27/mtm-dev/api/v1/users/register";
 
 export const registerUser = async (data, callback) => {

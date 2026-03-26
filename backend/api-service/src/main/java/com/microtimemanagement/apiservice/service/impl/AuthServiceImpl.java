@@ -40,7 +40,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public GenericMessageResponseDTO expireToken(String token) {
+    public GenericMessageResponseDTO<?> expireToken(String token) {
         sessionService.destroySession(token);
         return GenericMessageResponseDTO.builder().message(ResponseMessages.LOGOUT_SUCCESS).build();
     }

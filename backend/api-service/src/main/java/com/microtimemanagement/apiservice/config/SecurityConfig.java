@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.core.GrantedAuthorityDefaults;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -35,7 +36,7 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.applyPermitDefaultValues();
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:3000"));
+        configuration.setAllowedOriginPatterns(List.of("http://localhost:3000", "http://localhost:8080"));
         configuration.setMaxAge(Duration.ofHours(12));
         configuration.setAllowedMethods(List.of(
                 HttpMethod.HEAD.name(),
@@ -52,11 +53,11 @@ public class SecurityConfig {
     @Profile("dev")
     SecurityFilterChain devSecurityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
-                .httpBasic()
-                .disable()
-                .csrf().disable()
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable)
                 .cors(httpSecurityCorsConfigurer ->
-                        httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource())
+                        httpSecurityCorsConfigurer
+                                .configurationSource(corsConfigurationSource())
                 )
                 .authorizeHttpRequests(
                         auth -> auth
@@ -71,12 +72,12 @@ public class SecurityConfig {
                                         "/swagger-dev"
                                 ).permitAll()
                                 .requestMatchers("/api/v1/admin/**").hasRole("MTM_ADMIN")
-                                .requestMatchers("/api/v1/**", "api/v1/auth/logout").hasRole("MTM_USER")
-                ).authorizeHttpRequests()
-                .anyRequest().denyAll()
-                .and().addFilterBefore(mtmSessionFilter, UsernamePasswordAuthenticationFilter.class)
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and().build();
+                                .requestMatchers("/api/v1/**", "/api/v1/auth/logout").hasRole("MTM_USER")
+                                .anyRequest().denyAll()
+                )
+                .addFilterBefore(mtmSessionFilter, UsernamePasswordAuthenticationFilter.class)
+                .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .build();
     }
 
     @Bean

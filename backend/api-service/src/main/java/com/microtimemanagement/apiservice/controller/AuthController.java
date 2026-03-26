@@ -3,9 +3,11 @@ package com.microtimemanagement.apiservice.controller;
 import com.microtimemanagement.apiservice.dto.request.AuthenticationRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.AuthenticationLoginResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
+import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
 import com.microtimemanagement.apiservice.service.AuthService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.ServletWebRequest;
@@ -32,9 +34,11 @@ public class AuthController {
     @RequestMapping(value = "/logout", method = RequestMethod.POST)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
-    public GenericMessageResponseDTO logoutUser(ServletWebRequest request){
+    public GenericMessageResponseDTO<?> logoutUser(ServletWebRequest request){
         String authHeader = request.getHeader("Authorization");
-        return authService.expireToken(authHeader.substring(7));
+        if(StringUtils.isNotBlank(authHeader))
+            return authService.expireToken(authHeader.substring(7));
+        throw new MicroTimeManagementNotFoundException("Missing Authorisation Header");
     }
 
 }
