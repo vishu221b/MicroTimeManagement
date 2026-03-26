@@ -33,7 +33,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource() {
+    @Profile("dev")
+    CorsConfigurationSource corsConfigurationDevSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.applyPermitDefaultValues();
         configuration.setAllowedOriginPatterns(List.of("http://localhost:3000", "http://localhost:8080"));
@@ -41,7 +42,28 @@ public class SecurityConfig {
         configuration.setAllowedMethods(List.of(
                 HttpMethod.HEAD.name(),
                 HttpMethod.GET.name(),
-                HttpMethod.POST.name()
+                HttpMethod.POST.name(),
+                HttpMethod.PATCH.name(),
+                HttpMethod.DELETE.name()
+        ));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
+    @Profile("prod")
+    CorsConfigurationSource corsConfigurationProdSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.applyPermitDefaultValues();
+        configuration.setAllowedOriginPatterns(List.of("https://mtm.app"));
+        configuration.setMaxAge(Duration.ofHours(12));
+        configuration.setAllowedMethods(List.of(
+                HttpMethod.HEAD.name(),
+                HttpMethod.GET.name(),
+                HttpMethod.POST.name(),
+                HttpMethod.PATCH.name(),
+                HttpMethod.DELETE.name()
         ));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -57,7 +79,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(httpSecurityCorsConfigurer ->
                         httpSecurityCorsConfigurer
-                                .configurationSource(corsConfigurationSource())
+                                .configurationSource(corsConfigurationDevSource())
                 )
                 .authorizeHttpRequests(
                         auth -> auth
@@ -84,8 +106,9 @@ public class SecurityConfig {
     @Profile("prod")
     SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
-                .httpBasic().disable().csrf().disable().cors()
-                .and()
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors->cors.configurationSource(corsConfigurationProdSource()))
                 .authorizeHttpRequests(
                         auth -> auth
                                 .requestMatchers(
@@ -97,9 +120,10 @@ public class SecurityConfig {
                                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").hasRole("MTM_SWAGGER")
                                 .requestMatchers("/api/v1/admin/**").hasRole("MTM_ADMIN")
                                 .requestMatchers("/api/v1/**", "api/v1/auth/logout").hasRole("MTM_USER")
-                ).authorizeHttpRequests().anyRequest().denyAll()
-                .and().addFilterBefore(mtmSessionFilter, UsernamePasswordAuthenticationFilter.class)
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and().build();
+                                .anyRequest().denyAll()
+                )
+                .addFilterBefore(mtmSessionFilter, UsernamePasswordAuthenticationFilter.class)
+                .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .build();
     }
 }
