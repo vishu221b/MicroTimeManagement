@@ -28,6 +28,9 @@ public class CliRunner implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         List<Role> roles = new ArrayList<>();
+        /*
+         * ROLE_ is appended by default when the securityFilterChain checks for Role
+         */
         if(null==roleRepository.findByName("MTM_USER")){
             roles.add(Role.builder().name("MTM_USER").build());
         }
