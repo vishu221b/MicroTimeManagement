@@ -1,5 +1,6 @@
 package com.microtimemanagement.apiservice.config;
 
+import com.microtimemanagement.apiservice.constants.RoleConstants;
 import com.microtimemanagement.apiservice.filter.MtmSessionFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -93,8 +94,10 @@ public class SecurityConfig {
                                         "/",
                                         "/swagger-dev"
                                 ).permitAll()
-                                .requestMatchers("/api/v1/admin/**").hasRole("MTM_ADMIN")
-                                .requestMatchers("/api/v1/**", "/api/v1/auth/logout").hasRole("MTM_USER")
+                                .requestMatchers("/api/v1/admin/**").hasRole(RoleConstants.ADMIN_OPS_ROLE)
+                                .requestMatchers("/api/v1/role/**").hasRole(RoleConstants.ROLE_CRUD)
+                                .requestMatchers("/api/v1/activity/**").hasRole(RoleConstants.ACTIVITY_CRUD)
+                                .requestMatchers("/api/v1/users/**", "/api/v1/auth/logout").hasRole(RoleConstants.USER_OPS_ROLE)
                                 .anyRequest().denyAll()
                 )
                 .addFilterBefore(mtmSessionFilter, UsernamePasswordAuthenticationFilter.class)

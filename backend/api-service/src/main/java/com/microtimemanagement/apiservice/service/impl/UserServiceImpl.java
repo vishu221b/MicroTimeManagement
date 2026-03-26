@@ -78,7 +78,7 @@ public class UserServiceImpl implements UserService {
                 .username(requestDTO.getUsername())
                 .dateOfBirth(requestDTO.getDateOfBirth())
                 .roles(
-                        Set.of(roleRepository.findByNameAndIsActiveTrue(RoleConstants.USER_OPS_ROLE).getId()))
+                        Set.of(roleRepository.findByNameAndIsActiveTrue(RoleConstants.USER_OPS_ROLE_WITH_PREFIX).getId()))
                 .build();
         validateIfUserAlreadyExistsByUsernameOrEmail(userConverter.toDTO(newUser), Boolean.FALSE);
         userRepository.save(newUser);
