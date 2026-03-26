@@ -7,6 +7,7 @@ import com.microtimemanagement.apiservice.dto.request.NewUserRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.PasswordChangeRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
+import com.microtimemanagement.apiservice.model.User;
 import com.microtimemanagement.apiservice.service.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -14,7 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,7 +38,8 @@ public class UserController {
      * Update Password
      * */
 
-    private final UserService userService;
+    private final UserSes
+    rvice userService;
 
     /**
      * Creates a new user
@@ -103,7 +105,7 @@ public class UserController {
     @RequestMapping(value = ApiPathConstants.USER_PROFILE, method = RequestMethod.GET)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
-    public UserDTO getUserProfile(Principal principal){
-        return userService.getUserBySession(principal);
+    public UserDTO getUserProfile(@AuthenticationPrincipal User user){
+        return userService.getUserProfile(user);
     }
 }

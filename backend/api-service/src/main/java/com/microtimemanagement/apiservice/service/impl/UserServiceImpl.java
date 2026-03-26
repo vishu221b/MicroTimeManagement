@@ -213,8 +213,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO getUserBySession(Principal principal) {
-        return UserDTO.builder().firstName(principal.getName()).build();
+    public UserDTO getUserProfile(User user) {
+        return userConverter.toDTO(user);
     }
 
     @Override

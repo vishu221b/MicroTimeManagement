@@ -32,7 +32,7 @@ public interface UserService extends UserDetailsService {
 
     UserDTO getUserByUid(String id);
 
-    UserDTO getUserBySession(Principal principal);
+    UserDTO getUserProfile(User user);
 
     UserDTO loadUserDTOByUsername(String username);
 }
