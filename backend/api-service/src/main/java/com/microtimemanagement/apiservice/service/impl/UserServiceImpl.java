@@ -2,6 +2,7 @@ package com.microtimemanagement.apiservice.service.impl;
 
 import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.constants.ResponseMessages;
+import com.microtimemanagement.apiservice.constants.RoleConstants;
 import com.microtimemanagement.apiservice.converter.UserDTOConverter;
 import com.microtimemanagement.apiservice.dto.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.NewUserRequestDTO;
@@ -77,7 +78,7 @@ public class UserServiceImpl implements UserService {
                 .username(requestDTO.getUsername())
                 .dateOfBirth(requestDTO.getDateOfBirth())
                 .roles(
-                        Set.of(roleRepository.findByNameAndIsActiveTrue("ROLE_MTM_USER").getId()))
+                        Set.of(roleRepository.findByNameAndIsActiveTrue(RoleConstants.USER_OPS_ROLE).getId()))
                 .build();
         validateIfUserAlreadyExistsByUsernameOrEmail(userConverter.toDTO(newUser), Boolean.FALSE);
         userRepository.save(newUser);

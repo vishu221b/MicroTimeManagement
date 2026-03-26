@@ -29,8 +29,7 @@ public class SecurityConfig {
 
 //    @Bean
 //    public static GrantedAuthorityDefaults authorityDefaults(){
-////        return new GrantedAuthorityDefaults("_");
-//        return new GrantedAuthorityDefaults("");
+//        return new GrantedAuthorityDefaults("_");
 //    }
 
     @Bean

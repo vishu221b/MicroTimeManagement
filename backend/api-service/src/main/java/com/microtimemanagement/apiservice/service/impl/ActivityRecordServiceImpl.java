@@ -135,7 +135,7 @@ public class ActivityRecordServiceImpl implements ActivityRecordService {
                 .createdAt(activityRecord.getCreatedAt())
                 .lastUpdatedAt(activityRecord.getLastUpdatedAt())
                 .activities(activityRecord.getActivities().stream()
-                        .map(activity -> activityConverter.toDTO(activity))
+                        .map(activityConverter::toDTO)
                         .toList()
                 )
                 .build();
