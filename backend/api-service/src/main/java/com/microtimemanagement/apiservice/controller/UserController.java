@@ -101,6 +101,12 @@ public class UserController {
         return userService.getUserByUid(id);
     }
 
+    /**
+     * Get the currently logged-in user's profile
+     *
+     * @param user
+     * @return Profile for the currently signed-in user
+     */
     @RequestMapping(value = ApiPathConstants.USER_PROFILE, method = RequestMethod.GET)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")

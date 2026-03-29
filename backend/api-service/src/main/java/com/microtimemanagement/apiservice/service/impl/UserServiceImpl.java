@@ -215,6 +215,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO getUserProfile(User user) {
         UserDTO userDTO = userConverter.toDTO(user);
+        log.info("Retrieving user profile: {}", userDTO);
         return userDTO;
     }
 
