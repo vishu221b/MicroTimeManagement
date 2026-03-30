@@ -41,6 +41,7 @@ public class UserDTO {
 
     private Set<String> roles;
 
+    @JsonIgnore
     private List<ActivityRecord> activityRecords;
 
     private Boolean isActive;

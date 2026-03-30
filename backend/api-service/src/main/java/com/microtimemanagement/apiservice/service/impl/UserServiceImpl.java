@@ -166,15 +166,37 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public GenericMessageResponseDTO<?> updateUserDetails(UserDetailsUpdateRequestDTO userDetailsUpdateRequestDTO) {
-        Optional<User> existingUser = validateIfUserAlreadyExistsByUsernameOrEmail(
-                userDetailsUpdateRequestDTO.getUsername(), userDetailsUpdateRequestDTO.getEmail(), Boolean.TRUE
-        );
-        if(existingUser.isPresent() && !existingUser.get().getUid().equals(userDetailsUpdateRequestDTO.getUid())){
+        User currentUser = userRepository.findByUidAndIsActiveTrue(userDetailsUpdateRequestDTO.getUid());
+        // UIDs are used to uniquely identify the users
+        if(!currentUser.getUid().equals(userDetailsUpdateRequestDTO.getUid())){
             throw new MicroTimeManagementUserException(ErrorConstants.CANNOT_UPDATE_UID_OF_EXISTING_USER);
         }
-        log.info("Updating user with uid {} to : {}", userDetailsUpdateRequestDTO.getUid(), userDetailsUpdateRequestDTO);
+        // Email, username, First Name, Last Name, DOB changes are allowed
+        log.info("Update user request: {}", userDetailsUpdateRequestDTO);
+        if(!userDetailsUpdateRequestDTO.getFirstName().equals(currentUser.getFirstName())){
+            currentUser.setFirstName(userDetailsUpdateRequestDTO.getFirstName());
+        }
+
+        if(!userDetailsUpdateRequestDTO.getLastName().equals(currentUser.getLastName())){
+            currentUser.setLastName(userDetailsUpdateRequestDTO.getLastName());
+        }
+
+        if(!userDetailsUpdateRequestDTO.getDateOfBirth().equals(currentUser.getDateOfBirth())){
+            currentUser.setDateOfBirth(userDetailsUpdateRequestDTO.getDateOfBirth());
+        }
+
+        if(!userDetailsUpdateRequestDTO.getUsername().equals(currentUser.getUsername())){
+            currentUser.setUsername(userDetailsUpdateRequestDTO.getUsername());
+        }
+
+        if(!userDetailsUpdateRequestDTO.getEmail().equals(currentUser.getEmail())){
+            currentUser.setEmail(userDetailsUpdateRequestDTO.getEmail());
+        }
+
+        log.info("Updated user details: {}", currentUser);
+
         return  GenericMessageResponseDTO.builder()
-                .payload(userConverter.toDTO(saveUser(existingUser.get())))
+                .payload(userConverter.toDTO(saveUser(currentUser)))
                 .message(ResponseMessages.USER_DETAILS_UPDATED)
                 .build();
     }
