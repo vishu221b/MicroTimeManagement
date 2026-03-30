@@ -10,6 +10,7 @@ import com.microtimemanagement.apiservice.dto.request.PasswordChangeRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.UserDetailsUpdateRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.NewUserResponseDTO;
+import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementUserException;
@@ -23,8 +24,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.swing.text.html.Option;
-import java.security.Principal;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -91,7 +90,7 @@ public class UserServiceImpl implements UserService {
     private User findById(String id){
         Optional<User> user = userRepository.findById(id);
         if(user.isEmpty()){
-            throw new MicroTimeManagementUserException(ErrorConstants.USER_NOT_FOUND);
+            throw new MicroTimeManagementUserException(ErrorConstants.USER_NOT_FOUND_IN_DB_RECORDS);
         }
         return user.get();
     }
@@ -102,14 +101,14 @@ public class UserServiceImpl implements UserService {
     private User findByUsername(String username){
         Optional<User> user = userRepository.findByUsernameAndIsActiveTrue(username);
         if(user.isEmpty()){
-            throw new MicroTimeManagementUserException(ErrorConstants.USER_NOT_FOUND);
+            throw new MicroTimeManagementUserException(ErrorConstants.USER_NOT_FOUND_IN_DB_RECORDS);
         }
         return user.get();
     }
     private User findByEmail(String email){
         Optional<User> user = userRepository.findByEmailAndIsActiveTrue(email);
         if(user.isEmpty()){
-            throw new MicroTimeManagementUserException(ErrorConstants.USER_NOT_FOUND);
+            throw new MicroTimeManagementUserException(ErrorConstants.USER_NOT_FOUND_IN_DB_RECORDS);
         }
         return user.get();}
 
@@ -146,7 +145,7 @@ public class UserServiceImpl implements UserService {
             // Only change the allowed fields in update request
             saveUser = findActiveById(userDTO.getId());
             if(null == saveUser)
-                throw new MicroTimeManagementNotFoundException(ErrorConstants.USER_NOT_FOUND);
+                throw new MicroTimeManagementNotFoundException(ErrorConstants.USER_NOT_FOUND_IN_DB_RECORDS);
             saveUser.setFirstName(userDTO.getFirstName());
             saveUser.setLastName(userDTO.getLastName());
             saveUser.setEmail(userDTO.getEmail());
@@ -167,6 +166,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public GenericMessageResponseDTO<?> updateUserDetails(UserDetailsUpdateRequestDTO userDetailsUpdateRequestDTO) {
         User currentUser = userRepository.findByUidAndIsActiveTrue(userDetailsUpdateRequestDTO.getUid());
+
+        if(null == currentUser){
+            throw new MicroTimeManagementBadRequestException(ErrorConstants.INVALID_USER_IDENTIFIER_VALUE);
+        }
+
         // UIDs are used to uniquely identify the users
         if(!currentUser.getUid().equals(userDetailsUpdateRequestDTO.getUid())){
             throw new MicroTimeManagementUserException(ErrorConstants.CANNOT_UPDATE_UID_OF_EXISTING_USER);
@@ -235,7 +239,7 @@ public class UserServiceImpl implements UserService {
     public UserDTO getUserByUid(String id) {
         User user = userRepository.findByUidAndIsActiveTrue(id);
         if(null == user)
-            throw new MicroTimeManagementNotFoundException(ErrorConstants.USER_NOT_FOUND);
+            throw new MicroTimeManagementNotFoundException(ErrorConstants.USER_NOT_FOUND_IN_DB_RECORDS);
         return userConverter.toDTO(user);
     }
 

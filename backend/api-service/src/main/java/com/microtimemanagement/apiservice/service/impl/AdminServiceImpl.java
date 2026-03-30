@@ -111,7 +111,7 @@ public class AdminServiceImpl implements AdminService {
             identifierValue = requestDTO.getUserEmail();
         }
         else{
-            throw new MicroTimeManagementBadRequestException(ErrorConstants.INVALID_USER_IDENTIFIER);
+            throw new MicroTimeManagementBadRequestException(ErrorConstants.INVALID_USER_IDENTIFIER_VALUE);
         }
         if(null == userDTO)
             throw new MicroTimeManagementBadRequestException(

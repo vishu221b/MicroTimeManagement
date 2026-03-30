@@ -10,10 +10,10 @@ public class ErrorConstants {
     public static final String USER_ALREADY_EXISTS_FOR_USERNAME = "User with same username already exists!";
     public static final String USER_ALREADY_EXISTS_FOR_EMAIL = "User with same email already exists!";
     public static final String ROLE_NAME_SHOULD_NOT_START_WITH_ROLE = "Role name should not start with 'ROLE' or 'ROLE_'";
-    public static final String INVALID_USER_IDENTIFIER = "Invalid user identifier. Please provide a valid user identifier.";
+    public static final String INVALID_USER_IDENTIFIER_VALUE = "Invalid user identifier value. Please provide a valid uid.";
     public static final String USER_NOT_FOUND_FOR_IDENTIFIER = "No user found for identifier: %s";
     public static final String SOMETHING_WENT_WRONG = "Something went wrong. Please contact dev.";
-    public static final String USER_NOT_FOUND = "User not found.";
+    public static final String USER_NOT_FOUND_IN_DB_RECORDS = "No such User found in Database records.";
     public static final String EMAIL_NOT_VALID = "Email is not valid.";
     public static final String ERROR_ENCOUNTERED_DURING_REQUEST = "Error encountered in request.";
     public static final String NO_USER_FOUND_FOR_UPDATE = "No user found for update.";
