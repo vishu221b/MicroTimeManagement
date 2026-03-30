@@ -1,7 +1,7 @@
 package com.microtimemanagement.apiservice.controller;
 
 import com.microtimemanagement.apiservice.constants.ApiPathConstants;
-import com.microtimemanagement.apiservice.dto.RoleDTO;
+import com.microtimemanagement.apiservice.dto.entity.RoleDTO;
 import com.microtimemanagement.apiservice.dto.request.RoleRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.UserRoleRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.UserRoleResponseDTO;

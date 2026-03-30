@@ -1,6 +1,6 @@
 package com.microtimemanagement.apiservice.converter;
 
-import com.microtimemanagement.apiservice.dto.SessionDTO;
+import com.microtimemanagement.apiservice.dto.entity.SessionDTO;
 import com.microtimemanagement.apiservice.model.Session;
 import org.springframework.stereotype.Component;
 

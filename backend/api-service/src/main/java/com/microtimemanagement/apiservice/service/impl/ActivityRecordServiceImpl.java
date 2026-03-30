@@ -2,8 +2,8 @@ package com.microtimemanagement.apiservice.service.impl;
 
 import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.converter.ActivityDTOConverter;
-import com.microtimemanagement.apiservice.dto.ActivityDTO;
-import com.microtimemanagement.apiservice.dto.UserDTO;
+import com.microtimemanagement.apiservice.dto.entity.ActivityDTO;
+import com.microtimemanagement.apiservice.dto.entity.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordCreationdResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordResponseDTO;

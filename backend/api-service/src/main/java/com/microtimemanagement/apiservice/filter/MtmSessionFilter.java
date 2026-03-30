@@ -2,7 +2,7 @@ package com.microtimemanagement.apiservice.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microtimemanagement.apiservice.dto.ExceptionDTO;
-import com.microtimemanagement.apiservice.dto.ValidSessionDTO;
+import com.microtimemanagement.apiservice.dto.entity.ValidSessionDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementAuthenticationException;
 import com.microtimemanagement.apiservice.service.AuthService;
 import com.microtimemanagement.apiservice.utils.JwtUtils;

@@ -11,24 +11,27 @@ import org.springframework.data.mongodb.core.mapping.DocumentReference;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document("session")
+@Document("refresh_token")
 @EqualsAndHashCode(callSuper = true)
-public class Session extends BaseModel{
+public class RefreshToken extends BaseModel{
 
     @Id
     private String id;
 
-    @Field(name = "refresh_token")
-    @DocumentReference
-    private RefreshToken refreshToken;
+    @Field(name = "access_tokens")
+    @DocumentReference(lazy = true)
+    private List<AccessToken> accessTokens;
 
-    @Field(name = "principal")
-    @DocumentReference
-    private User user;
+    private String token;
+
+    // Expired refresh token means inactive session
+    private Date expiresAt;
+
 
 }

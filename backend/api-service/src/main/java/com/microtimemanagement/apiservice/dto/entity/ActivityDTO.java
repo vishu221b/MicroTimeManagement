@@ -1,4 +1,4 @@
-package com.microtimemanagement.apiservice.dto;
+package com.microtimemanagement.apiservice.dto.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

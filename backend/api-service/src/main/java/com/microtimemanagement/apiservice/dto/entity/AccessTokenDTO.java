@@ -1,4 +1,4 @@
-package com.microtimemanagement.apiservice.dto;
+package com.microtimemanagement.apiservice.dto.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,11 +11,13 @@ import java.util.Date;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RoleDTO {
+public class AccessTokenDTO {
 
     private String id;
 
-    private String name;
+    private String token;
+
+    private Date expiresAt;
 
     private Date createdAt;
 

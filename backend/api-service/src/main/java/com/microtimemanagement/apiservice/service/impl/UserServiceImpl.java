@@ -4,7 +4,7 @@ import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.constants.ResponseMessages;
 import com.microtimemanagement.apiservice.constants.RoleConstants;
 import com.microtimemanagement.apiservice.converter.UserDTOConverter;
-import com.microtimemanagement.apiservice.dto.UserDTO;
+import com.microtimemanagement.apiservice.dto.entity.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.NewUserRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.PasswordChangeRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.UserDetailsUpdateRequestDTO;

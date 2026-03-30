@@ -11,24 +11,21 @@ import org.springframework.data.mongodb.core.mapping.DocumentReference;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document("session")
+@Document("refresh_token")
 @EqualsAndHashCode(callSuper = true)
-public class Session extends BaseModel{
+public class AccessToken extends BaseModel{
 
     @Id
     private String id;
 
-    @Field(name = "refresh_token")
-    @DocumentReference
-    private RefreshToken refreshToken;
+    private String token;
 
-    @Field(name = "principal")
-    @DocumentReference
-    private User user;
+    private Date expiresAt;
 
 }

@@ -1,7 +1,7 @@
 package com.microtimemanagement.apiservice.service.impl;
 
 import com.microtimemanagement.apiservice.converter.SessionConverter;
-import com.microtimemanagement.apiservice.dto.SessionDTO;
+import com.microtimemanagement.apiservice.dto.entity.SessionDTO;
 import com.microtimemanagement.apiservice.model.Session;
 import com.microtimemanagement.apiservice.model.User;
 import com.microtimemanagement.apiservice.repository.SessionRepository;
@@ -25,8 +25,11 @@ public class SessionServiceImpl implements SessionService {
 
     @Override
     public SessionDTO createNewSession(User user) {
-        Session session = sessionRepository.findByUserIdAndIsActiveTrue(user.getId());
-        if(null!=session && !jwtUtils.isTokenExpired(session.getToken())){
+        Optional<Session> session = sessionRepository.findByUserAndIsActiveTrue(user);
+        if(!session.isPresent()){
+
+        }
+        if(null!=session && !jwtUtils.isTokenExpired(session.getRefreshToken().getToken())){
 
             return sessionConverter.toDTO(session);
         }
@@ -37,7 +40,7 @@ public class SessionServiceImpl implements SessionService {
                         .createdAt(new Date(System.currentTimeMillis()))
                         .lastUpdatedAt(new Date(System.currentTimeMillis()))
                         .isActive(Boolean.TRUE)
-                        .userId(user.getId())
+                        .user(user)
                         .build());
         sessionRepository.save(session);
         return sessionConverter.toDTO(session);

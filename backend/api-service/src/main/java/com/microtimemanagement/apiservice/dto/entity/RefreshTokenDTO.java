@@ -1,6 +1,5 @@
-package com.microtimemanagement.apiservice.dto.response;
+package com.microtimemanagement.apiservice.dto.entity;
 
-import com.microtimemanagement.apiservice.dto.entity.ActivityDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,14 +12,21 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ActivityRecordResponseDTO {
+public class RefreshTokenDTO {
 
-    private String recordDate;
+    private String id;
 
-    private List<ActivityDTO> activities;
+    private List<AccessTokenDTO> accessTokenDTOList;
+
+    private String token;
+
+    private Date expiresAt;
 
     private Date createdAt;
 
     private Date lastUpdatedAt;
+
+    private Boolean isActive;
+
 
 }
