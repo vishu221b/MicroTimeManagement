@@ -5,6 +5,7 @@ import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.dto.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.NewUserRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.PasswordChangeRequestDTO;
+import com.microtimemanagement.apiservice.dto.request.UserDetailsUpdateRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.model.User;
@@ -64,8 +65,8 @@ public class UserController {
     @RequestMapping(value = ApiPathConstants.UPDATE_USER, method = RequestMethod.PUT)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
-    public GenericMessageResponseDTO<?> updateUser(@Valid UserDTO userDTO){
-        return userService.updateUserDetails(userDTO);
+    public GenericMessageResponseDTO<?> updateUser(@Valid UserDetailsUpdateRequestDTO userDetailsUpdateRequestDTO){
+        return userService.updateUserDetails(userDetailsUpdateRequestDTO);
     }
 
     /**

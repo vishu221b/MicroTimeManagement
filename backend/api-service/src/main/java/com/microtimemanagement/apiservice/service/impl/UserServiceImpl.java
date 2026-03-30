@@ -7,6 +7,7 @@ import com.microtimemanagement.apiservice.converter.UserDTOConverter;
 import com.microtimemanagement.apiservice.dto.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.NewUserRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.PasswordChangeRequestDTO;
+import com.microtimemanagement.apiservice.dto.request.UserDetailsUpdateRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.NewUserResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementException;
@@ -22,6 +23,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.swing.text.html.Option;
 import java.security.Principal;
 import java.util.Optional;
 import java.util.Set;
@@ -47,9 +49,7 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
-    private void validateIfUserAlreadyExistsByUsernameOrEmail(UserDTO userDTO, Boolean isUpdate){
-        String username = userDTO.getUsername();
-        String email = userDTO.getEmail();
+    private Optional<User> validateIfUserAlreadyExistsByUsernameOrEmail(String username, String email, Boolean isUpdate){
         Optional<User> existingUser = findOptionalByUsername(username);
         if(existingUser.isPresent() && !isUpdate){
             throw new MicroTimeManagementUserException(ErrorConstants.USER_ALREADY_EXISTS_FOR_USERNAME);
@@ -61,12 +61,7 @@ public class UserServiceImpl implements UserService {
         if(isUpdate && existingUser.isEmpty()){
             throw new MicroTimeManagementNotFoundException(ErrorConstants.NO_USER_FOUND_FOR_UPDATE);
         }
-        if(existingUser.isPresent() && !existingUser.get().getId().equals(userDTO.getId())){
-            throw new MicroTimeManagementUserException(ErrorConstants.CANNOT_UPDATE_ID_OF_EXISTING_USER);
-        }
-        if(existingUser.isPresent() && !existingUser.get().getUid().equals(userDTO.getUid())){
-            throw new MicroTimeManagementUserException(ErrorConstants.CANNOT_UPDATE_UID_OF_EXISTING_USER);
-        }
+        return existingUser;
     }
 
     @Override
@@ -81,7 +76,7 @@ public class UserServiceImpl implements UserService {
                 .roles(
                         Set.of(roleRepository.findByNameAndIsActiveTrue(RoleConstants.USER_OPS_ROLE_WITH_PREFIX).getId()))
                 .build();
-        validateIfUserAlreadyExistsByUsernameOrEmail(userConverter.toDTO(newUser), Boolean.FALSE);
+        validateIfUserAlreadyExistsByUsernameOrEmail(newUser.getUsername(), newUser.getEmail(), Boolean.FALSE);
         userRepository.save(newUser);
         return GenericMessageResponseDTO.builder().payload(NewUserResponseDTO.builder()
                 .emailAddress(newUser.getEmail())
@@ -164,18 +159,28 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    private User saveUser(User user){
+        log.info("Saving user: {}", user);
+        return userRepository.save(user);
+    }
+
     @Override
-    public GenericMessageResponseDTO<?> updateUserDetails(UserDTO userDTO) {
-        validateIfUserAlreadyExistsByUsernameOrEmail(userDTO, Boolean.TRUE);
-        log.info("Updating user with id {} to : {}", userDTO.getId(), userDTO);
+    public GenericMessageResponseDTO<?> updateUserDetails(UserDetailsUpdateRequestDTO userDetailsUpdateRequestDTO) {
+        Optional<User> existingUser = validateIfUserAlreadyExistsByUsernameOrEmail(
+                userDetailsUpdateRequestDTO.getUsername(), userDetailsUpdateRequestDTO.getEmail(), Boolean.TRUE
+        );
+        if(existingUser.isPresent() && !existingUser.get().getUid().equals(userDetailsUpdateRequestDTO.getUid())){
+            throw new MicroTimeManagementUserException(ErrorConstants.CANNOT_UPDATE_UID_OF_EXISTING_USER);
+        }
+        log.info("Updating user with uid {} to : {}", userDetailsUpdateRequestDTO.getUid(), userDetailsUpdateRequestDTO);
         return  GenericMessageResponseDTO.builder()
-                .payload(saveUserFromDTO(userDTO, Boolean.TRUE))
+                .payload(userConverter.toDTO(saveUser(existingUser.get())))
                 .message(ResponseMessages.USER_DETAILS_UPDATED)
                 .build();
     }
 
     @Override
-    public GenericMessageResponseDTO deleteUserByUsername(String username) {
+    public GenericMessageResponseDTO<?> deleteUserByUsername(String username) {
         User user = findByUsername(username);
         user.setIsActive(Boolean.FALSE);
         userRepository.save(user);
