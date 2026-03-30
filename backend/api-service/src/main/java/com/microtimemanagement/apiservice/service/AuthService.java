@@ -10,7 +10,7 @@ public interface AuthService {
 
     AuthenticationLoginResponseDTO generateToken(AuthenticationRequestDTO authenticationRequestDTO);
 
-    GenericMessageResponseDTO expireToken(String substring);
+    GenericMessageResponseDTO<?> expireToken(String substring);
 
     ValidSessionDTO isValidSessionToken(String token);
 }

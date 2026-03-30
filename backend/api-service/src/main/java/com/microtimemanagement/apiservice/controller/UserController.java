@@ -10,6 +10,7 @@ import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.model.User;
 import com.microtimemanagement.apiservice.service.UserService;
+import com.microtimemanagement.apiservice.utils.ApiUtils;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -46,17 +47,13 @@ public class UserController {
      * */
     @RequestMapping(value = ApiPathConstants.REGISTER_USER, method = RequestMethod.POST)
     @ResponseBody
-    public GenericMessageResponseDTO<?> createNewUser(@Valid @RequestBody NewUserRequestDTO requestDTO, BindingResult bindingResult){
+    public GenericMessageResponseDTO<?> createNewUser(
+            @Valid @RequestBody NewUserRequestDTO requestDTO,
+            BindingResult bindingResult
+    ){
         log.info("Received request: {}", requestDTO);
-        if(bindingResult.hasErrors()){
-            log.info("Has binding errors: {}", bindingResult.getAllErrors());
-            throw new MicroTimeManagementBadRequestException(
-                    ErrorConstants.PLEASE_FIX_THE_FOLLOWING_ERRORS,
-                    bindingResult.getAllErrors().stream().map(DefaultMessageSourceResolvable::getDefaultMessage)
-                            .collect(Collectors.toList()));
-        }else{
-            return userService.createNewUser(requestDTO);
-        }
+        ApiUtils.handleValidationErrors(bindingResult);
+        return userService.createNewUser(requestDTO);
     }
 
     /**
@@ -65,7 +62,11 @@ public class UserController {
     @RequestMapping(value = ApiPathConstants.UPDATE_USER, method = RequestMethod.PUT)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
-    public GenericMessageResponseDTO<?> updateUser(@Valid UserDetailsUpdateRequestDTO userDetailsUpdateRequestDTO){
+    public GenericMessageResponseDTO<?> updateUser(
+            @Valid UserDetailsUpdateRequestDTO userDetailsUpdateRequestDTO,
+            BindingResult bindingResult
+    ){
+        ApiUtils.handleValidationErrors(bindingResult);
         return userService.updateUserDetails(userDetailsUpdateRequestDTO);
     }
 
@@ -86,7 +87,10 @@ public class UserController {
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
     public GenericMessageResponseDTO<?> updatePasswordForUser(
-            @RequestBody PasswordChangeRequestDTO passwordChangeRequestDTO, Principal principal){
+            @RequestBody @Valid PasswordChangeRequestDTO passwordChangeRequestDTO,
+            BindingResult bindingResult,
+            Principal principal){
+        ApiUtils.handleValidationErrors(bindingResult);
         passwordChangeRequestDTO.setUsername(principal.getName());
         return userService.changeUserPassword(passwordChangeRequestDTO);
     }

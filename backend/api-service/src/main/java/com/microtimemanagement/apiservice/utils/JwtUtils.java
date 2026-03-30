@@ -27,7 +27,6 @@ public class JwtUtils {
 
     private SecretKey getSigningKey(){
         log.info("Using key: {}", key);
-//        Decoders.BASE64.decode(key)
         byte [] secretKeyStringBytes = (key + key + key + key + key).getBytes();
         return Keys.hmacShaKeyFor(secretKeyStringBytes);
     }
@@ -39,13 +38,6 @@ public class JwtUtils {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
         log.info("Authorities generated: {}", authorities);
-//        return Jwts.builder()
-//                .addClaims(claims)
-//                .claim("authorities", authorities)
-//                .setSubject(user.getUsername())
-//                .setIssuedAt(new Date(System.currentTimeMillis()))
-//                .setExpiration(new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(24)))
-//                .signWith(SignatureAlgorithm.HS512, key).compact();
         return Jwts.builder()
                 .claims(claims)
                 .claim("authorities", authorities)
@@ -60,13 +52,11 @@ public class JwtUtils {
     public String extractUserNameFromToken(String token){
         return Jwts.parser().verifyWith(getSigningKey()).build()
                 .parseSignedClaims(token).getPayload().getSubject();
-//                .setSigningKey(key).parseClaimsJws(token).getBody().getSubject();
     }
 
     private Jws<Claims> parseToken(String token){
         return Jwts.parser()
                 .verifyWith(getSigningKey()).build().parseSignedClaims(token);
-//                .setSigningKey(key).parseClaimsJws(token);
     }
 
     public Boolean isTokenExpired(String token){

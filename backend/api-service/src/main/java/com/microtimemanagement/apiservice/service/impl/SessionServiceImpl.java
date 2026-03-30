@@ -30,6 +30,7 @@ public class SessionServiceImpl implements SessionService {
 
             return sessionConverter.toDTO(session);
         }
+        // TODO: Add a session token for revoking and re-issuing fresh tokens on the go
         session = sessionRepository.save(
                 Session.builder()
                         .token(jwtUtils.generateToken(user, null))
