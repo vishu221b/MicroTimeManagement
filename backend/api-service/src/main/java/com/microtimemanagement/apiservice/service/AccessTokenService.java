@@ -1,5 +1,6 @@
 package com.microtimemanagement.apiservice.service;
 
+import com.microtimemanagement.apiservice.dto.entity.AccessTokenDTO;
 import com.microtimemanagement.apiservice.model.AccessToken;
 
 public interface AccessTokenService {
@@ -8,6 +9,6 @@ public interface AccessTokenService {
 
     Boolean revokeAccessToken(AccessToken accessToken);
 
-    Boolean validateAccessToken(AccessToken accessToken);
+    void validateAccessToken(AccessToken accessToken);
 
 }

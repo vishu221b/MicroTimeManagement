@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microtimemanagement.apiservice.dto.ExceptionDTO;
 import com.microtimemanagement.apiservice.dto.entity.ValidSessionDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementAuthenticationException;
-import com.microtimemanagement.apiservice.service.AuthService;
+import com.microtimemanagement.apiservice.service.AuthenticationAndAuthorizationService;
 import com.microtimemanagement.apiservice.utils.JwtUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -30,7 +30,7 @@ public class MtmSessionFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
 
-    private final AuthService authService;
+    private final AuthenticationAndAuthorizationService authenticationAndAuthorizationService;
 
     private final ObjectMapper objectMapper;
 
@@ -41,15 +41,15 @@ public class MtmSessionFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
         try{
             final String authHeader = request.getHeader("Authorization");
-            final String token;
+            final String accessToken;
 
             if(null!=authHeader && authHeader.startsWith("Bearer")){
 
-                token = authHeader.substring(7);
+                accessToken = authHeader.substring(7);
 
                 if(null == SecurityContextHolder.getContext().getAuthentication()){
 
-                    ValidSessionDTO validSessionDTO = authService.isValidSessionToken(token);
+                    ValidSessionDTO validSessionDTO = authenticationAndAuthorizationService.validateSession(accessToken);
 
                     if(!validSessionDTO.getIsValidSession()){
                         throw new MicroTimeManagementAuthenticationException(validSessionDTO.getError());

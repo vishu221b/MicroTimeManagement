@@ -1,5 +1,6 @@
 package com.microtimemanagement.apiservice.utils;
 
+import com.microtimemanagement.apiservice.dto.request.JwtCreationRequestDTO;
 import com.microtimemanagement.apiservice.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -30,20 +31,28 @@ public class JwtUtils {
         byte [] secretKeyStringBytes = (key + key + key + key + key).getBytes();
         return Keys.hmacShaKeyFor(secretKeyStringBytes);
     }
-
-    public String generateToken(User user, Map<String, Object> claims){
-        List<String> authorities = user.
-                getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
-        log.info("Authorities generated: {}", authorities);
+    public String generateToken(JwtCreationRequestDTO requestDTO){
+//    public String generateToken(User user, Map<String, Object> claims){
+//        List<String> authorities = user.
+//                getAuthorities()
+//                .stream()
+//                .map(GrantedAuthority::getAuthority)
+//                .collect(Collectors.toList());
+//        log.info("Authorities generated: {}", authorities);
+//        return Jwts.builder()
+//                .claims(claims)
+//                .claim("authorities", authorities)
+//                .subject(user.getUsername())
+//                .issuedAt(new Date(System.currentTimeMillis()))
+//                .expiration(new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(24)))
+//                .signWith(getSigningKey(), Jwts.SIG.HS512)
+//                .compact();
         return Jwts.builder()
-                .claims(claims)
-                .claim("authorities", authorities)
-                .subject(user.getUsername())
+                .claims(requestDTO.getAdditionalClaims())
+                .claim("authorities", requestDTO.getPrincipalAuthorities())
+                .subject(requestDTO.getPrincipal())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(24)))
+                .expiration(requestDTO.getExpiry())
                 .signWith(getSigningKey(), Jwts.SIG.HS512)
                 .compact();
 

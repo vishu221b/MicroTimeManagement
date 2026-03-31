@@ -6,11 +6,11 @@ import com.microtimemanagement.apiservice.dto.request.AuthenticationRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.AuthenticationLoginResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
 
-public interface AuthService {
+public interface AuthenticationAndAuthorizationService {
 
     AuthenticationLoginResponseDTO generateToken(AuthenticationRequestDTO authenticationRequestDTO);
 
     GenericMessageResponseDTO<?> expireToken(String substring);
 
-    ValidSessionDTO isValidSessionToken(String token);
+    ValidSessionDTO validateSession(String token);
 }

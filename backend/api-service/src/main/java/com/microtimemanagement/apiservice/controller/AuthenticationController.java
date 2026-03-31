@@ -4,7 +4,7 @@ import com.microtimemanagement.apiservice.dto.request.AuthenticationRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.AuthenticationLoginResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
-import com.microtimemanagement.apiservice.service.AuthService;
+import com.microtimemanagement.apiservice.service.AuthenticationAndAuthorizationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
@@ -15,7 +15,7 @@ import org.springframework.web.context.request.ServletWebRequest;
 @RestController
 @RequestMapping("/api/v1/auth")
 @Tag(name = "Authentication", description = "Authentication Operations")
-public class AuthController {
+public class AuthenticationController {
     /**
      * Authenticate users - Generate Tokens
      * Verify Tokens
@@ -23,12 +23,12 @@ public class AuthController {
      */
 
     @Autowired
-    AuthService authService;
+    AuthenticationAndAuthorizationService authenticationAndAuthorizationService;
 
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     @ResponseBody
     public AuthenticationLoginResponseDTO loginUser(@RequestBody AuthenticationRequestDTO authenticationRequestDTO){
-        return authService.generateToken(authenticationRequestDTO);
+        return authenticationAndAuthorizationService.createNewUserSession(authenticationRequestDTO);
     }
 
     @RequestMapping(value = "/logout", method = RequestMethod.POST)
@@ -37,7 +37,7 @@ public class AuthController {
     public GenericMessageResponseDTO<?> logoutUser(ServletWebRequest request){
         String authHeader = request.getHeader("Authorization");
         if(StringUtils.isNotBlank(authHeader))
-            return authService.expireToken(authHeader.substring(7));
+            return authenticationAndAuthorizationService.destroyUserSession(authHeader.substring(7));
         throw new MicroTimeManagementNotFoundException("Missing Authorisation Header");
     }
 

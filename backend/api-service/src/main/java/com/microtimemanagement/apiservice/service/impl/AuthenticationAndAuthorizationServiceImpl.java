@@ -9,7 +9,7 @@ import com.microtimemanagement.apiservice.dto.response.AuthenticationLoginRespon
 import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.model.User;
-import com.microtimemanagement.apiservice.service.AuthService;
+import com.microtimemanagement.apiservice.service.AuthenticationAndAuthorizationService;
 import com.microtimemanagement.apiservice.service.SessionService;
 import com.microtimemanagement.apiservice.service.UserService;
 import com.microtimemanagement.apiservice.utils.JwtUtils;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class AuthServiceImpl implements AuthService {
+public class AuthenticationAndAuthorizationServiceImpl implements AuthenticationAndAuthorizationService {
 
     private final JwtUtils jwtUtils;
     private final UserService userService;
@@ -32,11 +32,14 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthenticationLoginResponseDTO generateToken(AuthenticationRequestDTO authenticationRequestDTO) {
         User user = userService.loadUserByUsername(authenticationRequestDTO.getUsername());
-        if(bCryptPasswordEncoder.matches(authenticationRequestDTO.getPassword(), user.getPassword()))
-            return AuthenticationLoginResponseDTO.builder().token(
-                    sessionService.createNewSession(user).getToken()
-            ).build();
-        throw new MicroTimeManagementBadRequestException("Invalid password");
+        if(bCryptPasswordEncoder.matches(authenticationRequestDTO.getPassword(), user.getPassword())){
+            SessionDTO sessionDTO = sessionService.createNewSession(user);
+            return AuthenticationLoginResponseDTO.builder()
+                    .accessToken(sessionDTO.getRefreshTokenDTO().getActiveAccessTokenDTO().getToken())
+                    .refreshToken(sessionDTO.getRefreshTokenDTO().getToken())
+                    .build();
+        }
+        throw new MicroTimeManagementBadRequestException(ErrorConstants.INVALID_PASSWORD_VALUE);
     }
 
     @Override
@@ -46,7 +49,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ValidSessionDTO isValidSessionToken(String token) {
+    public ValidSessionDTO validateSession(String token) {
         String error = null;
         Boolean isValidToken = Boolean.FALSE;
         final boolean isExpired = jwtUtils.isTokenExpired(token);

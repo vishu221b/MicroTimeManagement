@@ -18,6 +18,8 @@ public class RefreshTokenDTO {
 
     private List<AccessTokenDTO> accessTokenDTOList;
 
+    private AccessTokenDTO activeAccessTokenDTO;
+
     private String token;
 
     private Date expiresAt;
@@ -27,6 +29,5 @@ public class RefreshTokenDTO {
     private Date lastUpdatedAt;
 
     private Boolean isActive;
-
 
 }

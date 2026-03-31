@@ -1,6 +1,7 @@
 package com.microtimemanagement.apiservice.service;
 
 import com.microtimemanagement.apiservice.dto.entity.SessionDTO;
+import com.microtimemanagement.apiservice.model.Session;
 import com.microtimemanagement.apiservice.model.User;
 
 public interface SessionService {
@@ -11,6 +12,6 @@ public interface SessionService {
 
     SessionDTO getByToken(String token);
 
-    Boolean validateSession();
+    void validateSession(Session session);
 
 }
