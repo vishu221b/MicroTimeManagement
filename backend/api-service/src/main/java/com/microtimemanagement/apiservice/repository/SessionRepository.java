@@ -10,7 +10,7 @@ import java.util.Optional;
 @Repository
 public interface SessionRepository extends MongoRepository<Session, String> {
 
-    Optional<Session> findByTokenAndIsActiveTrue(String token);
+    Optional<Session> findByRefreshTokenAndIsActiveTrue(String token);
 
     Session findByUserIdAndIsActiveTrue(String userId);
 

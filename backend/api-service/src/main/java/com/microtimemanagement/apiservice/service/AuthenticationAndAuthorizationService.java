@@ -8,9 +8,9 @@ import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO
 
 public interface AuthenticationAndAuthorizationService {
 
-    AuthenticationLoginResponseDTO generateToken(AuthenticationRequestDTO authenticationRequestDTO);
+    AuthenticationLoginResponseDTO microTimeManagementSessionLogin(AuthenticationRequestDTO authenticationRequestDTO);
 
-    GenericMessageResponseDTO<?> expireToken(String substring);
+    GenericMessageResponseDTO<?> microTimeManagementSessionLogout(String substring);
 
-    ValidSessionDTO validateSession(String token);
+    ValidSessionDTO validateCurrentUserSessionForAccessToken(String token);
 }

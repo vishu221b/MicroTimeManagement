@@ -17,7 +17,7 @@ import java.util.List;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document("refresh_token")
+@Document("access_token")
 @EqualsAndHashCode(callSuper = true)
 public class AccessToken extends BaseModel{
 

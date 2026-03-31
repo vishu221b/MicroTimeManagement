@@ -1,5 +1,7 @@
 package com.microtimemanagement.apiservice.service.impl;
 
+import com.microtimemanagement.apiservice.dto.SessionPrincipalDTO;
+import com.microtimemanagement.apiservice.dto.request.JwtCreationRequestDTO;
 import com.microtimemanagement.apiservice.model.AccessToken;
 import com.microtimemanagement.apiservice.repository.AccessTokenRepository;
 import com.microtimemanagement.apiservice.service.AccessTokenService;
@@ -7,6 +9,9 @@ import com.microtimemanagement.apiservice.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -21,11 +26,19 @@ public class AccessTokenServiceImpl implements AccessTokenService {
      * @return
      */
     @Override
-    public AccessToken createAccessToken() {
-        String newToken=jwtUtils.generateToken(principal, principalAuthorities);
+    public AccessToken createAccessToken(SessionPrincipalDTO sessionPrincipalDTO) {
+        Date tokenExpiry = new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(5));
+        String newToken=jwtUtils.generateToken(
+                JwtCreationRequestDTO.builder()
+                        .principal(sessionPrincipalDTO.getUid())
+                        .principalAuthorities(sessionPrincipalDTO.getAuthorities())
+                        .additionalClaims(null) // Nothing at the moment
+                        .expiry(tokenExpiry)
+                        .build()
+        );
         AccessToken accessToken = AccessToken.builder()
                 .token(newToken)
-                .expiresAt()
+                .expiresAt(tokenExpiry)
                 .build();
         accessToken = accessTokenRepository.save(accessToken);
         log.info("Built access token: {}", accessToken);
@@ -37,7 +50,7 @@ public class AccessTokenServiceImpl implements AccessTokenService {
      * @return
      */
     @Override
-    public Boolean revokeAccessToken(AccessToken accessToken) {
+    public Boolean revokeAccessToken(String accessToken) {
         return null;
     }
 
@@ -45,7 +58,7 @@ public class AccessTokenServiceImpl implements AccessTokenService {
      * @param accessToken
      */
     @Override
-    public void validateAccessToken(AccessToken accessToken) {
+    public void validateAccessToken(String accessToken) {
 
     }
 }

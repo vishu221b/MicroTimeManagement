@@ -32,21 +32,6 @@ public class JwtUtils {
         return Keys.hmacShaKeyFor(secretKeyStringBytes);
     }
     public String generateToken(JwtCreationRequestDTO requestDTO){
-//    public String generateToken(User user, Map<String, Object> claims){
-//        List<String> authorities = user.
-//                getAuthorities()
-//                .stream()
-//                .map(GrantedAuthority::getAuthority)
-//                .collect(Collectors.toList());
-//        log.info("Authorities generated: {}", authorities);
-//        return Jwts.builder()
-//                .claims(claims)
-//                .claim("authorities", authorities)
-//                .subject(user.getUsername())
-//                .issuedAt(new Date(System.currentTimeMillis()))
-//                .expiration(new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(24)))
-//                .signWith(getSigningKey(), Jwts.SIG.HS512)
-//                .compact();
         return Jwts.builder()
                 .claims(requestDTO.getAdditionalClaims())
                 .claim("authorities", requestDTO.getPrincipalAuthorities())

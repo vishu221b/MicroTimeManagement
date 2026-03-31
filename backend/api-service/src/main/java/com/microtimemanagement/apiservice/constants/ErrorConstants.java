@@ -26,4 +26,8 @@ public class ErrorConstants {
     public static final String ACTIVITY_NOT_FOUND = "No activity found.";
     public static final String PLEASE_FIX_THE_FOLLOWING_ERRORS = "Please fix the following errors:";
     public static final String SESSION_EXPIRY_CANNOT_BE_NULL = "Session expiry date cannot be null.";
+    public static final String PASSWORD_CANNOT_BE_BLANK = "Password cannot be Blank.";
+    public static final String PASSWORD_CANNOT_BE_NULL = "Password cannot be Empty.";
+    public static final String USERNAME_CANNOT_BE_NULL = "Username cannot be Empty.";
+    public static final String USERNAME_CANNOT_BE_BLANK = "Username cannot be Blank.";
 }

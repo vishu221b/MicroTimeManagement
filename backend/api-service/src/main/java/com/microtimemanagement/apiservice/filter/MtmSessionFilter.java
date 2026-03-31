@@ -49,7 +49,8 @@ public class MtmSessionFilter extends OncePerRequestFilter {
 
                 if(null == SecurityContextHolder.getContext().getAuthentication()){
 
-                    ValidSessionDTO validSessionDTO = authenticationAndAuthorizationService.validateSession(accessToken);
+                    ValidSessionDTO validSessionDTO = authenticationAndAuthorizationService
+                            .validateCurrentUserSessionForAccessToken(accessToken);
 
                     if(!validSessionDTO.getIsValidSession()){
                         throw new MicroTimeManagementAuthenticationException(validSessionDTO.getError());

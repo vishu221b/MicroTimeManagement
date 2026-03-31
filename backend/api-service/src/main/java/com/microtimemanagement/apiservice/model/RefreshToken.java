@@ -37,7 +37,7 @@ public class RefreshToken extends BaseModel{
         return this.accessTokens
                 .stream()
                 .filter(accessToken -> accessToken.getIsActive().equals(Boolean.TRUE))
-                .toList().getFirst();
+                .toList().get(0);
     }
 
 

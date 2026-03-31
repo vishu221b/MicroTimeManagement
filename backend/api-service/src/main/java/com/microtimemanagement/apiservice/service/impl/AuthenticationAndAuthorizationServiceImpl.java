@@ -17,9 +17,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 @Slf4j
-@Component
+@Service
 @RequiredArgsConstructor
 public class AuthenticationAndAuthorizationServiceImpl implements AuthenticationAndAuthorizationService {
 
@@ -30,7 +31,9 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Override
-    public AuthenticationLoginResponseDTO generateToken(AuthenticationRequestDTO authenticationRequestDTO) {
+    public AuthenticationLoginResponseDTO microTimeManagementSessionLogin(
+            AuthenticationRequestDTO authenticationRequestDTO
+    ) {
         User user = userService.loadUserByUsername(authenticationRequestDTO.getUsername());
         if(bCryptPasswordEncoder.matches(authenticationRequestDTO.getPassword(), user.getPassword())){
             SessionDTO sessionDTO = sessionService.createNewSession(user);
@@ -43,13 +46,13 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
     }
 
     @Override
-    public GenericMessageResponseDTO<?> expireToken(String token) {
+    public GenericMessageResponseDTO<?> microTimeManagementSessionLogout(String token) {
         sessionService.destroySession(token);
         return GenericMessageResponseDTO.builder().message(ResponseMessages.LOGOUT_SUCCESS).build();
     }
 
     @Override
-    public ValidSessionDTO validateSession(String token) {
+    public ValidSessionDTO validateCurrentUserSessionForAccessToken(String token) {
         String error = null;
         Boolean isValidToken = Boolean.FALSE;
         final boolean isExpired = jwtUtils.isTokenExpired(token);
