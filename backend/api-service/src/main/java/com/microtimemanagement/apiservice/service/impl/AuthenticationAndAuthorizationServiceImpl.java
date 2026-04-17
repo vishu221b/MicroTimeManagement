@@ -10,6 +10,7 @@ import com.microtimemanagement.apiservice.dto.response.AuthenticationLoginRespon
 import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.model.User;
+import com.microtimemanagement.apiservice.repository.RoleRepository;
 import com.microtimemanagement.apiservice.service.AccessTokenService;
 import com.microtimemanagement.apiservice.service.AuthenticationAndAuthorizationService;
 import com.microtimemanagement.apiservice.service.SessionService;
@@ -19,6 +20,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -31,6 +34,7 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
     private final SessionService sessionService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final AccessTokenService accessTokenService;
+    private final RoleRepository roleRepository;
 
     @Override
     public AuthenticationLoginResponseDTO microTimeManagementSessionLogin(
@@ -70,10 +74,6 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
             isValidToken = jwtUtils.isValidTokenSubject(token, user);
         }
         if(isValidToken && !isExpired){
-            /*
-             * TODO: Use accessTokenService instead of SessionService to verify token
-             * TODO: For Refresh tokens, the API would itself be responsible for verifying that and issuing new accessTokens
-             */
             AccessTokenDTO accessTokenDTO = accessTokenService.findAccessToken(token);
             if(null == accessTokenDTO){
                 log.error("No session found for token: {}, giving error", token);
@@ -83,6 +83,13 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
                         .error(ErrorConstants.SESSION_TOKEN_INVALID)
                         .build();
             }
+            // Convert role from Ids to Names for correct filter chain matching
+            user.setRoles(
+                    user.getRoles()
+                            .stream()
+                            .map(rId -> roleRepository.findByIdAndIsActiveTrue(rId).getName())
+                            .collect(Collectors.toSet())
+            );
         }
         if(!isValidToken){
             error = ErrorConstants.SESSION_TOKEN_INVALID;
