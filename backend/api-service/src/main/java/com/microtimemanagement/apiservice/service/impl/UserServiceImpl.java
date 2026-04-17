@@ -41,14 +41,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User loadUserByUsername(String username) throws UsernameNotFoundException {
-
         User user = findActiveUserByEmailOrUsername(username);;
         user.setRoles(user.getRoles().stream()
                 .map(r -> roleRepository.findByIdAndIsActiveTrue(r).getName()).collect(Collectors.toSet()));
         return user;
     }
 
-    private Optional<User> validateIfUserAlreadyExistsByUsernameOrEmail(String username, String email, Boolean isUpdate){
+    private void validateIfUserAlreadyExistsByUsernameOrEmail(String username, String email, Boolean isUpdate){
         Optional<User> existingUser = findOptionalByUsername(username);
         if(existingUser.isPresent() && !isUpdate){
             throw new MicroTimeManagementUserException(ErrorConstants.USER_ALREADY_EXISTS_FOR_USERNAME);
@@ -60,7 +59,6 @@ public class UserServiceImpl implements UserService {
         if(isUpdate && existingUser.isEmpty()){
             throw new MicroTimeManagementNotFoundException(ErrorConstants.NO_USER_FOUND_FOR_UPDATE);
         }
-        return existingUser;
     }
 
     @Override
@@ -236,12 +234,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO getUserByUid(String id) {
+    public UserDTO getUserDTOByUid(String id) {
+        return userConverter.toDTO(getUserByUid(id));
+    }
+
+    @Override
+    public User getUserByUid(String id) {
         User user = userRepository.findByUidAndIsActiveTrue(id);
         if(null == user)
             throw new MicroTimeManagementNotFoundException(ErrorConstants.USER_NOT_FOUND_IN_DB_RECORDS);
-        return userConverter.toDTO(user);
+        return user;
     }
+
 
     @Override
     public UserDTO getUserProfile(User user) {

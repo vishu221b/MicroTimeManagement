@@ -33,7 +33,7 @@ public class RefreshToken extends BaseModel{
     // Expired refresh token means inactive session
     private Date expiresAt;
 
-    private AccessToken getActiveAccessToken(){
+    public AccessToken getActiveAccessToken(){
         return this.accessTokens
                 .stream()
                 .filter(accessToken -> accessToken.getIsActive().equals(Boolean.TRUE))

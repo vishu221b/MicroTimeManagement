@@ -89,10 +89,10 @@ public class SecurityConfig {
                                         "/",
                                         "/swagger-dev"
                                 ).permitAll()
-                                .requestMatchers("/api/v1/admin/**").hasRole(RoleConstants.ADMIN_OPS_ROLE)
-                                .requestMatchers("/api/v1/role/**").hasRole(RoleConstants.ROLE_CRUD)
-                                .requestMatchers("/api/v1/activity/**").hasRole(RoleConstants.ACTIVITY_CRUD)
                                 .requestMatchers("/api/v1/users/**", "/api/v1/auth/logout").hasRole(RoleConstants.USER_OPS_ROLE)
+                                .requestMatchers("/api/v1/activity/**").hasRole(RoleConstants.ACTIVITY_CRUD)
+                                .requestMatchers("/api/v1/role/**").hasRole(RoleConstants.ROLE_CRUD)
+                                .requestMatchers("/api/v1/admin/**").hasRole(RoleConstants.ADMIN_OPS_ROLE)
                                 .anyRequest().denyAll()
                 )
                 .addFilterBefore(mtmSessionFilter, UsernamePasswordAuthenticationFilter.class)

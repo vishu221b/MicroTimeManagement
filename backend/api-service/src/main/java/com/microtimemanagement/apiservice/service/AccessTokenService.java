@@ -10,6 +10,7 @@ public interface AccessTokenService {
 
     Boolean revokeAccessToken(String accessToken);
 
-    void validateAccessToken(String accessToken);
+    AccessTokenDTO findAccessToken(String accessToken);
 
+    AccessToken findByToken(String token);
 }

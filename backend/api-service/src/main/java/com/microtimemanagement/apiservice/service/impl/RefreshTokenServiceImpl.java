@@ -1,19 +1,15 @@
 package com.microtimemanagement.apiservice.service.impl;
 
 import com.microtimemanagement.apiservice.dto.SessionPrincipalDTO;
+import com.microtimemanagement.apiservice.model.AccessToken;
 import com.microtimemanagement.apiservice.model.RefreshToken;
-import com.microtimemanagement.apiservice.model.User;
 import com.microtimemanagement.apiservice.repository.RefreshTokenRepository;
 import com.microtimemanagement.apiservice.service.AccessTokenService;
 import com.microtimemanagement.apiservice.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.CalendarUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -56,5 +52,11 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Override
     public void validateRefreshToken(String refreshToken) {
 
+    }
+
+    @Override
+    public RefreshToken findByActiveAccessToken(String token) {
+        AccessToken accessToken = accessTokenService.findByToken(token);
+        return refreshTokenRepository.findByAccessTokensAndIsActiveTrue(List.of(accessToken.getId()));
     }
 }

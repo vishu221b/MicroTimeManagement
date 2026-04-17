@@ -2,6 +2,7 @@ package com.microtimemanagement.apiservice.service.impl;
 
 import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.constants.ResponseMessages;
+import com.microtimemanagement.apiservice.dto.entity.AccessTokenDTO;
 import com.microtimemanagement.apiservice.dto.entity.SessionDTO;
 import com.microtimemanagement.apiservice.dto.entity.ValidSessionDTO;
 import com.microtimemanagement.apiservice.dto.request.AuthenticationRequestDTO;
@@ -9,6 +10,7 @@ import com.microtimemanagement.apiservice.dto.response.AuthenticationLoginRespon
 import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.model.User;
+import com.microtimemanagement.apiservice.service.AccessTokenService;
 import com.microtimemanagement.apiservice.service.AuthenticationAndAuthorizationService;
 import com.microtimemanagement.apiservice.service.SessionService;
 import com.microtimemanagement.apiservice.service.UserService;
@@ -16,7 +18,6 @@ import com.microtimemanagement.apiservice.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -29,6 +30,7 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
 
     private final SessionService sessionService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final AccessTokenService accessTokenService;
 
     @Override
     public AuthenticationLoginResponseDTO microTimeManagementSessionLogin(
@@ -59,16 +61,21 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
         if(isExpired){
             error = ErrorConstants.SESSION_EXPIRED;
         }
-        final String username = jwtUtils.extractUserNameFromToken(token);
+
+        final String principal = jwtUtils.extractPrincipalFromToken(token);
 
         User user = null;
-        if(null!=username && !username.isEmpty()){
-            user = userService.loadUserByUsername(username);
+        if(null!=principal && !principal.isEmpty()){
+            user = userService.getUserByUid(principal);
             isValidToken = jwtUtils.isValidTokenSubject(token, user);
         }
         if(isValidToken && !isExpired){
-            SessionDTO sessionDTO = sessionService.getByToken(token);
-            if(null == sessionDTO){
+            /*
+             * TODO: Use accessTokenService instead of SessionService to verify token
+             * TODO: For Refresh tokens, the API would itself be responsible for verifying that and issuing new accessTokens
+             */
+            AccessTokenDTO accessTokenDTO = accessTokenService.findAccessToken(token);
+            if(null == accessTokenDTO){
                 log.error("No session found for token: {}, giving error", token);
                 return ValidSessionDTO.builder()
                         .isValidSession(Boolean.FALSE)
@@ -80,7 +87,7 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
         if(!isValidToken){
             error = ErrorConstants.SESSION_TOKEN_INVALID;
         }
-        final Boolean isValid = !isExpired && null!=username && isValidToken;
+        final Boolean isValid = !isExpired && null!=principal && isValidToken;
         log.info("isValidSession for isValid: {} and user: {} with error: {}", isValid, user, error);
         return ValidSessionDTO.builder()
                 .isValidSession(isValid)

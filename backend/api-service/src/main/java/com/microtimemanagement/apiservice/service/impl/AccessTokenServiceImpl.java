@@ -1,7 +1,11 @@
 package com.microtimemanagement.apiservice.service.impl;
 
+import com.microtimemanagement.apiservice.constants.ErrorConstants;
+import com.microtimemanagement.apiservice.converter.AccessTokenConverter;
 import com.microtimemanagement.apiservice.dto.SessionPrincipalDTO;
+import com.microtimemanagement.apiservice.dto.entity.AccessTokenDTO;
 import com.microtimemanagement.apiservice.dto.request.JwtCreationRequestDTO;
+import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
 import com.microtimemanagement.apiservice.model.AccessToken;
 import com.microtimemanagement.apiservice.repository.AccessTokenRepository;
 import com.microtimemanagement.apiservice.service.AccessTokenService;
@@ -21,6 +25,8 @@ public class AccessTokenServiceImpl implements AccessTokenService {
     private final AccessTokenRepository accessTokenRepository;
 
     private final JwtUtils jwtUtils;
+
+    private final AccessTokenConverter accessTokenConverter;
 
     /**
      * @return
@@ -58,7 +64,16 @@ public class AccessTokenServiceImpl implements AccessTokenService {
      * @param accessToken
      */
     @Override
-    public void validateAccessToken(String accessToken) {
+    public AccessTokenDTO findAccessToken(String accessToken) {
+        AccessToken validAccessToken = findByToken(accessToken);
+        return accessTokenConverter.toDTO(validAccessToken);
 
+    }
+
+    @Override
+    public AccessToken findByToken(String token) {
+        AccessToken accessToken = accessTokenRepository.findByTokenAndIsActiveTrue(token);
+        log.info("Found by token: {}", accessToken);
+        return accessToken;
     }
 }

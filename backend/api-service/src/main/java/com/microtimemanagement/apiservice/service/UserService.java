@@ -29,9 +29,12 @@ public interface UserService extends UserDetailsService {
 
     GenericMessageResponseDTO<?> changeUserPassword(PasswordChangeRequestDTO passwordChangeRequestDTO);
 
-    UserDTO getUserByUid(String id);
+    UserDTO getUserDTOByUid(String id);
+
+    User getUserByUid(String id);
 
     UserDTO getUserProfile(User user);
 
     UserDTO loadUserDTOByUsername(String username);
+
 }

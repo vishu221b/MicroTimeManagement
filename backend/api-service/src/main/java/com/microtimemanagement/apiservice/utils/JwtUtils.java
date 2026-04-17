@@ -5,19 +5,13 @@ import com.microtimemanagement.apiservice.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -43,12 +37,12 @@ public class JwtUtils {
 
     }
 
-    public String extractUserNameFromToken(String token){
+    public String extractPrincipalFromToken(String token){
         return Jwts.parser().verifyWith(getSigningKey()).build()
                 .parseSignedClaims(token).getPayload().getSubject();
     }
 
-    private Jws<Claims> parseToken(String token){
+    public Jws<Claims> parseToken(String token){
         return Jwts.parser()
                 .verifyWith(getSigningKey()).build().parseSignedClaims(token);
     }
@@ -61,6 +55,6 @@ public class JwtUtils {
     public Boolean isValidTokenSubject(String token, User user){
         Jws<Claims> tokenClaims = parseToken(token);
         log.info("Parsed claims: {}", tokenClaims);
-        return tokenClaims.getPayload().getSubject().equals(user.getUsername());
+        return tokenClaims.getPayload().getSubject().equals(user.getUid());
     }
 }

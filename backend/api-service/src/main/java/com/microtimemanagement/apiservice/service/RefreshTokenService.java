@@ -12,4 +12,5 @@ public interface RefreshTokenService {
 
     void validateRefreshToken(String token);
 
+    RefreshToken findByActiveAccessToken(String token);
 }

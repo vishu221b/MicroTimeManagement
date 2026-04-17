@@ -99,7 +99,7 @@ public class UserController {
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
     public UserDTO getUserByUid(@RequestParam String id){
-        return userService.getUserByUid(id);
+        return userService.getUserDTOByUid(id);
     }
 
     /**

@@ -12,8 +12,10 @@ public class SessionCallbacks implements BeforeConvertCallback<Session> {
     @Override
     public Session onBeforeConvert(Session entity, String collection) {
         entity.setCreatedAt(new Date());
-        entity.setLastUpdatedAt(new Date());
-        entity.setIsActive(true);
+        if(null == entity.getLastUpdatedAt())
+            entity.setLastUpdatedAt(new Date());
+        if(null == entity.getIsActive())
+            entity.setIsActive(true);
         return entity;
     }
 }
