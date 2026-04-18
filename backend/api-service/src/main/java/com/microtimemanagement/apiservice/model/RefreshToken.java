@@ -1,11 +1,9 @@
 package com.microtimemanagement.apiservice.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DocumentReference;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -18,6 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document("refresh_token")
+@ToString(exclude = {"session"})
 @EqualsAndHashCode(callSuper = true)
 public class RefreshToken extends BaseModel{
 
@@ -29,6 +28,13 @@ public class RefreshToken extends BaseModel{
     private List<AccessToken> accessTokens;
 
     private String token;
+
+    // Back referencing Session for efficiency
+    @ReadOnlyProperty
+    @DocumentReference(
+            lookup = "{refresh_token: ?#{#self._id}}"
+    )
+    private Session session;
 
     // Expired refresh token means inactive session
     private Date expiresAt;

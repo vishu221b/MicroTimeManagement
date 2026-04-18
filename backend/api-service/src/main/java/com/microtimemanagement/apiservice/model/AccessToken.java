@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DocumentReference;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -25,6 +26,13 @@ public class AccessToken extends BaseModel{
     private String id;
 
     private String token;
+
+    // Back referencing parent refresh token
+    @ReadOnlyProperty
+    @DocumentReference(
+            lookup = "{access_tokens: ?#{#self._id}}"
+    )
+    private RefreshToken refreshToken;
 
     private Date expiresAt;
 

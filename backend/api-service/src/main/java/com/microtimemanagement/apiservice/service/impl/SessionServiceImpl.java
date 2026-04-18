@@ -77,13 +77,18 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
+    @Transactional
     public void destroySession(String token) {
-        Optional<Session> session = sessionRepository.findByRefreshTokenAndIsActiveTrue(RefreshToken.builder().accessTokens(List.of(AccessToken.builder().token(token).build())).build());
-        if(session.isPresent()){
-            Session updatedSession = session.get();
-            updatedSession.setIsActive(Boolean.FALSE);
-            sessionRepository.save(updatedSession);
-        }
+        AccessToken accessToken = accessTokenService.findByToken(token);
+        RefreshToken refreshToken = accessToken.getRefreshToken();
+        Session session = refreshToken.getSession();
+        accessToken.setIsActive(Boolean.FALSE);
+        refreshToken.setIsActive(Boolean.FALSE);
+        session.setIsActive(Boolean.FALSE);
+        sessionRepository.save(session);
+        refreshTokenService.saveRefreshToken(refreshToken);
+        accessTokenService.saveAccessTokens(List.of(accessToken));
+        log.info("User logged out.");
     }
 
     @Override

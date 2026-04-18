@@ -22,7 +22,7 @@ public class JwtUtils {
     private String key;
 
     private SecretKey getSigningKey(){
-        log.info("Using key: {}", key);
+        log.debug("Using key: {}", key);
         byte [] secretKeyStringBytes = (key + key + key + key + key).getBytes();
         return Keys.hmacShaKeyFor(secretKeyStringBytes);
     }

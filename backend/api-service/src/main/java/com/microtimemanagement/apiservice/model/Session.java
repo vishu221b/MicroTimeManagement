@@ -1,9 +1,6 @@
 package com.microtimemanagement.apiservice.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -24,7 +21,7 @@ public class Session extends BaseModel{
     private String id;
 
     @Field(name = "refresh_token")
-    @DocumentReference
+    @DocumentReference(lazy = true)
     private RefreshToken refreshToken;
 
     @Field(name = "principal")
