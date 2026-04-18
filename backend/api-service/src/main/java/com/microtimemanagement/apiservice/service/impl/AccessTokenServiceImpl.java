@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -49,6 +50,15 @@ public class AccessTokenServiceImpl implements AccessTokenService {
         accessToken = accessTokenRepository.save(accessToken);
         log.info("Built access token: {}", accessToken);
         return accessToken;
+    }
+
+    /**
+     * @param accessToken
+     * @return
+     */
+    @Override
+    public List<AccessToken> saveAccessTokens(List<AccessToken> accessToken) {
+        return accessTokenRepository.saveAll(accessToken);
     }
 
     /**

@@ -8,6 +8,8 @@ public interface RefreshTokenService {
 
     RefreshToken createRefreshToken(SessionPrincipalDTO sessionPrincipalDTO);
 
+    RefreshToken saveRefreshToken(RefreshToken refreshToken);
+
     Boolean revokeRefreshToken(String token);
 
     void validateRefreshToken(String token);

@@ -12,8 +12,10 @@ public class RefreshTokenCallbacks implements BeforeConvertCallback<RefreshToken
     @Override
     public RefreshToken onBeforeConvert(RefreshToken entity, String collection) {
         entity.setCreatedAt(new Date());
-        entity.setLastUpdatedAt(new Date());
-        entity.setIsActive(true);
+        if(null == entity.getLastUpdatedAt())
+            entity.setLastUpdatedAt(new Date());
+        if(null == entity.getIsActive())
+            entity.setIsActive(true);
         return entity;
     }
 }

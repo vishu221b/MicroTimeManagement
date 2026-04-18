@@ -59,11 +59,15 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
 
     @Override
     public ValidSessionDTO validateCurrentUserSessionForAccessToken(String token) {
-        String error = null;
         Boolean isValidToken = Boolean.FALSE;
-        final boolean isExpired = jwtUtils.isTokenExpired(token);
+        final Boolean isExpired = jwtUtils.isTokenExpired(token);
+        String error = null;
         if(isExpired){
             error = ErrorConstants.SESSION_EXPIRED;
+            return ValidSessionDTO.builder()
+                    .isValidSession(isValidToken)
+                    .error(error)
+                    .build();
         }
 
         final String principal = jwtUtils.extractPrincipalFromToken(token);
@@ -73,7 +77,7 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
             user = userService.getUserByUid(principal);
             isValidToken = jwtUtils.isValidTokenSubject(token, user);
         }
-        if(isValidToken && !isExpired){
+        if(isValidToken){
             AccessTokenDTO accessTokenDTO = accessTokenService.findAccessToken(token);
             if(null == accessTokenDTO){
                 log.error("No session found for token: {}, giving error", token);
@@ -90,11 +94,10 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
                             .map(rId -> roleRepository.findByIdAndIsActiveTrue(rId).getName())
                             .collect(Collectors.toSet())
             );
-        }
-        if(!isValidToken){
+        }else {
             error = ErrorConstants.SESSION_TOKEN_INVALID;
         }
-        final Boolean isValid = !isExpired && null!=principal && isValidToken;
+        final Boolean isValid = null!=principal && isValidToken;
         log.info("isValidSession for isValid: {} and user: {} with error: {}", isValid, user, error);
         return ValidSessionDTO.builder()
                 .isValidSession(isValid)

@@ -14,7 +14,6 @@ import com.microtimemanagement.apiservice.service.SessionService;
 import com.microtimemanagement.apiservice.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.mongodb.core.aggregation.LookupOperation;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +45,15 @@ public class SessionServiceImpl implements SessionService {
         if(session.isPresent()){
             existing = session.get();
             existing.setIsActive(Boolean.FALSE);
+            existing.getRefreshToken().setIsActive(Boolean.FALSE);
+            existing.getRefreshToken().getAccessTokens().forEach(
+                    accessToken -> {
+                        if(accessToken.getIsActive().equals(Boolean.TRUE)) {
+                            accessToken.setIsActive(Boolean.FALSE);
+                        }
+                    });
+            refreshTokenService.saveRefreshToken(existing.getRefreshToken());
+            accessTokenService.saveAccessTokens(existing.getRefreshToken().getAccessTokens());
         }
         Session newSession = Session.builder()
                 .user(user)

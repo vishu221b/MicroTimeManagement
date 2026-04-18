@@ -12,8 +12,10 @@ public class AccessTokenCallbacks implements BeforeConvertCallback<AccessToken> 
     @Override
     public AccessToken onBeforeConvert(AccessToken entity, String collection) {
         entity.setCreatedAt(new Date());
-        entity.setLastUpdatedAt(new Date());
-        entity.setIsActive(true);
+        if(null == entity.getLastUpdatedAt())
+            entity.setLastUpdatedAt(new Date());
+        if(null == entity.getIsActive())
+            entity.setIsActive(true);
         return entity;
     }
 }

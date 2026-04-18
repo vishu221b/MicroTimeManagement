@@ -3,6 +3,7 @@ package com.microtimemanagement.apiservice.utils;
 import com.microtimemanagement.apiservice.dto.request.JwtCreationRequestDTO;
 import com.microtimemanagement.apiservice.model.User;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -48,9 +49,14 @@ public class JwtUtils {
     }
 
     public Boolean isTokenExpired(String token){
-        Jws<Claims> tokenClaims = parseToken(token);
-        return tokenClaims.getPayload()
-                .getExpiration().getTime() <= System.currentTimeMillis();
+        Boolean tokenExpired = Boolean.FALSE;
+        try{
+            parseToken(token);
+        }catch (ExpiredJwtException exception){
+            log.info("Expired JWT Token : {}", exception.getMessage());
+            tokenExpired = Boolean.TRUE;
+        }
+        return tokenExpired;
     }
     public Boolean isValidTokenSubject(String token, User user){
         Jws<Claims> tokenClaims = parseToken(token);
