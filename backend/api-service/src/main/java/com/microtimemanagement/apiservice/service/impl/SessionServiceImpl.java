@@ -1,8 +1,11 @@
 package com.microtimemanagement.apiservice.service.impl;
 
+import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.converter.SessionConverter;
 import com.microtimemanagement.apiservice.dto.SessionPrincipalDTO;
+import com.microtimemanagement.apiservice.dto.entity.RefreshTokenDTO;
 import com.microtimemanagement.apiservice.dto.entity.SessionDTO;
+import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
 import com.microtimemanagement.apiservice.model.AccessToken;
 import com.microtimemanagement.apiservice.model.RefreshToken;
 import com.microtimemanagement.apiservice.model.Session;
@@ -10,6 +13,7 @@ import com.microtimemanagement.apiservice.model.User;
 import com.microtimemanagement.apiservice.repository.SessionRepository;
 import com.microtimemanagement.apiservice.service.AccessTokenService;
 import com.microtimemanagement.apiservice.service.RefreshTokenService;
+import com.microtimemanagement.apiservice.service.RoleService;
 import com.microtimemanagement.apiservice.service.SessionService;
 import com.microtimemanagement.apiservice.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +38,7 @@ public class SessionServiceImpl implements SessionService {
 
     private final AccessTokenService accessTokenService;
 
-    private final JwtUtils jwtUtils;
+    private final RoleService roleService;
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
@@ -111,5 +115,29 @@ public class SessionServiceImpl implements SessionService {
     @Override
     public void validateSession(Session session) {
         //TODO
+    }
+
+    @Override
+    public SessionDTO refreshSession(String token) {
+        RefreshToken refreshToken = refreshTokenService.findEntityByActiveToken(token);
+        if(null == refreshToken){
+            throw new MicroTimeManagementNotFoundException(ErrorConstants.SESSION_TOKEN_INVALID);
+        }
+        Session activeSession = refreshToken.getSession();
+        if(refreshToken.getExpiresAt().getTime() <= System.currentTimeMillis() || activeSession.getIsActive().equals(Boolean.FALSE))
+            throw new MicroTimeManagementNotFoundException(ErrorConstants.SESSION_EXPIRED);
+        AccessToken accessToken = accessTokenService.createAccessToken(
+                SessionPrincipalDTO.builder()
+                        .uid(activeSession.getUser().getUid())
+                        .authorities(roleService.getRoleNamesForIds(activeSession.getUser().getRoles()))
+                        .build()
+        );
+        List<AccessToken> accessTokens = refreshToken.getAccessTokens();
+        accessTokens.forEach(t -> t.setIsActive(Boolean.FALSE));
+        accessTokenService.saveAccessTokens(accessTokens);
+        accessTokens.add(accessToken);
+        refreshToken.setAccessTokens(accessTokens);
+        refreshTokenService.saveRefreshToken(refreshToken);
+        return sessionConverter.toDTO(activeSession);
     }
 }

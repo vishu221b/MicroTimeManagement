@@ -14,4 +14,5 @@ public interface SessionService {
 
     void validateSession(Session session);
 
+    SessionDTO refreshSession(String token);
 }

@@ -2,7 +2,6 @@ package com.microtimemanagement.apiservice.service.impl;
 
 import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.constants.ResponseMessages;
-import com.microtimemanagement.apiservice.constants.RoleConstants;
 import com.microtimemanagement.apiservice.converter.UserDTOConverter;
 import com.microtimemanagement.apiservice.dto.entity.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.NewUserRequestDTO;
@@ -15,8 +14,8 @@ import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementExceptio
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementUserException;
 import com.microtimemanagement.apiservice.model.User;
-import com.microtimemanagement.apiservice.repository.RoleRepository;
 import com.microtimemanagement.apiservice.repository.UserRepository;
+import com.microtimemanagement.apiservice.service.RoleService;
 import com.microtimemanagement.apiservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +24,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -35,15 +32,14 @@ public class UserServiceImpl implements UserService {
 
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
+    private final RoleService roleService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final UserDTOConverter userConverter;
 
     @Override
     public User loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = findActiveUserByEmailOrUsername(username);;
-        user.setRoles(user.getRoles().stream()
-                .map(r -> roleRepository.findByIdAndIsActiveTrue(r).getName()).collect(Collectors.toSet()));
+        user.setRoles(roleService.getRoleNamesForIds(user.getRoles()));
         return user;
     }
 
@@ -70,8 +66,7 @@ public class UserServiceImpl implements UserService {
                 .lastName(requestDTO.getLastName())
                 .username(requestDTO.getUsername())
                 .dateOfBirth(requestDTO.getDateOfBirth())
-                .roles(
-                        Set.of(roleRepository.findByNameAndIsActiveTrue(RoleConstants.USER_OPS_ROLE_WITH_PREFIX).getId()))
+                .roles(roleService.getDefaultUserRoleIds())
                 .build();
         validateIfUserAlreadyExistsByUsernameOrEmail(newUser.getUsername(), newUser.getEmail(), Boolean.FALSE);
         userRepository.save(newUser);

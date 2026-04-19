@@ -1,5 +1,6 @@
 package com.microtimemanagement.apiservice.controller;
 
+import com.microtimemanagement.apiservice.constants.ResponseMessages;
 import com.microtimemanagement.apiservice.dto.request.AccessTokenRefreshRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.AuthenticationRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.AuthenticationLoginResponseDTO;
@@ -33,30 +34,38 @@ public class AuthenticationController {
 
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     @ResponseBody
-    public AuthenticationLoginResponseDTO loginUser(
+    public GenericMessageResponseDTO<AuthenticationLoginResponseDTO> loginUser(
             @Valid @RequestBody AuthenticationRequestDTO authenticationRequestDTO,
             BindingResult bindingResult
     ){
         ApiUtils.handleValidationErrors(bindingResult);
-        return authenticationAndAuthorizationService.microTimeManagementSessionLogin(authenticationRequestDTO);
+        return ApiUtils.buildResponseDTO(
+                ResponseMessages.SUCCESS,
+                authenticationAndAuthorizationService.microTimeManagementSessionLogin(authenticationRequestDTO)
+        );
     }
 
     @RequestMapping(value = "/refresh", method = RequestMethod.POST)
-    public GenericMessageResponseDTO<?> refreshSession(
+    public GenericMessageResponseDTO<AuthenticationLoginResponseDTO> refreshSession(
             @Valid  @RequestBody AccessTokenRefreshRequestDTO accessTokenRefreshRequestDTO,
             BindingResult bindingResult
     ){
         ApiUtils.handleValidationErrors(bindingResult);
-        return GenericMessageResponseDTO.builder().build();
+        return ApiUtils.buildResponseDTO(
+                ResponseMessages.SUCCESS,
+                authenticationAndAuthorizationService.microTimeManagementSessionRefresh(accessTokenRefreshRequestDTO)
+        );
     }
 
     @RequestMapping(value = "/logout", method = RequestMethod.POST)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
-    public GenericMessageResponseDTO<?> logoutUser(ServletWebRequest request){
+    public GenericMessageResponseDTO<String> logoutUser(ServletWebRequest request){
         String authHeader = request.getHeader("Authorization");
-        if(StringUtils.isNotBlank(authHeader))
-            return authenticationAndAuthorizationService.microTimeManagementSessionLogout(authHeader.substring(7));
+        if(StringUtils.isNotBlank(authHeader)){
+            authenticationAndAuthorizationService.microTimeManagementSessionLogout(authHeader.substring(7));
+            ApiUtils.buildResponseDTO(ResponseMessages.LOGOUT_SUCCESS, ResponseMessages.SUCCESS);
+        }
         throw new MicroTimeManagementNotFoundException("Missing Authorisation Header");
     }
 

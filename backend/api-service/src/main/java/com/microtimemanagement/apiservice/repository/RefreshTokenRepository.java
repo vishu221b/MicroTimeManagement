@@ -10,4 +10,6 @@ import java.util.List;
 @Component
 public interface RefreshTokenRepository extends MongoRepository<RefreshToken, String> {
     RefreshToken findByAccessTokensAndIsActiveTrue(List<String> tokens);
+
+    RefreshToken findByTokenAndIsActiveTrue(String token);
 }

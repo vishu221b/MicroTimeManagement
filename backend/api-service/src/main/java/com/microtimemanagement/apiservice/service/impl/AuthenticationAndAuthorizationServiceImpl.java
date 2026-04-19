@@ -5,16 +5,14 @@ import com.microtimemanagement.apiservice.constants.ResponseMessages;
 import com.microtimemanagement.apiservice.dto.entity.AccessTokenDTO;
 import com.microtimemanagement.apiservice.dto.entity.SessionDTO;
 import com.microtimemanagement.apiservice.dto.entity.ValidSessionDTO;
+import com.microtimemanagement.apiservice.dto.request.AccessTokenRefreshRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.AuthenticationRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.AuthenticationLoginResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.model.User;
 import com.microtimemanagement.apiservice.repository.RoleRepository;
-import com.microtimemanagement.apiservice.service.AccessTokenService;
-import com.microtimemanagement.apiservice.service.AuthenticationAndAuthorizationService;
-import com.microtimemanagement.apiservice.service.SessionService;
-import com.microtimemanagement.apiservice.service.UserService;
+import com.microtimemanagement.apiservice.service.*;
 import com.microtimemanagement.apiservice.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +32,7 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
     private final SessionService sessionService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final AccessTokenService accessTokenService;
-    private final RoleRepository roleRepository;
+    private final RoleService roleService;
 
     @Override
     public AuthenticationLoginResponseDTO microTimeManagementSessionLogin(
@@ -52,9 +50,8 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
     }
 
     @Override
-    public GenericMessageResponseDTO<?> microTimeManagementSessionLogout(String token) {
+    public void microTimeManagementSessionLogout(String token) {
         sessionService.destroySession(token);
-        return GenericMessageResponseDTO.builder().message(ResponseMessages.LOGOUT_SUCCESS).build();
     }
 
     @Override
@@ -89,10 +86,7 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
             }
             // Convert role from Ids to Names for correct filter chain matching
             user.setRoles(
-                    user.getRoles()
-                            .stream()
-                            .map(rId -> roleRepository.findByIdAndIsActiveTrue(rId).getName())
-                            .collect(Collectors.toSet())
+                    roleService.getRoleNamesForIds(user.getRoles())
             );
         }else {
             error = ErrorConstants.SESSION_TOKEN_INVALID;
@@ -103,6 +97,16 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
                 .isValidSession(isValid)
                 .principal(user)
                 .error(error)
+                .build();
+    }
+
+    @Override
+    public AuthenticationLoginResponseDTO microTimeManagementSessionRefresh(
+            AccessTokenRefreshRequestDTO accessTokenRefreshRequestDTO) {
+        SessionDTO sessionDTO = sessionService.refreshSession(accessTokenRefreshRequestDTO.getToken());
+        return AuthenticationLoginResponseDTO.builder()
+                .accessToken(sessionDTO.getRefreshTokenDTO().getActiveAccessTokenDTO().getToken())
+                .refreshToken(sessionDTO.getRefreshTokenDTO().getToken())
                 .build();
     }
 }

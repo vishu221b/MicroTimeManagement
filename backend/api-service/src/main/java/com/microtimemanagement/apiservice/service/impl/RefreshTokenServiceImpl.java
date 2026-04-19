@@ -64,4 +64,9 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         AccessToken accessToken = accessTokenService.findByToken(token);
         return refreshTokenRepository.findByAccessTokensAndIsActiveTrue(List.of(accessToken.getId()));
     }
+
+    @Override
+    public RefreshToken findEntityByActiveToken(String token) {
+        return refreshTokenRepository.findByTokenAndIsActiveTrue(token);
+    }
 }
