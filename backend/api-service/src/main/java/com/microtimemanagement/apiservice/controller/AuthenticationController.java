@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.ServletWebRequest;
@@ -64,7 +63,7 @@ public class AuthenticationController {
         String authHeader = request.getHeader("Authorization");
         if(StringUtils.isNotBlank(authHeader)){
             authenticationAndAuthorizationService.microTimeManagementSessionLogout(authHeader.substring(7));
-            ApiUtils.buildResponseDTO(ResponseMessages.LOGOUT_SUCCESS, ResponseMessages.SUCCESS);
+            return ApiUtils.buildResponseDTO(ResponseMessages.LOGOUT_SUCCESS, ResponseMessages.SUCCESS);
         }
         throw new MicroTimeManagementNotFoundException("Missing Authorisation Header");
     }

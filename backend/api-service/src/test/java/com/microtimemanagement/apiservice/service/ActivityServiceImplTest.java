@@ -1,6 +1,6 @@
-package com.microtimemanagement.apiservice.service.impl;
+package com.microtimemanagement.apiservice.service;
 
-import com.microtimemanagement.apiservice.service.ActivityService;
+import com.microtimemanagement.apiservice.service.impl.ActivityServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

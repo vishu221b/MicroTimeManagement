@@ -1,15 +1,11 @@
 package com.microtimemanagement.apiservice.utils;
 
 import com.microtimemanagement.apiservice.constants.ErrorConstants;
-import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.stereotype.Component;
-import org.springframework.validation.BindingResult;
 
 import java.util.Date;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component

@@ -1,7 +1,6 @@
 package com.microtimemanagement.apiservice.service;
 
 import com.microtimemanagement.apiservice.dto.SessionPrincipalDTO;
-import com.microtimemanagement.apiservice.model.AccessToken;
 import com.microtimemanagement.apiservice.model.RefreshToken;
 
 public interface RefreshTokenService {

@@ -1,9 +1,7 @@
 package com.microtimemanagement.apiservice.converter;
 
 import com.microtimemanagement.apiservice.dto.entity.AccessTokenDTO;
-import com.microtimemanagement.apiservice.dto.entity.RefreshTokenDTO;
 import com.microtimemanagement.apiservice.model.AccessToken;
-import com.microtimemanagement.apiservice.model.RefreshToken;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

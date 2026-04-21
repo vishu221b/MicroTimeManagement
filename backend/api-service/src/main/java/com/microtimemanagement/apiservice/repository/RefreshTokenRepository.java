@@ -1,6 +1,5 @@
 package com.microtimemanagement.apiservice.repository;
 
-import com.microtimemanagement.apiservice.model.AccessToken;
 import com.microtimemanagement.apiservice.model.RefreshToken;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Component;

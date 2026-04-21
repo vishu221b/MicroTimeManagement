@@ -5,7 +5,6 @@ import com.microtimemanagement.apiservice.dto.entity.ValidSessionDTO;
 import com.microtimemanagement.apiservice.dto.request.AccessTokenRefreshRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.AuthenticationRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.AuthenticationLoginResponseDTO;
-import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
 import jakarta.validation.Valid;
 
 public interface AuthenticationAndAuthorizationService {

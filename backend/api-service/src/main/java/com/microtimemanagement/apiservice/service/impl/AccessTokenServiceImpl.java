@@ -1,11 +1,9 @@
 package com.microtimemanagement.apiservice.service.impl;
 
-import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.converter.AccessTokenConverter;
 import com.microtimemanagement.apiservice.dto.SessionPrincipalDTO;
 import com.microtimemanagement.apiservice.dto.entity.AccessTokenDTO;
 import com.microtimemanagement.apiservice.dto.request.JwtCreationRequestDTO;
-import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
 import com.microtimemanagement.apiservice.model.AccessToken;
 import com.microtimemanagement.apiservice.repository.AccessTokenRepository;
 import com.microtimemanagement.apiservice.service.AccessTokenService;

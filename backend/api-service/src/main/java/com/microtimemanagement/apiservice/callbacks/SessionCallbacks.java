@@ -1,6 +1,5 @@
 package com.microtimemanagement.apiservice.callbacks;
 
-import com.microtimemanagement.apiservice.model.Role;
 import com.microtimemanagement.apiservice.model.Session;
 import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
 import org.springframework.stereotype.Component;
