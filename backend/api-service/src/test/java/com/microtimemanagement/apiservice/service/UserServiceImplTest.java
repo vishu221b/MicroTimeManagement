@@ -38,16 +38,6 @@ public class UserServiceImplTest {
     @InjectMocks
     private UserServiceImpl userService;
 
-//    @BeforeTestMethod(value = "shouldLoadUserByUsername")
-//    void setup(){
-//        String username = UserTestFactory.MtmAppUserAttributes.USERNAME;
-//        Mockito.when(
-//                userRepository
-//                        .findByEmailOrUsernameAndIsActiveTrue(username, username)
-//        ).thenReturn(Optional.of(UserTestFactory.existingAppUser().build()));
-//    }
-//
-
     @Test
     void shouldCreateNewUser(){
         NewUserRequestDTO requestDTO = TestDataFactory.getNewUserRequestDTO();
