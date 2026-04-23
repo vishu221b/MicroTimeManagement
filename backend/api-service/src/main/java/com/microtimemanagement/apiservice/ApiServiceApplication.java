@@ -21,8 +21,7 @@ public class ApiServiceApplication {
 
 	@Bean
 	public static BCryptPasswordEncoder bCryptPasswordEncoder(){
-		return new BCryptPasswordEncoder();
+		return new BCryptPasswordEncoder(12);
 	}
-
 
 }

@@ -114,17 +114,23 @@ public class UserServiceImpl implements UserService {
     }
     @Override
     public UserDTO findDTOById(String userId) {
-        return userConverter.toDTO(findById(userId));
+        User user = findById(userId);
+        user.setRoles(roleService.getRoleNamesForIds(user.getRoles()));
+        return userConverter.toDTO(user);
     }
 
     @Override
     public UserDTO findDTOByUsername(String username) {
-        return userConverter.toDTO(findByUsername(username));
+        User user = findByUsername(username);
+        user.setRoles(roleService.getRoleNamesForIds(user.getRoles()));
+        return userConverter.toDTO(user);
     }
 
     @Override
     public UserDTO findDTOByEmail(String userEmail) {
-        return userConverter.toDTO(findByEmail(userEmail));
+        User user = findByEmail(userEmail);
+        user.setRoles(roleService.getRoleNamesForIds(user.getRoles()));
+        return userConverter.toDTO(user);
     }
 
     @Override

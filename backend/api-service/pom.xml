@@ -66,6 +66,12 @@
 			<artifactId>jaxb-api</artifactId>
 			<version>2.3.1</version>
 		</dependency>
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-launcher</artifactId>
+			<version>1.12.2</version> <!-- Use the version matching your junit-jupiter -->
+			<scope>test</scope>
+		</dependency>
 
 	</dependencies>
 

@@ -3,9 +3,11 @@ package com.microtimemanagement.apiservice.dto.request;
 import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
+@Builder
 public class AuthenticationRequestDTO {
 
     @NotNull(message = ErrorConstants.USERNAME_CANNOT_BE_NULL)

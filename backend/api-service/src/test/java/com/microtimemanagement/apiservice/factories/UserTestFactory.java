@@ -1,5 +1,7 @@
 package com.microtimemanagement.apiservice.factories;
 
+import com.microtimemanagement.apiservice.dto.entity.UserDTO;
+import com.microtimemanagement.apiservice.dto.request.NewUserRequestDTO;
 import com.microtimemanagement.apiservice.model.User;
 
 import java.util.Set;
@@ -53,6 +55,16 @@ public class UserTestFactory {
         );
     }
 
+    public static NewUserRequestDTO getNewUserRequestDTO(){
+        return NewUserRequestDTO.builder()
+                .firstName("Test First")
+                .lastName("Test Last")
+                .email("test@test.com")
+                .dateOfBirth("12-12-2002")
+                .username("testersFirst")
+                .password("Test123")
+                .build();
+    }
 
     public static User.UserBuilder<?,?> existingAppUserEntity(){
         return User.builder()
@@ -63,6 +75,18 @@ public class UserTestFactory {
                 .username(MtmAppUserAttributes.USERNAME)
                 .password(MtmAppUserAttributes.BCRYPT_PASSWORD_RANDOM_HASH)
                 .roles(MtmAppUserAttributes.DEFAULT_USER_ROLE_IDS)
+                .uid(UUID.randomUUID().toString());
+    }
+
+    public static UserDTO.UserDTOBuilder existingAppUserDTO(){
+        return UserDTO.builder()
+                .firstName(MtmAppUserAttributes.FIRST_NAME)
+                .lastName(MtmAppUserAttributes.LAST_NAME)
+                .email(MtmAppUserAttributes.EMAIL)
+                .dateOfBirth(MtmAppUserAttributes.DATE_OF_BIRTH)
+                .username(MtmAppUserAttributes.USERNAME)
+                .password(MtmAppUserAttributes.BCRYPT_PASSWORD_RANDOM_HASH)
+                .roles(MtmAppUserAttributes.DEFAULT_USER_ROLE_NAMES)
                 .uid(UUID.randomUUID().toString());
     }
 
