@@ -15,6 +15,7 @@ import com.microtimemanagement.apiservice.model.User;
 import com.microtimemanagement.apiservice.service.impl.AuthenticationAndAuthorizationServiceImpl;
 import com.microtimemanagement.apiservice.utils.JwtUtils;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,6 +26,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.List;
 
+/**
+ * @author vishal.dogra
+ * @since 1.0.0
+ */
+
+@DisplayName("Authentication and Authorization Service Tests")
 @ExtendWith(MockitoExtension.class)
 public class AuthenticationAndAuthorizationServiceImplTest {
 
@@ -50,6 +57,7 @@ public class AuthenticationAndAuthorizationServiceImplTest {
     AuthenticationAndAuthorizationServiceImpl authenticationAndAuthorizationService;
 
     @Test
+    @DisplayName("Should create mtm session login Successfully")
     void shouldCreateMicroTimeManagementSessionLogin(){
         User user = UserTestFactory.existingAppUserEntity().build();
         Mockito.when(userService.loadUserByUsername(user.getUsername())).thenReturn(user);
@@ -58,9 +66,9 @@ public class AuthenticationAndAuthorizationServiceImplTest {
                 .password(user.getPassword())
                 .build();
         AccessTokenDTO accessTokenDTO = AccessTokenDTO.builder()
-                .token(AuthTestDataFactory.TokenConstants.JWT_SESSION_ACCESS_TOKEN).build();
+                .token(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN).build();
         RefreshTokenDTO refreshTokenDTO = RefreshTokenDTO.builder()
-                .token(AuthTestDataFactory.TokenConstants.JWT_SESSION_REFRESH_TOKEN)
+                .token(AuthTestDataFactory.MockConstants.JWT_SESSION_REFRESH_TOKEN)
                 .accessTokenDTOList(List.of(accessTokenDTO))
                 .activeAccessTokenDTO(accessTokenDTO)
                 .build();
@@ -96,13 +104,13 @@ public class AuthenticationAndAuthorizationServiceImplTest {
     @Test
     void shouldCreateMicroTimeManagementSessionRefresh(){
         AccessTokenRefreshRequestDTO accessTokenRefreshRequestDTO = AccessTokenRefreshRequestDTO.builder()
-                .token(AuthTestDataFactory.TokenConstants.JWT_SESSION_REFRESH_TOKEN)
+                .token(AuthTestDataFactory.MockConstants.JWT_SESSION_REFRESH_TOKEN)
                 .build();
 
         AccessTokenDTO accessTokenDTO = AccessTokenDTO.builder()
-                .token(AuthTestDataFactory.TokenConstants.JWT_SESSION_ACCESS_TOKEN).build();
+                .token(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN).build();
         RefreshTokenDTO refreshTokenDTO = RefreshTokenDTO.builder()
-                .token(AuthTestDataFactory.TokenConstants.JWT_SESSION_REFRESH_TOKEN)
+                .token(AuthTestDataFactory.MockConstants.JWT_SESSION_REFRESH_TOKEN)
                 .accessTokenDTOList(List.of(accessTokenDTO))
                 .activeAccessTokenDTO(accessTokenDTO)
                 .build();
@@ -123,16 +131,16 @@ public class AuthenticationAndAuthorizationServiceImplTest {
     void shouldValidateCurrentUserSessionForAccessToken(){
         User user = UserTestFactory.existingAppUserEntity().build();
         AccessTokenDTO accessTokenDTO = AccessTokenDTO.builder()
-                .token(AuthTestDataFactory.TokenConstants.JWT_SESSION_ACCESS_TOKEN).build();
+                .token(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN).build();
 
-        Mockito.when(jwtUtils.isTokenExpired(AuthTestDataFactory.TokenConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(false);
-        Mockito.when(jwtUtils.extractPrincipalFromToken(AuthTestDataFactory.TokenConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(user.getUid());
+        Mockito.when(jwtUtils.isTokenExpired(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(false);
+        Mockito.when(jwtUtils.extractPrincipalFromToken(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(user.getUid());
         Mockito.when(userService.getUserByUid(user.getUid())).thenReturn(user);
-        Mockito.when(jwtUtils.isValidTokenSubject(AuthTestDataFactory.TokenConstants.JWT_SESSION_ACCESS_TOKEN, user)).thenReturn(true);
-        Mockito.when(accessTokenService.findAccessToken(AuthTestDataFactory.TokenConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(accessTokenDTO);
+        Mockito.when(jwtUtils.isValidTokenSubject(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN, user)).thenReturn(true);
+        Mockito.when(accessTokenService.findAccessToken(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(accessTokenDTO);
         Mockito.when(roleService.getRoleNamesForIds(user.getRoles())).thenReturn(UserTestFactory.MtmAppUserAttributes.DEFAULT_USER_ROLE_NAMES);
 
-        ValidSessionDTO validSessionDTO = authenticationAndAuthorizationService.validateCurrentUserSessionForAccessToken(AuthTestDataFactory.TokenConstants.JWT_SESSION_ACCESS_TOKEN);
+        ValidSessionDTO validSessionDTO = authenticationAndAuthorizationService.validateCurrentUserSessionForAccessToken(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN);
 
         Assertions.assertThat(validSessionDTO.getIsValidSession()).isEqualTo(Boolean.TRUE);
         Assertions.assertThat(validSessionDTO.getPrincipal()).isEqualTo(user);
@@ -142,9 +150,9 @@ public class AuthenticationAndAuthorizationServiceImplTest {
 
     @Test
     void shouldReturnSessionExpiredError_onValidateCurrentUserSessionForAccessToken(){
-        Mockito.when(jwtUtils.isTokenExpired(AuthTestDataFactory.TokenConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(true);
+        Mockito.when(jwtUtils.isTokenExpired(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(true);
 
-        ValidSessionDTO validSessionDTO = authenticationAndAuthorizationService.validateCurrentUserSessionForAccessToken(AuthTestDataFactory.TokenConstants.JWT_SESSION_ACCESS_TOKEN);
+        ValidSessionDTO validSessionDTO = authenticationAndAuthorizationService.validateCurrentUserSessionForAccessToken(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN);
 
         Assertions.assertThat(validSessionDTO.getIsValidSession()).isEqualTo(Boolean.FALSE);
         Assertions.assertThat(validSessionDTO.getPrincipal()).isNull();
@@ -155,10 +163,10 @@ public class AuthenticationAndAuthorizationServiceImplTest {
 
     @Test
     void shouldReturnInvalidSessionError_onValidateCurrentUserSessionForAccessToken(){
-        Mockito.when(jwtUtils.isTokenExpired(AuthTestDataFactory.TokenConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(false);
-        Mockito.when(jwtUtils.extractPrincipalFromToken(AuthTestDataFactory.TokenConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(null);
+        Mockito.when(jwtUtils.isTokenExpired(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(false);
+        Mockito.when(jwtUtils.extractPrincipalFromToken(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(null);
 
-        ValidSessionDTO validSessionDTO = authenticationAndAuthorizationService.validateCurrentUserSessionForAccessToken(AuthTestDataFactory.TokenConstants.JWT_SESSION_ACCESS_TOKEN);
+        ValidSessionDTO validSessionDTO = authenticationAndAuthorizationService.validateCurrentUserSessionForAccessToken(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN);
 
         Assertions.assertThat(validSessionDTO.getIsValidSession()).isEqualTo(Boolean.FALSE);
         Assertions.assertThat(validSessionDTO.getPrincipal()).isNull();

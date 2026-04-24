@@ -13,6 +13,15 @@ public class SessionConverter implements BaseDTOConverter<Session, SessionDTO>{
 
     @Override
     public Session fromDTO(SessionDTO sessionDTO) {
+        if(null!=sessionDTO)
+            return Session.builder()
+                    .id(sessionDTO.getId())
+                    .user(sessionDTO.getUser())
+                    .refreshToken(refreshTokenConverter.fromDTO(sessionDTO.getRefreshTokenDTO()))
+                    .isActive(sessionDTO.getIsActive())
+                    .createdAt(sessionDTO.getCreatedAt())
+                    .lastUpdatedAt(sessionDTO.getLastUpdatedAt())
+                    .build();
         return null;
     }
 
@@ -24,6 +33,7 @@ public class SessionConverter implements BaseDTOConverter<Session, SessionDTO>{
                 .createdAt(session.getCreatedAt())
                 .lastUpdatedAt(session.getLastUpdatedAt())
                 .isActive(session.getIsActive())
+                .user(session.getUser())
                 .build();
     }
 }

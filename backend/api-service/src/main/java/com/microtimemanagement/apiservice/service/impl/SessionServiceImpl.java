@@ -94,7 +94,7 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    public SessionDTO getByToken(String token) {
+    public SessionDTO getByAccessToken(String token) {
         RefreshToken refreshToken = refreshTokenService.findByActiveAccessToken(token);
         AccessToken accessToken = refreshToken.getActiveAccessToken();
         log.info("Retrieved refreshToken and accessToken: {} , {}", refreshToken, accessToken);

@@ -11,6 +11,7 @@ import com.microtimemanagement.apiservice.factories.UserTestFactory;
 import com.microtimemanagement.apiservice.model.User;
 import com.microtimemanagement.apiservice.repository.UserRepository;
 import com.microtimemanagement.apiservice.service.impl.UserServiceImpl;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,6 +26,12 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+/**
+ * @author vishal.dogra
+ * @since 1.0.0
+ */
+
+@DisplayName("User Service Tests")
 @ExtendWith(MockitoExtension.class)
 public class UserServiceImplTest {
 

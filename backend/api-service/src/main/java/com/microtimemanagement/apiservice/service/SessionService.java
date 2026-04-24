@@ -10,7 +10,7 @@ public interface SessionService {
 
     void destroySession(String token);
 
-    SessionDTO getByToken(String token);
+    SessionDTO getByAccessToken(String token);
 
     void validateSession(Session session);
 

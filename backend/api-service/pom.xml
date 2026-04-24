@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.micro-time-management</groupId>
 	<artifactId>api-service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>api-service</name>
 	<description>Api service for Micro Time management App</description>
 	<properties>

@@ -1,9 +1,6 @@
 package com.microtimemanagement.apiservice.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
@@ -14,6 +11,7 @@ import java.util.Date;
 
 @Data
 @SuperBuilder
+@ToString(exclude = {"refreshToken"})
 @NoArgsConstructor
 @AllArgsConstructor
 @Document("access_token")
