@@ -6,8 +6,6 @@ import com.microtimemanagement.apiservice.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.stream.Collectors;
-
 @Component
 @RequiredArgsConstructor
 public class UserDTOConverter implements BaseDTOConverter<User, UserDTO> {
