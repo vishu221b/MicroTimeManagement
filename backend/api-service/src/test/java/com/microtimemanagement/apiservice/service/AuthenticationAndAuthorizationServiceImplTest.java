@@ -1,10 +1,8 @@
 package com.microtimemanagement.apiservice.service;
 
-import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.dto.entity.AccessTokenDTO;
 import com.microtimemanagement.apiservice.dto.entity.RefreshTokenDTO;
 import com.microtimemanagement.apiservice.dto.entity.SessionDTO;
-import com.microtimemanagement.apiservice.dto.entity.ValidSessionDTO;
 import com.microtimemanagement.apiservice.dto.request.AccessTokenRefreshRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.AuthenticationRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.AuthenticationLoginResponseDTO;
@@ -13,7 +11,6 @@ import com.microtimemanagement.apiservice.factories.AuthTestDataFactory;
 import com.microtimemanagement.apiservice.factories.UserTestFactory;
 import com.microtimemanagement.apiservice.model.User;
 import com.microtimemanagement.apiservice.service.impl.AuthenticationAndAuthorizationServiceImpl;
-import com.microtimemanagement.apiservice.utils.JwtUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
