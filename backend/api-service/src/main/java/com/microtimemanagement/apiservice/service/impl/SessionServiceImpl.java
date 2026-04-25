@@ -93,20 +93,6 @@ public class SessionServiceImpl implements SessionService {
         log.info("User logged out.");
     }
 
-    @Override
-    public SessionDTO getByAccessToken(String token) {
-        RefreshToken refreshToken = refreshTokenService.findByActiveAccessToken(token);
-        AccessToken accessToken = refreshToken.getActiveAccessToken();
-        log.info("Retrieved refreshToken and accessToken: {} , {}", refreshToken, accessToken);
-        Optional<Session> session = sessionRepository.findByRefreshTokenAndIsActiveTrue(
-                RefreshToken.builder()
-                        .accessTokens(
-                                List.of(AccessToken.builder().token(token).build())
-                        )
-                        .build());
-        return session.map(sessionConverter::toDTO).orElse(null);
-    }
-
     /**
      *
      */

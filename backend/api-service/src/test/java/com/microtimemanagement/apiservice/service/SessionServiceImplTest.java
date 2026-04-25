@@ -21,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -110,18 +111,63 @@ public class SessionServiceImplTest {
         assertThat(session.getIsActive()).isFalse();
     }
 
-    @Test
-    @DisplayName("Should fetch session by refresh token value.")
-    void shouldGetSessionByToken(){}
 
     @Test
-    @DisplayName("Should refresh session successfully for valid refresh token value.")
+    @DisplayName("Should refresh the session successfully for valid refresh token value by setting previous access token invalid and issuing a fresh access token.")
     void shouldRefreshSession(){
+
+        String previousAccessTokenId="Previous Active AccessToken";
+
+        User user = UserTestFactory.existingAppUserEntity()
+                .roles(UserTestFactory.MtmAppUserAttributes.DEFAULT_USER_ROLE_NAMES)
+                .build();
+
+        Session session = SessionTestDataFactory
+                .mockSessionEntity()
+                .user(user)
+                .build();
+
+        List<AccessToken> accessTokens = new ArrayList<>();
+        accessTokens.add(AccessTokenTestDataFactory
+                .newAccessTokenEntity()
+                        .id(previousAccessTokenId)
+                .build());
+
+        RefreshToken refreshToken = RefreshTokenTestDataFactory
+                .mockRefreshTokenEntity()
+                .expiresAt(new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(5)))
+                .session(session)
+                .accessTokens(accessTokens)
+                .build();
+
+        session.setRefreshToken(refreshToken);
+
+        AccessToken accessToken = AccessTokenTestDataFactory.newAccessTokenEntity().build();
+
+        Mockito.when(refreshTokenService.findEntityByActiveToken(Mockito.anyString())).thenReturn(refreshToken);
+        Mockito.when(roleService.getRoleNamesForIds(Mockito.any())).thenReturn(UserTestFactory.MtmAppUserAttributes.DEFAULT_USER_ROLE_NAMES);
+        Mockito.when(accessTokenService.createAccessToken(Mockito.any())).thenReturn(accessToken);
+        Mockito.when(accessTokenService.saveAccessTokens(Mockito.any())).then(AdditionalAnswers.returnsFirstArg());
+        Mockito.when(refreshTokenService.saveRefreshToken(Mockito.any())).then(AdditionalAnswers.returnsFirstArg());
+
+        SessionDTO sessionDTO = sessionService.refreshSession(AuthTestDataFactory.MockConstants.JWT_SESSION_REFRESH_TOKEN);
+
+        assertThat(sessionDTO.getRefreshTokenDTO().getToken())
+                .isEqualTo(refreshToken.getToken());
+
+        assertThat(sessionDTO.getRefreshTokenDTO().getActiveAccessTokenDTO().getId())
+                .isNotEqualTo(previousAccessTokenId);
+
+        assertThat(sessionDTO.getRefreshTokenDTO()
+                .getAccessTokenDTOList().stream()
+                .filter(accessTokenDTO -> accessTokenDTO.getId().equals(previousAccessTokenId))
+                .toList().get(0).getId()
+        ).isEqualTo(previousAccessTokenId);
 
     }
 
     @Test
-    @DisplayName("Session should be invalid on session not found for the given refresh token value.")
+    @DisplayName("Session should be invalid when no session is found for the given refresh token.")
     void shouldThrowNotFoundException_withSessionInvalidMessage_onRefreshSession(){
         Mockito.when(refreshTokenService.findEntityByActiveToken(Mockito.anyString())).thenReturn(null);
 

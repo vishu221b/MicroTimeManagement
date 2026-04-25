@@ -11,7 +11,7 @@ import java.util.Date;
 
 @Data
 @SuperBuilder
-@ToString(exclude = {"refreshToken"})
+@ToString(exclude = {"refreshToken"}, callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Document("access_token")

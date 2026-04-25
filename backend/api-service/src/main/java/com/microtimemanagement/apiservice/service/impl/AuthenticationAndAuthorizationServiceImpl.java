@@ -51,6 +51,11 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
 
     @Override
     public ValidSessionDTO validateCurrentUserSessionForAccessToken(String token) {
+        /**
+         * TODO
+         * @implNote Most of the logic belongs under Session Service validateToken method
+         *  therefore move the necessary logic to the session service
+         */
         Boolean isValidToken = Boolean.FALSE;
         final Boolean isExpired = jwtUtils.isTokenExpired(token);
         String error = null;
