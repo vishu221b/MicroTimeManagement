@@ -3,17 +3,17 @@ package com.microtimemanagement.apiservice.service.impl;
 import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.converter.SessionConverter;
 import com.microtimemanagement.apiservice.dto.SessionPrincipalDTO;
+import com.microtimemanagement.apiservice.dto.entity.AccessTokenDTO;
 import com.microtimemanagement.apiservice.dto.entity.SessionDTO;
+import com.microtimemanagement.apiservice.dto.entity.ValidSessionDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
 import com.microtimemanagement.apiservice.model.AccessToken;
 import com.microtimemanagement.apiservice.model.RefreshToken;
 import com.microtimemanagement.apiservice.model.Session;
 import com.microtimemanagement.apiservice.model.User;
 import com.microtimemanagement.apiservice.repository.SessionRepository;
-import com.microtimemanagement.apiservice.service.AccessTokenService;
-import com.microtimemanagement.apiservice.service.RefreshTokenService;
-import com.microtimemanagement.apiservice.service.RoleService;
-import com.microtimemanagement.apiservice.service.SessionService;
+import com.microtimemanagement.apiservice.service.*;
+import com.microtimemanagement.apiservice.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,15 +28,13 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class SessionServiceImpl implements SessionService {
 
-    private final SessionRepository sessionRepository;
-
-    private final SessionConverter sessionConverter;
-
-    private final RefreshTokenService refreshTokenService;
-
-    private final AccessTokenService accessTokenService;
-
+    private final JwtUtils jwtUtils;
+    private final UserService userService;
     private final RoleService roleService;
+    private final SessionConverter sessionConverter;
+    private final SessionRepository sessionRepository;
+    private final AccessTokenService accessTokenService;
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
@@ -97,8 +95,51 @@ public class SessionServiceImpl implements SessionService {
      *
      */
     @Override
-    public void validateSession(Session session) {
-        //TODO
+    public ValidSessionDTO validateSessionForAccessToken(String token) {
+        // TODO: Move JWT Logic to JWT Service
+        Boolean isValidToken = Boolean.FALSE;
+        final Boolean isExpired = jwtUtils.isTokenExpired(token);
+        String error = null;
+        if(isExpired){
+            error = ErrorConstants.SESSION_EXPIRED;
+            return ValidSessionDTO.builder()
+                    .isValidSession(isValidToken)
+                    .error(error)
+                    .build();
+        }
+
+        final String principal = jwtUtils.extractPrincipalFromToken(token);
+
+        User user = null;
+        if(null!=principal && !principal.isEmpty()){
+            user = userService.getUserByUid(principal);
+            isValidToken = jwtUtils.isValidTokenSubject(token, user);
+        }
+        if(isValidToken){
+            AccessTokenDTO accessTokenDTO = accessTokenService.findAccessToken(token);
+            if(null == accessTokenDTO){
+                log.error("No session found for token: {}, giving error", token);
+                return ValidSessionDTO.builder()
+                        .isValidSession(Boolean.FALSE)
+                        .principal(null)
+                        .error(ErrorConstants.SESSION_TOKEN_INVALID)
+                        .build();
+            }
+            // Convert role from Ids to Names for correct filter chain matching
+            user.setRoles(
+                    roleService.getRoleNamesForIds(user.getRoles())
+            );
+        }else {
+            error = ErrorConstants.SESSION_TOKEN_INVALID;
+        }
+        final Boolean isValid = null!=principal && isValidToken;
+        log.info("isValidSession for isValid: {} and user: {} with error: {}", isValid, user, error);
+        return ValidSessionDTO.builder()
+                .isValidSession(isValid)
+                .principal(user)
+                .error(error)
+                .build();
+
     }
 
     @Override

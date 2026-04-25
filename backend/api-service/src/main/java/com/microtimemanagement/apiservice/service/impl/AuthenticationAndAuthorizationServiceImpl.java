@@ -21,13 +21,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthenticationAndAuthorizationServiceImpl implements AuthenticationAndAuthorizationService {
 
-    private final JwtUtils jwtUtils;
     private final UserService userService;
-
     private final SessionService sessionService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
-    private final AccessTokenService accessTokenService;
-    private final RoleService roleService;
 
     @Override
     public AuthenticationLoginResponseDTO microTimeManagementSessionLogin(
@@ -51,53 +47,7 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
 
     @Override
     public ValidSessionDTO validateCurrentUserSessionForAccessToken(String token) {
-        /**
-         * TODO
-         * @implNote Most of the logic belongs under Session Service validateToken method
-         *  therefore move the necessary logic to the session service
-         */
-        Boolean isValidToken = Boolean.FALSE;
-        final Boolean isExpired = jwtUtils.isTokenExpired(token);
-        String error = null;
-        if(isExpired){
-            error = ErrorConstants.SESSION_EXPIRED;
-            return ValidSessionDTO.builder()
-                    .isValidSession(isValidToken)
-                    .error(error)
-                    .build();
-        }
-
-        final String principal = jwtUtils.extractPrincipalFromToken(token);
-
-        User user = null;
-        if(null!=principal && !principal.isEmpty()){
-            user = userService.getUserByUid(principal);
-            isValidToken = jwtUtils.isValidTokenSubject(token, user);
-        }
-        if(isValidToken){
-            AccessTokenDTO accessTokenDTO = accessTokenService.findAccessToken(token);
-            if(null == accessTokenDTO){
-                log.error("No session found for token: {}, giving error", token);
-                return ValidSessionDTO.builder()
-                        .isValidSession(Boolean.FALSE)
-                        .principal(null)
-                        .error(ErrorConstants.SESSION_TOKEN_INVALID)
-                        .build();
-            }
-            // Convert role from Ids to Names for correct filter chain matching
-            user.setRoles(
-                    roleService.getRoleNamesForIds(user.getRoles())
-            );
-        }else {
-            error = ErrorConstants.SESSION_TOKEN_INVALID;
-        }
-        final Boolean isValid = null!=principal && isValidToken;
-        log.info("isValidSession for isValid: {} and user: {} with error: {}", isValid, user, error);
-        return ValidSessionDTO.builder()
-                .isValidSession(isValid)
-                .principal(user)
-                .error(error)
-                .build();
+        return sessionService.validateSessionForAccessToken(token);
     }
 
     @Override
