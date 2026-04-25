@@ -21,8 +21,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -127,6 +129,42 @@ public class SessionServiceImplTest {
                 .isThrownBy(() -> {
                     sessionService.refreshSession(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN);
                 }).withMessage(ErrorConstants.SESSION_TOKEN_INVALID);
+    }
+
+    @Test
+    @DisplayName("Should throw Not Found Exception with Session Expired message if the refresh token is expired.")
+    void shouldThrowNotFound_withSessionExpiredMessage_onRefreshSession_whenExpiredRefreshToken(){
+        RefreshToken refreshToken = RefreshTokenTestDataFactory
+                .mockRefreshTokenEntity()
+                .expiresAt(new Date(System.currentTimeMillis() - TimeUnit.HOURS.toMillis(5)))
+                .build();
+
+        Mockito.when(refreshTokenService.findEntityByActiveToken(Mockito.anyString())).thenReturn(refreshToken);
+
+        assertThatExceptionOfType(MicroTimeManagementNotFoundException.class).isThrownBy(() -> {
+            sessionService.refreshSession(AuthTestDataFactory.MockConstants.JWT_SESSION_REFRESH_TOKEN);
+        }).withMessage(ErrorConstants.SESSION_EXPIRED);
+
+    }
+
+    @Test
+    @DisplayName("Should throw Not Found Exception with Session Expired message if the associated session is not active.")
+    void shouldThrowNotFound_withSessionExpiredMessage_onRefreshSession_whenInactiveSessionEntity(){
+        RefreshToken refreshToken = RefreshTokenTestDataFactory
+                .mockRefreshTokenEntity()
+                .expiresAt(new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(5)))
+                .session(SessionTestDataFactory
+                        .mockSessionEntity()
+                        .isActive(Boolean.FALSE)
+                        .build())
+                .build();
+
+        Mockito.when(refreshTokenService.findEntityByActiveToken(Mockito.anyString())).thenReturn(refreshToken);
+
+        assertThatExceptionOfType(MicroTimeManagementNotFoundException.class).isThrownBy(() -> {
+            sessionService.refreshSession(AuthTestDataFactory.MockConstants.JWT_SESSION_REFRESH_TOKEN);
+        }).withMessage(ErrorConstants.SESSION_EXPIRED);
+
     }
 
 
