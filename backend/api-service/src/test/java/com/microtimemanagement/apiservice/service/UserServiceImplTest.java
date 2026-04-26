@@ -49,6 +49,7 @@ public class UserServiceImplTest {
     private UserServiceImpl userService;
 
     @Test
+    @DisplayName("Should create a new user successfully.")
     void shouldCreateNewUser(){
         NewUserRequestDTO requestDTO = UserTestFactory.getNewUserRequestDTO();
         GenericMessageResponseDTO<NewUserResponseDTO>
@@ -62,6 +63,7 @@ public class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("Should throw UserException when another user with same username already exists while user registration.")
     void shouldThrowExceptionForExistingUserName_onNewUserCreationRequest(){
         NewUserRequestDTO requestDTO = UserTestFactory.getNewUserRequestDTO();
         Mockito.when(userRepository.findByUsername(requestDTO.getUsername()))
@@ -73,6 +75,7 @@ public class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("Should throw UserException when another user with same email already exists while user registration.")
     void shouldThrowExceptionForExistingUserEmail_onNewUserCreationRequest(){
         NewUserRequestDTO requestDTO = UserTestFactory.getNewUserRequestDTO();
         Mockito.when(userRepository.findByEmail(requestDTO.getEmail()))
@@ -84,6 +87,7 @@ public class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("Should fetch correct user using the username from repository.")
     void shouldLoadUserByUsername(){
         User user = UserTestFactory.existingAppUserEntity()
                 .id(UUID.randomUUID().toString())
@@ -120,6 +124,7 @@ public class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("Should find user by userId and return UserDTO.")
     void shouldFindUserDTOByUserId(){
         String userId = UUID.randomUUID().toString();
         User appUser = UserTestFactory.existingAppUserEntity().id(userId).build();
@@ -134,6 +139,7 @@ public class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("Should find user by username and return UserDTO.")
     void shouldFindUserDTOByUsername(){
         String userId = UUID.randomUUID().toString();
         User appUser = UserTestFactory.existingAppUserEntity().id(userId).build();
@@ -166,6 +172,7 @@ public class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("Should find user by email and return UserDTO.")
     void shouldFindUserDTOByEmail(){
         String userId = UUID.randomUUID().toString();
         User appUser = UserTestFactory.existingAppUserEntity().id(userId).build();

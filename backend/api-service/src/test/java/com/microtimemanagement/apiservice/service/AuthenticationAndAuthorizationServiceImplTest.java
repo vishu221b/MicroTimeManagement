@@ -1,5 +1,6 @@
 package com.microtimemanagement.apiservice.service;
 
+import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.dto.entity.AccessTokenDTO;
 import com.microtimemanagement.apiservice.dto.entity.RefreshTokenDTO;
 import com.microtimemanagement.apiservice.dto.entity.SessionDTO;
@@ -45,7 +46,7 @@ public class AuthenticationAndAuthorizationServiceImplTest {
     AuthenticationAndAuthorizationServiceImpl authenticationAndAuthorizationService;
 
     @Test
-    @DisplayName("Should create mtm session login Successfully")
+    @DisplayName("Should create mtm session login Successfully.")
     void shouldCreateMicroTimeManagementSessionLogin(){
         User user = UserTestFactory.existingAppUserEntity().build();
         Mockito.when(userService.loadUserByUsername(user.getUsername())).thenReturn(user);
@@ -74,6 +75,7 @@ public class AuthenticationAndAuthorizationServiceImplTest {
     }
 
     @Test
+    @DisplayName("Should throw Bad request exception with message 'Invalid password' when the login password is incorrect.")
     void shouldThrowBadPasswordException_whenMicroTimeManagementSessionLogin(){
         User user = UserTestFactory.existingAppUserEntity().build();
         Mockito.when(userService.loadUserByUsername(user.getUsername())).thenReturn(user);
@@ -85,12 +87,13 @@ public class AuthenticationAndAuthorizationServiceImplTest {
 
         Assertions.assertThatExceptionOfType(MicroTimeManagementBadRequestException.class).isThrownBy(() -> {
             authenticationAndAuthorizationService.microTimeManagementSessionLogin(authenticationRequestDTO);
-        }).withMessage("Invalid password. Please try again.");
+        }).withMessage(ErrorConstants.INVALID_PASSWORD_VALUE);
 
     }
 
 
     @Test
+    @DisplayName("Should refresh the user session.")
     void shouldCreateMicroTimeManagementSessionRefresh(){
         AccessTokenRefreshRequestDTO accessTokenRefreshRequestDTO = AccessTokenRefreshRequestDTO.builder()
                 .token(AuthTestDataFactory.MockConstants.JWT_SESSION_REFRESH_TOKEN)
@@ -108,10 +111,12 @@ public class AuthenticationAndAuthorizationServiceImplTest {
         SessionDTO sessionDTO = SessionDTO.builder()
                 .refreshTokenDTO(refreshTokenDTO)
                 .build();
+
         Mockito.when(sessionService.refreshSession(accessTokenRefreshRequestDTO.getToken()))
                 .thenReturn(sessionDTO);
 
-        AuthenticationLoginResponseDTO responseDTO = authenticationAndAuthorizationService.microTimeManagementSessionRefresh(accessTokenRefreshRequestDTO);
+        AuthenticationLoginResponseDTO responseDTO = authenticationAndAuthorizationService
+                .microTimeManagementSessionRefresh(accessTokenRefreshRequestDTO);
 
         Assertions.assertThat(responseDTO.getAccessToken()).isEqualTo(accessTokenDTO.getToken());
         Assertions.assertThat(responseDTO.getRefreshToken()).isEqualTo(refreshTokenDTO.getToken());
