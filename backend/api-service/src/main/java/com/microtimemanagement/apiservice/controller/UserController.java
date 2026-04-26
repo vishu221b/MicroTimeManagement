@@ -24,7 +24,7 @@ import java.security.Principal;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(ApiPathConstants.USER_BASE_ROUTE_V1)
+@RequestMapping(ApiPathConstants.USER_BASE_ENDPOINT)
 @Tag(name = "Users", description = "User Operations")
 public class UserController {
     /**

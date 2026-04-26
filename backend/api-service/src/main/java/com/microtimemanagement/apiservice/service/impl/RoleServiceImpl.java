@@ -3,14 +3,18 @@ package com.microtimemanagement.apiservice.service.impl;
 import com.microtimemanagement.apiservice.constants.RoleConstants;
 import com.microtimemanagement.apiservice.converter.RoleConverter;
 import com.microtimemanagement.apiservice.dto.entity.RoleDTO;
+import com.microtimemanagement.apiservice.model.Role;
 import com.microtimemanagement.apiservice.repository.RoleRepository;
 import com.microtimemanagement.apiservice.service.RoleService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RoleServiceImpl implements RoleService {
@@ -34,19 +38,21 @@ public class RoleServiceImpl implements RoleService {
      * @return
      */
     @Override
-    public Set<RoleDTO> findActiveRolesByName(Set<String> roleNames) {
-        return roleRepository.findByNameAndIsActiveTrue(roleNames)
-                .stream().map(roleConverter::toDTO).collect(Collectors.toSet());
+    public Set<RoleDTO> findActiveRolesByName(List<String> roleNames) {
+        List<Role> roles = roleRepository.findByNameInAndIsActiveTrue(roleNames);
+        log.info("Retrieved active roles by name: {}", roles);
+        return roles.stream().map(roleConverter::toDTO).collect(Collectors.toSet());
     }
 
     @Override
     public Set<String> getDefaultUserRoleIds() {
         Set<RoleDTO> roleDTOS = findActiveRolesByName(
-                Set.of(
+                List.of(
                         RoleConstants.USER_OPS_ROLE_WITH_PREFIX,
                         RoleConstants.ACTIVITY_CRUD_WITH_PREFIX
                 )
         );
+        log.info("Default Roles: {}", roleDTOS);
         return roleDTOS.stream()
                 .map(RoleDTO::getId)
                 .collect(Collectors.toSet());

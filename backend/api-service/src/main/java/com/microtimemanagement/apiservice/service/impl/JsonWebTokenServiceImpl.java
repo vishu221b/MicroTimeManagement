@@ -1,8 +1,11 @@
 package com.microtimemanagement.apiservice.service.impl;
 
+import com.microtimemanagement.apiservice.constants.ErrorConstants;
+import com.microtimemanagement.apiservice.dto.entity.ValidSessionTokenDTO;
 import com.microtimemanagement.apiservice.dto.request.JwtCreationRequestDTO;
 import com.microtimemanagement.apiservice.model.User;
 import com.microtimemanagement.apiservice.service.JsonWebTokenService;
+import com.microtimemanagement.apiservice.service.UserService;
 import com.microtimemanagement.apiservice.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +25,7 @@ import org.springframework.stereotype.Service;
 public class JsonWebTokenServiceImpl implements JsonWebTokenService {
 
     private final JwtUtils jwtUtils;
+    private final UserService userService;
 
     /**
      * @implNote This method creates a new JWT Access Token for the given subject and claims in the request dto.
@@ -72,5 +76,37 @@ public class JsonWebTokenServiceImpl implements JsonWebTokenService {
     @Override
     public Boolean tokenSubjectIsValid(String token, User user) {
         return jwtUtils.isValidTokenSubject(token, user);
+    }
+
+    public ValidSessionTokenDTO validateJwtSessionAccessToken(String token){
+        Boolean isValidToken = Boolean.FALSE;
+        final Boolean isExpired = isJwtTokenExpired(token);
+        String error = null;
+
+        if(isExpired){
+            error = ErrorConstants.SESSION_EXPIRED;
+            return ValidSessionTokenDTO.builder()
+                    .isValidSession(isValidToken)
+                    .error(error)
+                    .build();
+        }
+        final String principal = getPrincipalSubjectForToken(token);
+        User user = null;
+
+        if(null!=principal && !principal.isEmpty()){
+            user = userService.getUserByUid(principal);
+            if(tokenSubjectIsValid(token, user)){
+                isValidToken=Boolean.TRUE;
+            }else {
+                error = ErrorConstants.SESSION_TOKEN_INVALID;
+            }
+        }
+        final Boolean isValid = null!=principal && isValidToken;
+        log.info("isValidSession for isValid: {} and user: {} with error: {}", isValid, user, error);
+        return ValidSessionTokenDTO.builder()
+                .isValidSession(isValid)
+                .principal(user)
+                .error(error)
+                .build();
     }
 }

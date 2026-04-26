@@ -11,7 +11,7 @@ springdoc:
     default-model-expand-depth: 5
     default-models-expand-depth: -1
     use-root-path: true
-  show-actuator: true
+  show-actuator: false
 management:
   endpoints:
     web:

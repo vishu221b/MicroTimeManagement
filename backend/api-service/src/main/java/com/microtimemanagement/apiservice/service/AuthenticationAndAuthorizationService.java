@@ -1,7 +1,7 @@
 package com.microtimemanagement.apiservice.service;
 
 
-import com.microtimemanagement.apiservice.dto.entity.ValidSessionDTO;
+import com.microtimemanagement.apiservice.dto.entity.ValidSessionTokenDTO;
 import com.microtimemanagement.apiservice.dto.request.AccessTokenRefreshRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.AuthenticationRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.AuthenticationLoginResponseDTO;
@@ -13,7 +13,7 @@ public interface AuthenticationAndAuthorizationService {
 
     void microTimeManagementSessionLogout(String substring);
 
-    ValidSessionDTO validateCurrentUserSessionForAccessToken(String token);
+    ValidSessionTokenDTO validateCurrentUserSessionForAccessToken(String token);
 
     AuthenticationLoginResponseDTO microTimeManagementSessionRefresh(@Valid AccessTokenRefreshRequestDTO accessTokenRefreshRequestDTO);
 }

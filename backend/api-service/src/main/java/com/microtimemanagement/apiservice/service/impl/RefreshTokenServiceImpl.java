@@ -1,14 +1,20 @@
 package com.microtimemanagement.apiservice.service.impl;
 
+import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.dto.SessionPrincipalDTO;
+import com.microtimemanagement.apiservice.dto.entity.ValidSessionTokenDTO;
+import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
 import com.microtimemanagement.apiservice.model.AccessToken;
 import com.microtimemanagement.apiservice.model.RefreshToken;
+import com.microtimemanagement.apiservice.model.User;
 import com.microtimemanagement.apiservice.repository.RefreshTokenRepository;
 import com.microtimemanagement.apiservice.service.AccessTokenService;
 import com.microtimemanagement.apiservice.service.RefreshTokenService;
+import com.microtimemanagement.apiservice.service.RoleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
@@ -20,9 +26,9 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
-    private final RefreshTokenRepository refreshTokenRepository;
-
+    private final RoleService roleService;
     private final AccessTokenService accessTokenService;
+    private final RefreshTokenRepository refreshTokenRepository;
     /**
      * @return
      */
@@ -33,7 +39,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
                 .expiresAt(new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(7)))
                 .accessTokens(List.of(accessTokenService.createAccessToken(sessionPrincipalDTO)))
                 .build();
-        refreshToken = refreshTokenRepository.save(refreshToken);
+        refreshToken = saveRefreshToken(refreshToken);
         log.info("Saved refresh token: {}", refreshToken);
         return refreshToken;
     }
@@ -43,20 +49,32 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         return refreshTokenRepository.save(refreshToken);
     }
 
+
     /**
      * @return
      */
     @Override
-    public Boolean revokeRefreshToken(String token) {
-        return null;
+    @Transactional
+    public Boolean revokeRefreshToken(RefreshToken refreshToken) {
+        if(null!=refreshToken){
+            refreshToken.setIsActive(Boolean.FALSE);
+            refreshToken=saveRefreshToken(refreshToken);
+            return accessTokenService.revokeAccessTokens(refreshToken.getAccessTokens());
+        }
+        return Boolean.FALSE;
     }
 
     /**
-     * @param refreshToken
+     * @param token Refresh Token to be validated
      */
     @Override
-    public void validateRefreshToken(String refreshToken) {
-
+    public RefreshToken validateRefreshToken(String token) {
+        RefreshToken refreshToken = findEntityByActiveToken(token);
+        if(null == refreshToken)
+            throw new MicroTimeManagementNotFoundException(ErrorConstants.SESSION_TOKEN_INVALID);
+        if(refreshToken.getExpiresAt().getTime() <= System.currentTimeMillis())
+            throw new MicroTimeManagementNotFoundException(ErrorConstants.SESSION_EXPIRED);
+        return refreshToken;
     }
 
     @Override
@@ -68,5 +86,35 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Override
     public RefreshToken findEntityByActiveToken(String token) {
         return refreshTokenRepository.findByTokenAndIsActiveTrue(token);
+    }
+
+    @Override
+    public RefreshToken refreshSessionForRefreshToken(RefreshToken refreshToken) {
+        User principal = refreshToken.getSession().getUser();
+        AccessToken accessToken = accessTokenService.createAccessToken(
+                SessionPrincipalDTO.builder()
+                        .uid(principal.getUid())
+                        .authorities(roleService.getRoleNamesForIds(principal.getRoles()))
+                        .build()
+        );
+        List<AccessToken> accessTokens = refreshToken.getAccessTokens();
+        accessTokenService.revokeAccessTokens(accessTokens);
+        accessTokens.add(accessToken);
+        refreshToken.setAccessTokens(accessTokens);
+        saveRefreshToken(refreshToken);
+
+        return refreshToken;
+    }
+
+    @Override
+    public RefreshToken revokeRefreshTokenUsingAccessToken(String token) {
+        AccessToken accessToken = accessTokenService.revokeAccessToken(token);
+        revokeRefreshToken(accessToken.getRefreshToken());
+        return accessToken.getRefreshToken();
+    }
+
+    @Override
+    public ValidSessionTokenDTO validateAccessToken(String token) {
+        return accessTokenService.validateAccessToken(token);
     }
 }

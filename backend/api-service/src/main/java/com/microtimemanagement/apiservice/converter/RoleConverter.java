@@ -15,13 +15,15 @@ public class RoleConverter implements BaseDTOConverter<Role, RoleDTO>{
     }
 
     public RoleDTO toDTO(Role role){
-        return RoleDTO.builder()
-                .id(role.getId())
-                .name(role.getName())
-                .createdAt(role.getCreatedAt())
-                .lastUpdatedAt(role.getLastUpdatedAt())
-                .isActive(role.getIsActive())
-                .build();
+        if(null!=role)
+            return RoleDTO.builder()
+                    .id(role.getId())
+                    .name(role.getName())
+                    .createdAt(role.getCreatedAt())
+                    .lastUpdatedAt(role.getLastUpdatedAt())
+                    .isActive(role.getIsActive())
+                    .build();
+        return null;
     }
 
 }

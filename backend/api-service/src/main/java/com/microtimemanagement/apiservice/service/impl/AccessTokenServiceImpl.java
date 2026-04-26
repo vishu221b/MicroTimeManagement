@@ -1,17 +1,19 @@
 package com.microtimemanagement.apiservice.service.impl;
 
+import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.converter.AccessTokenConverter;
 import com.microtimemanagement.apiservice.dto.SessionPrincipalDTO;
 import com.microtimemanagement.apiservice.dto.entity.AccessTokenDTO;
+import com.microtimemanagement.apiservice.dto.entity.ValidSessionTokenDTO;
 import com.microtimemanagement.apiservice.dto.request.JwtCreationRequestDTO;
 import com.microtimemanagement.apiservice.model.AccessToken;
 import com.microtimemanagement.apiservice.repository.AccessTokenRepository;
 import com.microtimemanagement.apiservice.service.AccessTokenService;
 import com.microtimemanagement.apiservice.service.JsonWebTokenService;
-import com.microtimemanagement.apiservice.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
@@ -22,10 +24,8 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class AccessTokenServiceImpl implements AccessTokenService {
 
-    private final AccessTokenRepository accessTokenRepository;
-
     private final JsonWebTokenService jsonWebTokenService;
-
+    private final AccessTokenRepository accessTokenRepository;
     private final AccessTokenConverter accessTokenConverter;
 
     /**
@@ -62,13 +62,38 @@ public class AccessTokenServiceImpl implements AccessTokenService {
         return accessTokenRepository.saveAll(accessTokens);
     }
 
+    private AccessToken saveAccessToken(AccessToken accessToken) {
+        return accessTokenRepository.save(accessToken);
+    }
+
     /**
-     * @param accessToken
+     * @param token
      * @return
      */
     @Override
-    public Boolean revokeAccessToken(String accessToken) {
+    public AccessToken revokeAccessToken(String token) {
+        AccessToken accessToken = findByToken(token);
+        if(null != accessToken){
+            accessToken.setIsActive(Boolean.FALSE);
+            return saveAccessToken(accessToken);
+        }
         return null;
+    }
+
+    @Override
+    @Transactional
+    public Boolean revokeAccessTokens(List<AccessToken> accessTokens) {
+        if(null!=accessTokens && !accessTokens.isEmpty()){
+            accessTokens.forEach(
+                    accessToken -> {
+                        if(accessToken.getIsActive().equals(Boolean.TRUE))
+                            accessToken.setIsActive(Boolean.FALSE);
+                    }
+            );
+            saveAccessTokens(accessTokens);
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
     }
 
     /**
@@ -86,5 +111,22 @@ public class AccessTokenServiceImpl implements AccessTokenService {
         AccessToken accessToken = accessTokenRepository.findByTokenAndIsActiveTrue(token);
         log.info("Found by token: {}", accessToken);
         return accessToken;
+    }
+
+    @Override
+    public ValidSessionTokenDTO validateAccessToken(String token) {
+
+        AccessTokenDTO accessTokenDTO = findAccessToken(token);
+
+        if(null == accessTokenDTO){
+            log.error("No session found for token: {}, giving error", token);
+            return ValidSessionTokenDTO.builder()
+                    .isValidSession(Boolean.FALSE)
+                    .principal(null)
+                    .error(ErrorConstants.SESSION_TOKEN_INVALID)
+                    .build();
+        }
+
+        return jsonWebTokenService.validateJwtSessionAccessToken(token);
     }
 }

@@ -2,7 +2,7 @@ package com.microtimemanagement.apiservice.service.impl;
 
 import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.dto.entity.SessionDTO;
-import com.microtimemanagement.apiservice.dto.entity.ValidSessionDTO;
+import com.microtimemanagement.apiservice.dto.entity.ValidSessionTokenDTO;
 import com.microtimemanagement.apiservice.dto.request.AccessTokenRefreshRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.AuthenticationRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.AuthenticationLoginResponseDTO;
@@ -42,11 +42,11 @@ public class AuthenticationAndAuthorizationServiceImpl implements Authentication
 
     @Override
     public void microTimeManagementSessionLogout(String token) {
-        sessionService.destroySession(token);
+        sessionService.destroySessionForAccessToken(token);
     }
 
     @Override
-    public ValidSessionDTO validateCurrentUserSessionForAccessToken(String token) {
+    public ValidSessionTokenDTO validateCurrentUserSessionForAccessToken(String token) {
         return sessionService.validateSessionForAccessToken(token);
     }
 

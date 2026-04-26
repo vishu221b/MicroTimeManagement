@@ -2,7 +2,6 @@ package com.microtimemanagement.apiservice.converter;
 
 import com.microtimemanagement.apiservice.dto.entity.UserDTO;
 import com.microtimemanagement.apiservice.model.User;
-import com.microtimemanagement.apiservice.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -7,16 +7,17 @@ import com.microtimemanagement.apiservice.dto.request.UserRoleRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.UserRoleResponseDTO;
 import com.microtimemanagement.apiservice.service.AdminService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @SecurityRequirement(name = "MTM Auth")
-@RequestMapping(ApiPathConstants.ADMIN_BASE_V1)
+@Tag(name = "Admin", description = "Admin Operations")
+@RequestMapping(ApiPathConstants.ADMIN_BASE_ENDPOINT)
 public class AdminController {
 
-    //TODO: Implement later once App is Live
     final AdminService adminService;
 
     @RequestMapping(value = ApiPathConstants.EMPTY_BASE, method = RequestMethod.POST)

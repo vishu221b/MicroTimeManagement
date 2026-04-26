@@ -39,7 +39,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public User loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = findActiveUserByEmailOrUsername(username);;
-        user.setRoles(roleService.getRoleNamesForIds(user.getRoles()));
         return user;
     }
 
@@ -59,7 +58,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public GenericMessageResponseDTO<?> createNewUser(NewUserRequestDTO requestDTO) {
-        User newUser = User.builder()
+
+        validateIfUserAlreadyExistsByUsernameOrEmail(requestDTO.getUsername(), requestDTO.getEmail(), Boolean.FALSE);
+
+        User newUser = userRepository.save(User.builder()
                 .email(requestDTO.getEmail())
                 .password(bCryptPasswordEncoder.encode(requestDTO.getPassword()))
                 .firstName(requestDTO.getFirstName())
@@ -67,9 +69,7 @@ public class UserServiceImpl implements UserService {
                 .username(requestDTO.getUsername())
                 .dateOfBirth(requestDTO.getDateOfBirth())
                 .roles(roleService.getDefaultUserRoleIds())
-                .build();
-        validateIfUserAlreadyExistsByUsernameOrEmail(newUser.getUsername(), newUser.getEmail(), Boolean.FALSE);
-        userRepository.save(newUser);
+                .build());
         return GenericMessageResponseDTO.builder().payload(NewUserResponseDTO.builder()
                 .emailAddress(newUser.getEmail())
                 .username(newUser.getUsername())
@@ -115,21 +115,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO findDTOById(String userId) {
         User user = findById(userId);
-        user.setRoles(roleService.getRoleNamesForIds(user.getRoles()));
+        replaceRoleIdsWithNamesForUser(user);
         return userConverter.toDTO(user);
     }
 
     @Override
     public UserDTO findDTOByUsername(String username) {
         User user = findByUsername(username);
-        user.setRoles(roleService.getRoleNamesForIds(user.getRoles()));
+        replaceRoleIdsWithNamesForUser(user);
         return userConverter.toDTO(user);
     }
 
     @Override
     public UserDTO findDTOByEmail(String userEmail) {
         User user = findByEmail(userEmail);
-        user.setRoles(roleService.getRoleNamesForIds(user.getRoles()));
+        replaceRoleIdsWithNamesForUser(user);
         return userConverter.toDTO(user);
     }
 
@@ -215,11 +215,12 @@ public class UserServiceImpl implements UserService {
     }
 
     private User findActiveUserByEmailOrUsername(String username){
-        Optional<User> user = userRepository.findByEmailOrUsernameAndIsActiveTrue(username, username);
-        if(user.isEmpty())
+        Optional<User> optionalUser = userRepository.findByEmailOrUsernameAndIsActiveTrue(username, username);
+        if(optionalUser.isEmpty())
             throw new MicroTimeManagementNotFoundException(
                     String.format(ErrorConstants.ACCOUNT_NOT_FOUND_FOR_USERNAME, username));
-        return user.get();
+        User user = optionalUser.get();
+        return replaceRoleIdsWithNamesForUser(user);
     }
     @Override
     public GenericMessageResponseDTO<?> changeUserPassword(PasswordChangeRequestDTO passwordChangeRequestDTO) {
@@ -244,6 +245,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByUidAndIsActiveTrue(id);
         if(null == user)
             throw new MicroTimeManagementNotFoundException(ErrorConstants.USER_NOT_FOUND_IN_DB_RECORDS);
+        replaceRoleIdsWithNamesForUser(user);
         return user;
     }
 
@@ -258,6 +260,15 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO loadUserDTOByUsername(String username) {
         return userConverter.toDTO(findActiveUserByEmailOrUsername(username));
+    }
+
+    @Override
+    public User replaceRoleIdsWithNamesForUser(User user) {
+        if(null!=user){
+            user.setRoles(roleService.getRoleNamesForIds(user.getRoles()));
+            return user;
+        }
+        return null;
     }
 
 }

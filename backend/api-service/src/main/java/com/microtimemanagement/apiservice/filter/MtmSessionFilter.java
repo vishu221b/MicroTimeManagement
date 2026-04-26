@@ -2,7 +2,7 @@ package com.microtimemanagement.apiservice.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microtimemanagement.apiservice.dto.ExceptionDTO;
-import com.microtimemanagement.apiservice.dto.entity.ValidSessionDTO;
+import com.microtimemanagement.apiservice.dto.entity.ValidSessionTokenDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementAuthenticationException;
 import com.microtimemanagement.apiservice.service.AuthenticationAndAuthorizationService;
 import com.microtimemanagement.apiservice.utils.JwtUtils;
@@ -49,17 +49,17 @@ public class MtmSessionFilter extends OncePerRequestFilter {
 
                 if(null == SecurityContextHolder.getContext().getAuthentication()){
 
-                    ValidSessionDTO validSessionDTO = authenticationAndAuthorizationService
+                    ValidSessionTokenDTO validSessionTokenDTO = authenticationAndAuthorizationService
                             .validateCurrentUserSessionForAccessToken(accessToken);
 
-                    if(!validSessionDTO.getIsValidSession()){
-                        throw new MicroTimeManagementAuthenticationException(validSessionDTO.getError());
+                    if(!validSessionTokenDTO.getIsValidSession()){
+                        throw new MicroTimeManagementAuthenticationException(validSessionTokenDTO.getError());
                     }
                     UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
                             new UsernamePasswordAuthenticationToken(
-                                    validSessionDTO.getPrincipal(),
+                                    validSessionTokenDTO.getPrincipal(),
                                     null,
-                                    validSessionDTO.getPrincipal().getAuthorities()
+                                    validSessionTokenDTO.getPrincipal().getAuthorities()
                             );
                     usernamePasswordAuthenticationToken
                             .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

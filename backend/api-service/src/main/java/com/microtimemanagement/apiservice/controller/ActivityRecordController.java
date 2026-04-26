@@ -1,5 +1,6 @@
 package com.microtimemanagement.apiservice.controller;
 
+import com.microtimemanagement.apiservice.constants.ApiPathConstants;
 import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordCreationdResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordResponseDTO;
@@ -14,8 +15,8 @@ import java.text.ParseException;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("api/v1/activities")
 @SecurityRequirement(name = "MTM Auth")
+@RequestMapping(ApiPathConstants.ACTIVITY_BASE_ENDPOINT)
 @Tag(name = "Activity Record", description = "Activity Record Operations")
 public class ActivityRecordController {
 

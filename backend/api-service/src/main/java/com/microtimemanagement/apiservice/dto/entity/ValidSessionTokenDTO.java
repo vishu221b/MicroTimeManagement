@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ValidSessionDTO {
+public class ValidSessionTokenDTO {
 
     private Boolean isValidSession;
 

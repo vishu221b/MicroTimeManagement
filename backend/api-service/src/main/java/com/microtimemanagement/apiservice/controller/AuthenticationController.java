@@ -1,5 +1,6 @@
 package com.microtimemanagement.apiservice.controller;
 
+import com.microtimemanagement.apiservice.constants.ApiPathConstants;
 import com.microtimemanagement.apiservice.constants.ResponseMessages;
 import com.microtimemanagement.apiservice.dto.request.AccessTokenRefreshRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.AuthenticationRequestDTO;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.ServletWebRequest;
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping(ApiPathConstants.AUTH_BASE_ENDPOINT)
 @Tag(name = "Authentication", description = "Authentication Operations")
 @RequiredArgsConstructor
 public class AuthenticationController {
