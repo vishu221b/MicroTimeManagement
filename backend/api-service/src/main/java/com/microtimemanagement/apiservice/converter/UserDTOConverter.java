@@ -1,14 +1,10 @@
 package com.microtimemanagement.apiservice.converter;
 
-import com.microtimemanagement.apiservice.dto.UserDTO;
+import com.microtimemanagement.apiservice.dto.entity.UserDTO;
 import com.microtimemanagement.apiservice.model.User;
 import com.microtimemanagement.apiservice.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -25,10 +21,7 @@ public class UserDTOConverter implements BaseDTOConverter<User, UserDTO> {
                 .email(userDTO.getEmail())
                 .password(userDTO.getPassword())
                 .dateOfBirth(userDTO.getDateOfBirth())
-                .roles(userDTO.getRoles().stream()
-                        .map(r -> roleRepository.findByName(r).getId())
-                                .collect(Collectors.toSet())
-                )
+                .roles(userDTO.getRoles())
                 .build();
     }
 
@@ -46,10 +39,7 @@ public class UserDTOConverter implements BaseDTOConverter<User, UserDTO> {
                 .lastUpdatedAt(user.getLastUpdatedAt())
                 .password(user.getPassword())
                 .dateOfBirth(user.getDateOfBirth())
-                .roles(user.getRoles().stream()
-                        .map(r -> roleRepository.findByIdOrNameAndIsActiveTrue(r, r).get().getName())
-                        .collect(Collectors.toSet())
-                )
+                .roles(user.getRoles())
                 .build();
     }
 

@@ -2,6 +2,7 @@ package com.microtimemanagement.apiservice.constants;
 
 public class ErrorConstants {
     public static final String INVALID_DATE_VALUE = "Invalid date value. Please supply date in correct format.";
+    public static final String INVALID_PASSWORD_VALUE = "Invalid password. Please try again.";
     public static final String OVERLAPPING_NEW_ACTIVITY_TIME_WITH_PREVIOUS_ACTIVITY = "Overlapping activity time. Cannot create record as a record already exists with time falling in between the provided time span.";
     public static final String ROLE_NOT_FOUND_ERROR = "No role found.";
     
@@ -24,4 +25,9 @@ public class ErrorConstants {
     public static final String SESSION_TOKEN_INVALID = "Invalid session token.";
     public static final String ACTIVITY_NOT_FOUND = "No activity found.";
     public static final String PLEASE_FIX_THE_FOLLOWING_ERRORS = "Please fix the following errors:";
+    public static final String SESSION_EXPIRY_CANNOT_BE_NULL = "Session expiry date cannot be null.";
+    public static final String PASSWORD_CANNOT_BE_BLANK = "Password cannot be Blank.";
+    public static final String PASSWORD_CANNOT_BE_NULL = "Password cannot be Empty.";
+    public static final String USERNAME_CANNOT_BE_NULL = "Username cannot be Empty.";
+    public static final String USERNAME_CANNOT_BE_BLANK = "Username cannot be Blank.";
 }

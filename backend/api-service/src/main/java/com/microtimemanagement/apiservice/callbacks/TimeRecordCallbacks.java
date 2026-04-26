@@ -13,10 +13,11 @@ public class TimeRecordCallbacks implements BeforeConvertCallback<ActivityRecord
 
     @Override
     public ActivityRecord onBeforeConvert(ActivityRecord entity, String collection) {
-        log.info("Time Record Before Convert Callback -> Entity:{}, Collection:{}", entity, collection);
         entity.setCreatedAt(new Date());
-        entity.setLastUpdatedAt(new Date());
-        log.info("Time Record After Convert Callback -> Entity:{}, Collection:{}", entity, collection);
+        if(null == entity.getLastUpdatedAt())
+            entity.setLastUpdatedAt(new Date());
+        if(null == entity.getIsActive())
+            entity.setIsActive(true);
         return entity;
     }
 }

@@ -1,7 +1,7 @@
 package com.microtimemanagement.apiservice.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.microtimemanagement.apiservice.dto.UserDTO;
+import com.microtimemanagement.apiservice.dto.entity.UserDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

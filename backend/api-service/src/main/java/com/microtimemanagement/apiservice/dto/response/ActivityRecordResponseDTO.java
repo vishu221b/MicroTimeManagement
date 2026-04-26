@@ -1,6 +1,6 @@
 package com.microtimemanagement.apiservice.dto.response;
 
-import com.microtimemanagement.apiservice.dto.ActivityDTO;
+import com.microtimemanagement.apiservice.dto.entity.ActivityDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

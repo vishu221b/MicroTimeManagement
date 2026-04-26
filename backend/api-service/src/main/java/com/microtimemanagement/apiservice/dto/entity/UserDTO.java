@@ -1,4 +1,4 @@
-package com.microtimemanagement.apiservice.dto;
+package com.microtimemanagement.apiservice.dto.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.microtimemanagement.apiservice.model.ActivityRecord;

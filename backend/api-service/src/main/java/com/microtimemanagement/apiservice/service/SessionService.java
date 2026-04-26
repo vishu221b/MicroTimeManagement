@@ -1,6 +1,7 @@
 package com.microtimemanagement.apiservice.service;
 
-import com.microtimemanagement.apiservice.dto.SessionDTO;
+import com.microtimemanagement.apiservice.dto.entity.SessionDTO;
+import com.microtimemanagement.apiservice.dto.entity.ValidSessionDTO;
 import com.microtimemanagement.apiservice.model.User;
 
 public interface SessionService {
@@ -9,6 +10,7 @@ public interface SessionService {
 
     void destroySession(String token);
 
-    SessionDTO getByToken(String token);
+    ValidSessionDTO validateSessionForAccessToken(String token);
 
+    SessionDTO refreshSession(String token);
 }

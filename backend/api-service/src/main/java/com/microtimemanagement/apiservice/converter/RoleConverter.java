@@ -1,6 +1,6 @@
 package com.microtimemanagement.apiservice.converter;
 
-import com.microtimemanagement.apiservice.dto.RoleDTO;
+import com.microtimemanagement.apiservice.dto.entity.RoleDTO;
 import com.microtimemanagement.apiservice.model.Role;
 import org.springframework.stereotype.Component;
 

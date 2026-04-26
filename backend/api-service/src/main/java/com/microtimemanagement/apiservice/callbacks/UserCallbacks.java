@@ -18,11 +18,12 @@ public class UserCallbacks implements BeforeConvertCallback<User>, AfterConvertC
         // Call at the time of new user creation
         if(null==entity.getCreatedAt()){
             entity.setCreatedAt(new Date());
-            entity.setIsActive(true);
             entity.setUid(UUID.randomUUID().toString());
         }
-        // Update call edits
-        entity.setLastUpdatedAt(new Date());
+        if(null == entity.getLastUpdatedAt())
+            entity.setLastUpdatedAt(new Date());
+        if(null == entity.getIsActive())
+            entity.setIsActive(true);
         return entity;
     }
 

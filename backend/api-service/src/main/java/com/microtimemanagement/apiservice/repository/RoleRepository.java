@@ -6,11 +6,14 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface RoleRepository extends MongoRepository<Role, String> {
 
     Role findByNameAndIsActiveTrue(String name);
+
+    Set<Role> findByNameAndIsActiveTrue(Set<String> name);
 
     List<Role> findAllByNameAndIsActiveTrue(String name);
 

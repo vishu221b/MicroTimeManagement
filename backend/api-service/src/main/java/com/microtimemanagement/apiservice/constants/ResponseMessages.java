@@ -7,4 +7,5 @@ public class ResponseMessages {
     public static final String PASSWORD_CHANGED_SUCCESSFULLY = "Password updated successfully.";
     public static final String USER_REGISTRATION_SUCCESS = "Registration Complete!!";
     public static final String USER_DETAILS_UPDATED = "Details Updated Successfully!!";
+    public static final String SUCCESS = "SUCCESS";
 }

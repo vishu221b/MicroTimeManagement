@@ -1,6 +1,6 @@
 package com.microtimemanagement.apiservice.converter;
 
-import com.microtimemanagement.apiservice.dto.ActivityDTO;
+import com.microtimemanagement.apiservice.dto.entity.ActivityDTO;
 import com.microtimemanagement.apiservice.model.Activity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

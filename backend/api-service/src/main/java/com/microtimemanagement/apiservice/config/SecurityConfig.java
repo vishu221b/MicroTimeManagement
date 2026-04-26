@@ -10,7 +10,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.core.GrantedAuthorityDefaults;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -83,16 +82,17 @@ public class SecurityConfig {
                                         "/swagger-ui/**",
                                         "/v3/api-docs/**",
                                         "/api/v1/auth/login",
+                                        "/api/v1/auth/refresh",
                                         "/actuator/**",
                                         "/error",
                                         "/api/v1/users/register",
                                         "/",
                                         "/swagger-dev"
                                 ).permitAll()
-                                .requestMatchers("/api/v1/admin/**").hasRole(RoleConstants.ADMIN_OPS_ROLE)
-                                .requestMatchers("/api/v1/role/**").hasRole(RoleConstants.ROLE_CRUD)
-                                .requestMatchers("/api/v1/activity/**").hasRole(RoleConstants.ACTIVITY_CRUD)
                                 .requestMatchers("/api/v1/users/**", "/api/v1/auth/logout").hasRole(RoleConstants.USER_OPS_ROLE)
+                                .requestMatchers("/api/v1/activity/**").hasRole(RoleConstants.ACTIVITY_CRUD)
+                                .requestMatchers("/api/v1/role/**").hasRole(RoleConstants.ROLE_CRUD)
+                                .requestMatchers("/api/v1/admin/**").hasRole(RoleConstants.ADMIN_OPS_ROLE)
                                 .anyRequest().denyAll()
                 )
                 .addFilterBefore(mtmSessionFilter, UsernamePasswordAuthenticationFilter.class)

@@ -1,6 +1,7 @@
 package com.microtimemanagement.apiservice.utils;
 
 import com.microtimemanagement.apiservice.constants.ErrorConstants;
+import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -20,5 +21,15 @@ public class ApiUtils {
                     bindingResult.getAllErrors().stream().map(DefaultMessageSourceResolvable::getDefaultMessage)
                             .collect(Collectors.toList()));
         }
+    }
+
+    public static <T> GenericMessageResponseDTO<T> buildResponseDTO(
+            String message,
+            T t
+    ){
+        return (GenericMessageResponseDTO<T>) GenericMessageResponseDTO.builder()
+                .payload(t)
+                .message(message)
+                .build();
     }
 }
