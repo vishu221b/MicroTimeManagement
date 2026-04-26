@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.micro-time-management</groupId>
 	<artifactId>api-service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>api-service</name>
 	<description>Api service for Micro Time management App</description>
 	<properties>
@@ -66,6 +66,12 @@
 			<artifactId>jaxb-api</artifactId>
 			<version>2.3.1</version>
 		</dependency>
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-launcher</artifactId>
+			<version>1.12.2</version> <!-- Use the version matching your junit-jupiter -->
+			<scope>test</scope>
+		</dependency>
 
 	</dependencies>
 
@@ -98,7 +104,7 @@
 			<groupId>org.apache.maven.plugins</groupId>
 			<artifactId>maven-surefire-plugin</artifactId>
 			<configuration>
-				<argLine>@{argLine} -javaagent:${settings.localRepository}/org/mockito/mockito-core/5.17.0/mockito-core-5.17.0.jar</argLine>
+				<argLine>-javaagent:${settings.localRepository}/org/mockito/mockito-core/5.17.0/mockito-core-5.17.0.jar</argLine>
 			</configuration>
 		</plugin>
 		</plugins>

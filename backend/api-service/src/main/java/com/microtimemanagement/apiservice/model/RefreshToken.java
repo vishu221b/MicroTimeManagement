@@ -40,10 +40,12 @@ public class RefreshToken extends BaseModel{
     private Date expiresAt;
 
     public AccessToken getActiveAccessToken(){
-        return this.accessTokens
-                .stream()
-                .filter(accessToken -> accessToken.getIsActive().equals(Boolean.TRUE))
-                .toList().get(0);
+        if(null!=accessTokens)
+            return this.accessTokens
+                    .stream()
+                    .filter(accessToken -> accessToken.getIsActive().equals(Boolean.TRUE))
+                    .toList().get(0);
+        return null;
     }
 
 

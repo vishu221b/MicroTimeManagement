@@ -30,4 +30,11 @@ public class RefreshTokenDTO {
 
     private Boolean isActive;
 
+    public AccessTokenDTO getActiveAccessTokenDTO() {
+        if(null != accessTokenDTOList && !accessTokenDTOList.isEmpty())
+            return accessTokenDTOList.stream()
+                    .filter(t -> t.getIsActive().equals(Boolean.TRUE))
+                    .toList().get(0);
+        return null;
+    }
 }

@@ -19,21 +19,19 @@ public class RefreshTokenConverter implements BaseDTOConverter<RefreshToken, Ref
 
     @Override
     public RefreshTokenDTO toDTO(RefreshToken refreshToken) {
-        return RefreshTokenDTO.builder()
-                .id(refreshToken.getId())
-                .activeAccessTokenDTO(
-                        accessTokenConverter.toDTO(
-                        refreshToken
-                                .getAccessTokens()
-                                .stream()
-                                .filter(
-                                        t -> t.getIsActive().equals(Boolean.TRUE)
-                                ).toList().get(0))
-                )
-                .token(refreshToken.getToken())
-                .createdAt(refreshToken.getCreatedAt())
-                .lastUpdatedAt(refreshToken.getLastUpdatedAt())
-                .isActive(refreshToken.getIsActive())
-                .build();
+        if(null!=refreshToken)
+            return RefreshTokenDTO.builder()
+                    .id(refreshToken.getId())
+                    .token(refreshToken.getToken())
+                    .accessTokenDTOList(refreshToken
+                            .getAccessTokens()
+                            .stream()
+                            .map(accessTokenConverter::toDTO)
+                            .toList())
+                    .createdAt(refreshToken.getCreatedAt())
+                    .lastUpdatedAt(refreshToken.getLastUpdatedAt())
+                    .isActive(refreshToken.getIsActive())
+                    .build();
+        return null;
     }
 }
