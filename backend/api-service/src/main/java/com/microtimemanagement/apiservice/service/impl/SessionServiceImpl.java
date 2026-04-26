@@ -28,7 +28,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class SessionServiceImpl implements SessionService {
 
-    private final JwtUtils jwtUtils;
+    private final JsonWebTokenService jsonWebTokenService;
     private final UserService userService;
     private final RoleService roleService;
     private final SessionConverter sessionConverter;
@@ -96,9 +96,8 @@ public class SessionServiceImpl implements SessionService {
      */
     @Override
     public ValidSessionDTO validateSessionForAccessToken(String token) {
-        // TODO: Move JWT Logic to JWT Service
         Boolean isValidToken = Boolean.FALSE;
-        final Boolean isExpired = jwtUtils.isTokenExpired(token);
+        final Boolean isExpired = jsonWebTokenService.isJwtTokenExpired(token);
         String error = null;
         if(isExpired){
             error = ErrorConstants.SESSION_EXPIRED;
@@ -108,12 +107,12 @@ public class SessionServiceImpl implements SessionService {
                     .build();
         }
 
-        final String principal = jwtUtils.extractPrincipalFromToken(token);
+        final String principal = jsonWebTokenService.getPrincipalSubjectForToken(token);
 
         User user = null;
         if(null!=principal && !principal.isEmpty()){
             user = userService.getUserByUid(principal);
-            isValidToken = jwtUtils.isValidTokenSubject(token, user);
+            isValidToken = jsonWebTokenService.tokenSubjectIsValid(token, user);
         }
         if(isValidToken){
             AccessTokenDTO accessTokenDTO = accessTokenService.findAccessToken(token);

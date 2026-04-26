@@ -10,8 +10,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UserDTOConverter implements BaseDTOConverter<User, UserDTO> {
 
-    private final RoleRepository roleRepository;
-
     @Override
     public User fromDTO(UserDTO userDTO) {
         return User.builder()
@@ -27,20 +25,22 @@ public class UserDTOConverter implements BaseDTOConverter<User, UserDTO> {
 
     @Override
     public UserDTO toDTO(User user) {
-        return UserDTO.builder()
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .id(user.getId())
-                .uid(user.getUid())
-                .createdAt(user.getCreatedAt())
-                .isActive(user.getIsActive())
-                .lastUpdatedAt(user.getLastUpdatedAt())
-                .password(user.getPassword())
-                .dateOfBirth(user.getDateOfBirth())
-                .roles(user.getRoles())
-                .build();
+        if(null != user)
+            return UserDTO.builder()
+                    .firstName(user.getFirstName())
+                    .lastName(user.getLastName())
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .id(user.getId())
+                    .uid(user.getUid())
+                    .createdAt(user.getCreatedAt())
+                    .isActive(user.getIsActive())
+                    .lastUpdatedAt(user.getLastUpdatedAt())
+                    .password(user.getPassword())
+                    .dateOfBirth(user.getDateOfBirth())
+                    .roles(user.getRoles())
+                    .build();
+        return null;
     }
 
 }

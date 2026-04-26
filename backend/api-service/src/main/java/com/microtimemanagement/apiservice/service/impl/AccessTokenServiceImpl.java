@@ -7,6 +7,7 @@ import com.microtimemanagement.apiservice.dto.request.JwtCreationRequestDTO;
 import com.microtimemanagement.apiservice.model.AccessToken;
 import com.microtimemanagement.apiservice.repository.AccessTokenRepository;
 import com.microtimemanagement.apiservice.service.AccessTokenService;
+import com.microtimemanagement.apiservice.service.JsonWebTokenService;
 import com.microtimemanagement.apiservice.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,17 +24,19 @@ public class AccessTokenServiceImpl implements AccessTokenService {
 
     private final AccessTokenRepository accessTokenRepository;
 
-    private final JwtUtils jwtUtils;
+    private final JsonWebTokenService jsonWebTokenService;
 
     private final AccessTokenConverter accessTokenConverter;
 
     /**
-     * @return
+     * @param sessionPrincipalDTO The DTO containing subject information used to create {@link AccessToken}
+     * @return {@link AccessToken}
+     * @see SessionPrincipalDTO
      */
     @Override
     public AccessToken createAccessToken(SessionPrincipalDTO sessionPrincipalDTO) {
         Date tokenExpiry = new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(5));
-        String newToken=jwtUtils.generateToken(
+        String newToken=jsonWebTokenService.createNewToken(
                 JwtCreationRequestDTO.builder()
                         .principal(sessionPrincipalDTO.getUid())
                         .principalAuthorities(sessionPrincipalDTO.getAuthorities())
@@ -51,12 +54,12 @@ public class AccessTokenServiceImpl implements AccessTokenService {
     }
 
     /**
-     * @param accessToken
-     * @return
+     * @param accessTokens The Access Tokens List that will be saved to the Database.
+     * @return A {@link List} of {@link AccessToken}
      */
     @Override
-    public List<AccessToken> saveAccessTokens(List<AccessToken> accessToken) {
-        return accessTokenRepository.saveAll(accessToken);
+    public List<AccessToken> saveAccessTokens(List<AccessToken> accessTokens) {
+        return accessTokenRepository.saveAll(accessTokens);
     }
 
     /**

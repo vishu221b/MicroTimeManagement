@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -41,7 +42,8 @@ public class UserServiceImplTest {
     private BCryptPasswordEncoder bCryptPasswordEncoder;
     @Mock
     private RoleService roleService;
-    @Mock
+
+    @Spy
     private UserDTOConverter userDTOConverter;
 
 
@@ -129,8 +131,6 @@ public class UserServiceImplTest {
         String userId = UUID.randomUUID().toString();
         User appUser = UserTestFactory.existingAppUserEntity().id(userId).build();
         Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(appUser));
-        Mockito.when(userDTOConverter.toDTO(appUser))
-                .thenReturn(UserTestFactory.existingAppUserDTO().id(userId).build());
 
         UserDTO userDTO = userService.findDTOById(userId);
 
@@ -147,10 +147,6 @@ public class UserServiceImplTest {
                 roleService.getRoleNamesForIds(UserTestFactory.MtmAppUserAttributes.DEFAULT_USER_ROLE_IDS)
         ).thenReturn(UserTestFactory.MtmAppUserAttributes.DEFAULT_USER_ROLE_NAMES);
         Mockito.when(userRepository.findByUsernameAndIsActiveTrue(appUser.getUsername())).thenReturn(Optional.of(appUser));
-        Mockito.when(userDTOConverter.toDTO(appUser))
-                .thenReturn(UserTestFactory.existingAppUserDTO()
-                        .uid(appUser.getUid())
-                        .id(userId).build());
 
         UserDTO userDTO = userService.findDTOByUsername(appUser.getUsername());
 
@@ -180,11 +176,6 @@ public class UserServiceImplTest {
                 roleService.getRoleNamesForIds(UserTestFactory.MtmAppUserAttributes.DEFAULT_USER_ROLE_IDS)
         ).thenReturn(UserTestFactory.MtmAppUserAttributes.DEFAULT_USER_ROLE_NAMES);
         Mockito.when(userRepository.findByEmailAndIsActiveTrue(appUser.getEmail())).thenReturn(Optional.of(appUser));
-        Mockito.when(userDTOConverter.toDTO(appUser))
-                .thenReturn(
-                        UserTestFactory.existingAppUserDTO()
-                        .id(userId).uid(appUser.getUid())
-                                .build());
 
         UserDTO userDTO = userService.findDTOByEmail(appUser.getEmail());
 
@@ -206,7 +197,17 @@ public class UserServiceImplTest {
     }
 
     @Test
-    void shouldGetUserProfileForAuthenticatedUser(){}
+    @DisplayName("Should get user profile for currently signed in user successfully.")
+    void shouldGetUserProfileForAuthenticatedUser(){
+        User authenticatedUser = UserTestFactory.existingAppUserEntity()
+                .id(UUID.randomUUID().toString().replaceAll("-",""))
+                .build();
+
+        UserDTO userDTO = userService.getUserProfile(authenticatedUser);
+
+        assertThat(userDTO.getId()).isEqualTo(authenticatedUser.getId());
+        assertThat(userDTO.getUid()).isEqualTo(authenticatedUser.getUid());
+    }
 
 
 }

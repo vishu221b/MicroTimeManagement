@@ -44,7 +44,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 public class SessionServiceImplTest {
 
     @Mock
-    JwtUtils jwtUtils;
+    JsonWebTokenService jsonWebTokenService;
 
     @Mock
     SessionRepository sessionRepository;
@@ -231,10 +231,10 @@ public class SessionServiceImplTest {
         AccessTokenDTO accessTokenDTO = AccessTokenDTO.builder()
                 .token(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN).build();
 
-        Mockito.when(jwtUtils.isTokenExpired(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(false);
-        Mockito.when(jwtUtils.extractPrincipalFromToken(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(user.getUid());
+        Mockito.when(jsonWebTokenService.isJwtTokenExpired(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(false);
+        Mockito.when(jsonWebTokenService.getPrincipalSubjectForToken(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(user.getUid());
         Mockito.when(userService.getUserByUid(user.getUid())).thenReturn(user);
-        Mockito.when(jwtUtils.isValidTokenSubject(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN, user)).thenReturn(true);
+        Mockito.when(jsonWebTokenService.tokenSubjectIsValid(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN, user)).thenReturn(true);
         Mockito.when(accessTokenService.findAccessToken(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(accessTokenDTO);
         Mockito.when(roleService.getRoleNamesForIds(user.getRoles())).thenReturn(UserTestFactory.MtmAppUserAttributes.DEFAULT_USER_ROLE_NAMES);
 
@@ -249,7 +249,7 @@ public class SessionServiceImplTest {
     @Test
     @DisplayName("Should return 'Session Expired' error message when the JWT access token associated with currently logged in user's session is expired.")
     void shouldReturnSessionExpiredError_onValidateCurrentUserSessionForAccessToken(){
-        Mockito.when(jwtUtils.isTokenExpired(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(true);
+        Mockito.when(jsonWebTokenService.isJwtTokenExpired(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(true);
 
         ValidSessionDTO validSessionDTO = sessionService.validateSessionForAccessToken(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN);
 
@@ -263,8 +263,8 @@ public class SessionServiceImplTest {
     @Test
     @DisplayName("Should return 'Invalid Session Token' error message when no valid principal is found with the JWT access token associated with currently logged in user's session.")
     void shouldReturnInvalidSessionError_onValidateCurrentUserSessionForAccessToken(){
-        Mockito.when(jwtUtils.isTokenExpired(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(false);
-        Mockito.when(jwtUtils.extractPrincipalFromToken(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(null);
+        Mockito.when(jsonWebTokenService.isJwtTokenExpired(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(false);
+        Mockito.when(jsonWebTokenService.getPrincipalSubjectForToken(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN)).thenReturn(null);
 
         ValidSessionDTO validSessionDTO = sessionService.validateSessionForAccessToken(AuthTestDataFactory.MockConstants.JWT_SESSION_ACCESS_TOKEN);
 

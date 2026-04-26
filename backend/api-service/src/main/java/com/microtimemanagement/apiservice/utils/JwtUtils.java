@@ -23,7 +23,7 @@ public class JwtUtils {
 
     private SecretKey getSigningKey(){
         log.debug("Using key: {}", key);
-        byte [] secretKeyStringBytes = (key + key + key + key + key).getBytes();
+        byte [] secretKeyStringBytes = (key).getBytes();
         return Keys.hmacShaKeyFor(secretKeyStringBytes);
     }
     public String generateToken(JwtCreationRequestDTO requestDTO){
