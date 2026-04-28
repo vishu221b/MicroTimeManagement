@@ -1,6 +1,8 @@
 package com.microtimemanagement.apiservice.repository;
 
 import com.microtimemanagement.apiservice.model.Role;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,7 +16,7 @@ public interface RoleRepository extends MongoRepository<Role, String> {
 
     List<Role> findByNameInAndIsActiveTrue(List<String> name);
 
-//    List<Role> findAllByNameAndIsActiveTrue(String name);
+    Page<Role> findAll(Pageable pageable);
 
     Role findByIdAndIsActiveTrue(String id);
 

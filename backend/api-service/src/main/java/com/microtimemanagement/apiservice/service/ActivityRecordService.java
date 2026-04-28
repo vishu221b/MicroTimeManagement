@@ -16,4 +16,6 @@ public interface ActivityRecordService {
     ActivityRecordResponseDTO getActivitiesForDate(String date);
 
     ActivityRecordResponseDTO deleteActivity(String date, String recordId);
+
+    ActivityRecordResponseDTO updateActivity(String date);
 }

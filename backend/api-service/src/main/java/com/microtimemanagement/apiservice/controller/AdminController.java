@@ -3,8 +3,6 @@ package com.microtimemanagement.apiservice.controller;
 import com.microtimemanagement.apiservice.constants.ApiPathConstants;
 import com.microtimemanagement.apiservice.dto.entity.RoleDTO;
 import com.microtimemanagement.apiservice.dto.request.RoleRequestDTO;
-import com.microtimemanagement.apiservice.dto.request.UserRoleRequestDTO;
-import com.microtimemanagement.apiservice.dto.response.UserRoleResponseDTO;
 import com.microtimemanagement.apiservice.service.AdminService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,12 +34,6 @@ public class AdminController {
     @ResponseBody
     public RoleDTO getRole(@RequestParam String roleName){
         return adminService.getDTOByName(roleName);
-    }
-
-    @RequestMapping(value = ApiPathConstants.ADD_ROLE_TO_USER, method = RequestMethod.POST)
-    @ResponseBody
-    public UserRoleResponseDTO addRoleToUser(@RequestBody UserRoleRequestDTO requestDTO){
-        return adminService.addRoleToUser(requestDTO);
     }
 
 

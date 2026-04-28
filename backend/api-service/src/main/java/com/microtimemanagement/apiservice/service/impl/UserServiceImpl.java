@@ -157,9 +157,9 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    private User saveUser(User user){
+    public UserDTO saveUser(User user){
         log.info("Saving user: {}", user);
-        return userRepository.save(user);
+        return userConverter.toDTO(userRepository.save(user));
     }
 
     @Override
@@ -199,9 +199,13 @@ public class UserServiceImpl implements UserService {
         log.info("Updated user details: {}", currentUser);
 
         return  GenericMessageResponseDTO.builder()
-                .payload(userConverter.toDTO(saveUser(currentUser)))
+                .payload(userConverter.toDTO(saveUserEntity(currentUser)))
                 .message(ResponseMessages.USER_DETAILS_UPDATED)
                 .build();
+    }
+
+    private User saveUserEntity(User currentUser) {
+        return userRepository.save(currentUser);
     }
 
     @Override

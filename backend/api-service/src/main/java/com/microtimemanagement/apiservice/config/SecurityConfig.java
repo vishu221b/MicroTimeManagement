@@ -1,6 +1,7 @@
 package com.microtimemanagement.apiservice.config;
 
 import com.microtimemanagement.apiservice.constants.RoleConstants;
+import com.microtimemanagement.apiservice.constants.SecurityConstants;
 import com.microtimemanagement.apiservice.filter.MtmSessionFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -72,27 +73,24 @@ public class SecurityConfig {
         return httpSecurity
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(httpSecurityCorsConfigurer ->
-                        httpSecurityCorsConfigurer
-                                .configurationSource(corsConfigurationDevSource())
-                )
+                .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfigurationDevSource()))
                 .authorizeHttpRequests(
                         auth -> auth
-                                .requestMatchers(
-                                        "/swagger-ui/**",
-                                        "/v3/api-docs/**",
-                                        "/api/v1/auth/login",
-                                        "/api/v1/auth/refresh",
-                                        "/actuator/**",
-                                        "/error",
-                                        "/api/v1/user/register",
-                                        "/",
-                                        "/swagger-dev"
-                                ).permitAll()
-                                .requestMatchers("/api/v1/user/**", "/api/v1/auth/logout").hasRole(RoleConstants.USER_OPS_ROLE)
-                                .requestMatchers("/api/v1/activity/**").hasRole(RoleConstants.ACTIVITY_CRUD)
-                                .requestMatchers("/api/v1/role/**").hasRole(RoleConstants.ROLE_CRUD)
-                                .requestMatchers("/api/v1/admin/**").hasRole(RoleConstants.ADMIN_OPS_ROLE)
+                                .requestMatchers(SecurityConstants.DEV.OPEN_API_ENDPOINT_REQUEST_MATCHERS)
+                                .permitAll()
+
+                                .requestMatchers(SecurityConstants.DEV.SECURE_USER_API_ENDPOINT_REQUEST_MATCHERS)
+                                .hasRole(RoleConstants.USER_OPS_ROLE)
+
+                                .requestMatchers(SecurityConstants.DEV.SECURE_ACTIVITY_API_ENDPOINT_REQUEST_MATCHERS)
+                                .hasRole(RoleConstants.ACTIVITY_CRUD)
+
+                                .requestMatchers(SecurityConstants.DEV.SECURE_ROLE_API_ENDPOINT_REQUEST_MATCHERS)
+                                .hasRole(RoleConstants.ROLE_CRUD)
+
+                                .requestMatchers(SecurityConstants.DEV.SECURE_ADMIN_API_ENDPOINT_REQUEST_MATCHERS)
+                                .hasRole(RoleConstants.ADMIN_OPS_ROLE)
+
                                 .anyRequest().denyAll()
                 )
                 .addFilterBefore(mtmSessionFilter, UsernamePasswordAuthenticationFilter.class)

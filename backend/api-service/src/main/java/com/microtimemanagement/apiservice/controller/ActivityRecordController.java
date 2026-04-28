@@ -8,6 +8,7 @@ import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadReque
 import com.microtimemanagement.apiservice.service.ActivityRecordService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,10 +29,10 @@ public class ActivityRecordController {
 
     private final ActivityRecordService activityRecordService;
 
-    @RequestMapping(value = "/", method = RequestMethod.POST)
+    @RequestMapping(value = ApiPathConstants.EMPTY_BASE, method = RequestMethod.POST)
     @ResponseBody
     public ActivityRecordCreationdResponseDTO saveRecord(
-            @RequestBody ActivityRecordCreationRequestDTO activityRecordCreationRequestDTO
+            @Valid @RequestBody ActivityRecordCreationRequestDTO activityRecordCreationRequestDTO
     ) throws MicroTimeManagementBadRequestException, ParseException {
         return activityRecordService.processCreateUpdateRequest(activityRecordCreationRequestDTO);
     }
@@ -44,7 +45,16 @@ public class ActivityRecordController {
         return activityRecordService.getActivitiesForDate(date);
     }
 
-    @RequestMapping(value = "/", method = RequestMethod.DELETE)
+    @RequestMapping(value = ApiPathConstants.EMPTY_BASE, method = RequestMethod.PUT)
+    @ResponseBody
+    public ActivityRecordResponseDTO updateActivity(
+            @RequestParam String date
+    ){
+        return activityRecordService.updateActivity(date);
+    }
+
+
+    @RequestMapping(value = ApiPathConstants.EMPTY_BASE, method = RequestMethod.DELETE)
     @ResponseBody
     public ActivityRecordResponseDTO deleteActivityById(
             @RequestParam String date,

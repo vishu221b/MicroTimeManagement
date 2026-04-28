@@ -122,7 +122,7 @@ public class AdminServiceImpl implements AdminService {
         if(isOk)
             return UserRoleResponseDTO.builder()
                     .user(userDTO)
-                    .message(ResponseMessages.USER_ASSIGNED_WITH_ROLE_SUCCESS)
+                    .message(ResponseMessages.ROLE_ASSIGNED_TO_USER_SUCCESSFULLY)
                     .build();
         else
             throw new MicroTimeManagementException(ErrorConstants.SOMETHING_WENT_WRONG);

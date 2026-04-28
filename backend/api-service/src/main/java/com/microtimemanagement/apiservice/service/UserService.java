@@ -38,4 +38,6 @@ public interface UserService extends UserDetailsService {
     UserDTO loadUserDTOByUsername(String username);
 
     User replaceRoleIdsWithNamesForUser(User user);
+
+    UserDTO saveUser(User user);
 }

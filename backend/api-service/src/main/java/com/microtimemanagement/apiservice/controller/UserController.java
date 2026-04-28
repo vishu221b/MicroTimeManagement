@@ -98,8 +98,8 @@ public class UserController {
     @RequestMapping(value = ApiPathConstants.GET_USER_BY_UID, method = RequestMethod.GET)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
-    public UserDTO getUserByUid(@RequestParam String id){
-        return userService.getUserDTOByUid(id);
+    public GenericMessageResponseDTO<UserDTO> getUserByUid(@RequestParam String id){
+        return ApiUtils.buildSuccessResponseDTO(userService.getUserDTOByUid(id));
     }
 
     /**

@@ -171,6 +171,11 @@ public class ActivityRecordServiceImpl implements ActivityRecordService {
                 .build();
     }
 
+    @Override
+    public ActivityRecordResponseDTO updateActivity(String date) {
+        return null;
+    }
+
     private ActivityRecord insertActivityInTimeRecordAtLocation(
             Activity activity, ActivityRecord activityRecord, int position, AtomicBoolean activityUpdateStatus
     ){
