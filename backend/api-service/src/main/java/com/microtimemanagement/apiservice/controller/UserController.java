@@ -1,6 +1,7 @@
 package com.microtimemanagement.apiservice.controller;
 
 import com.microtimemanagement.apiservice.constants.ApiPathConstants;
+import com.microtimemanagement.apiservice.constants.ResponseMessages;
 import com.microtimemanagement.apiservice.dto.entity.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.NewUserRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.PasswordChangeRequestDTO;
@@ -49,7 +50,10 @@ public class UserController {
     ){
         log.info("Received request: {}", requestDTO);
         ApiUtils.handleValidationErrors(bindingResult);
-        return userService.createNewUser(requestDTO);
+        return ApiUtils.buildResponseDTO(
+                ResponseMessages.USER_REGISTRATION_SUCCESS,
+                userService.createNewUser(requestDTO)
+        );
     }
 
     /**
@@ -63,7 +67,10 @@ public class UserController {
             BindingResult bindingResult
     ){
         ApiUtils.handleValidationErrors(bindingResult);
-        return userService.updateUserDetails(userDetailsUpdateRequestDTO);
+        return ApiUtils.buildResponseDTO(
+                ResponseMessages.USER_DETAILS_UPDATED,
+                userService.updateUserDetails(userDetailsUpdateRequestDTO)
+        );
     }
 
     /**
@@ -72,8 +79,9 @@ public class UserController {
     @RequestMapping(value = ApiPathConstants.DELETE_CURRENT_USER, method = RequestMethod.DELETE)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
-    public GenericMessageResponseDTO<?> deleteUserById(Principal principal){
-        return userService.deleteUserByUsername(principal.getName());
+    public GenericMessageResponseDTO<String> deleteUserById(Principal principal){
+        return ApiUtils.buildSuccessResponseDTO(userService.deleteUserByUsername(principal.getName())
+        );
     }
 
     /**
@@ -82,13 +90,15 @@ public class UserController {
     @RequestMapping(value = ApiPathConstants.RESET_PASSWORD, method = RequestMethod.POST)
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
-    public GenericMessageResponseDTO<?> updatePasswordForUser(
+    public GenericMessageResponseDTO<String> updatePasswordForUser(
             @RequestBody @Valid PasswordChangeRequestDTO passwordChangeRequestDTO,
             BindingResult bindingResult,
             Principal principal){
         ApiUtils.handleValidationErrors(bindingResult);
         passwordChangeRequestDTO.setUsername(principal.getName());
-        return userService.changeUserPassword(passwordChangeRequestDTO);
+        return ApiUtils.buildSuccessResponseDTO(
+                userService.changeUserPassword(passwordChangeRequestDTO)
+        );
     }
 
     /**

@@ -100,15 +100,15 @@ public class AdminServiceImpl implements AdminService {
                     String.format(ErrorConstants.ROLE_NOT_FOUND_WTH_NAME_ERROR, requestDTO.getRoleName()));
         UserDTO userDTO = null;
         String identifierValue = "";
-        if(null!=requestDTO.getUserId()){
-            userDTO = userService.findDTOById(requestDTO.getUserId());
-            identifierValue = requestDTO.getUserId();
+        if(null!=requestDTO.getUserUid()){
+            userDTO = userService.findDTOById(requestDTO.getUserUid());
+            identifierValue = requestDTO.getUserUid();
         } else if(null!=requestDTO.getUsername()){
             userDTO = userService.findDTOByUsername(requestDTO.getUsername());
             identifierValue = requestDTO.getUsername();
-        } else if(null!=requestDTO.getUserEmail()){
-            userDTO = userService.findDTOByEmail(requestDTO.getUserEmail());
-            identifierValue = requestDTO.getUserEmail();
+        } else if(null!=requestDTO.getEmail()){
+            userDTO = userService.findDTOByEmail(requestDTO.getEmail());
+            identifierValue = requestDTO.getEmail();
         }
         else{
             throw new MicroTimeManagementBadRequestException(ErrorConstants.INVALID_USER_IDENTIFIER_VALUE);

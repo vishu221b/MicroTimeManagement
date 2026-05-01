@@ -3,7 +3,6 @@ package com.microtimemanagement.apiservice.service;
 import com.microtimemanagement.apiservice.converter.UserDTOConverter;
 import com.microtimemanagement.apiservice.dto.entity.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.NewUserRequestDTO;
-import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.NewUserResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementUserException;
 import com.microtimemanagement.apiservice.factories.RoleTestFactory;
@@ -14,10 +13,7 @@ import com.microtimemanagement.apiservice.service.impl.UserServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -54,14 +50,15 @@ public class UserServiceImplTest {
     @DisplayName("Should create a new user successfully.")
     void shouldCreateNewUser(){
         NewUserRequestDTO requestDTO = UserTestFactory.getNewUserRequestDTO();
-        GenericMessageResponseDTO<NewUserResponseDTO>
-                responseDTO = (GenericMessageResponseDTO<NewUserResponseDTO>) userService.createNewUser(requestDTO);
+        User user = UserTestFactory.existingAppUserEntity().build();
+        Mockito.when(userRepository.save(Mockito.any())).thenReturn(user);
+        NewUserResponseDTO responseDTO = userService.createNewUser(requestDTO);
         assertThat(responseDTO).isNotNull();
-        assertThat(responseDTO.getPayload().getFirstName()).isEqualTo(requestDTO.getFirstName());
-        assertThat(responseDTO.getPayload().getLastName()).isEqualTo(requestDTO.getLastName());
-        assertThat(responseDTO.getPayload().getDateOfBirth()).isEqualTo(requestDTO.getDateOfBirth());
-        assertThat(responseDTO.getPayload().getEmailAddress()).isEqualTo(requestDTO.getEmail());
-        assertThat(responseDTO.getPayload().getUsername()).isEqualTo(requestDTO.getUsername());
+        assertThat(responseDTO.getFirstName()).isEqualTo(requestDTO.getFirstName());
+        assertThat(responseDTO.getLastName()).isEqualTo(requestDTO.getLastName());
+        assertThat(responseDTO.getDateOfBirth()).isEqualTo(requestDTO.getDateOfBirth());
+        assertThat(responseDTO.getEmailAddress()).isEqualTo(requestDTO.getEmail());
+        assertThat(responseDTO.getUsername()).isEqualTo(requestDTO.getUsername());
     }
 
     @Test

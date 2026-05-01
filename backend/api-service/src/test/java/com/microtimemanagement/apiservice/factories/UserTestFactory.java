@@ -57,12 +57,12 @@ public class UserTestFactory {
 
     public static NewUserRequestDTO getNewUserRequestDTO(){
         return NewUserRequestDTO.builder()
-                .firstName("Test First")
-                .lastName("Test Last")
-                .email("test@test.com")
-                .dateOfBirth("12-12-2002")
-                .username("testersFirst")
-                .password("Test123")
+                .firstName(MtmAppUserAttributes.FIRST_NAME)
+                .lastName(MtmAppUserAttributes.LAST_NAME)
+                .email(MtmAppUserAttributes.EMAIL)
+                .dateOfBirth(MtmAppUserAttributes.DATE_OF_BIRTH)
+                .username(MtmAppUserAttributes.USERNAME)
+                .password(MtmAppUserAttributes.PASSWORD)
                 .build();
     }
 

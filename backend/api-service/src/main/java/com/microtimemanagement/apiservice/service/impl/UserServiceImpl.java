@@ -57,7 +57,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public GenericMessageResponseDTO<?> createNewUser(NewUserRequestDTO requestDTO) {
+    public NewUserResponseDTO createNewUser(NewUserRequestDTO requestDTO) {
 
         validateIfUserAlreadyExistsByUsernameOrEmail(requestDTO.getUsername(), requestDTO.getEmail(), Boolean.FALSE);
 
@@ -70,14 +70,14 @@ public class UserServiceImpl implements UserService {
                 .dateOfBirth(requestDTO.getDateOfBirth())
                 .roles(roleService.getDefaultUserRoleIds())
                 .build());
-        return GenericMessageResponseDTO.builder().payload(NewUserResponseDTO.builder()
+        return NewUserResponseDTO.builder()
                 .emailAddress(newUser.getEmail())
                 .username(newUser.getUsername())
                 .firstName(newUser.getFirstName())
                 .lastName(newUser.getLastName())
                 .createdAt(newUser.getCreatedAt())
                 .dateOfBirth(newUser.getDateOfBirth())
-                .build()).message(ResponseMessages.USER_REGISTRATION_SUCCESS).build();
+                .build();
     }
 
     private User findById(String id){
@@ -163,7 +163,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public GenericMessageResponseDTO<?> updateUserDetails(UserDetailsUpdateRequestDTO userDetailsUpdateRequestDTO) {
+    public UserDTO updateUserDetails(UserDetailsUpdateRequestDTO userDetailsUpdateRequestDTO) {
         User currentUser = userRepository.findByUidAndIsActiveTrue(userDetailsUpdateRequestDTO.getUid());
 
         if(null == currentUser){
@@ -198,10 +198,7 @@ public class UserServiceImpl implements UserService {
 
         log.info("Updated user details: {}", currentUser);
 
-        return  GenericMessageResponseDTO.builder()
-                .payload(userConverter.toDTO(saveUserEntity(currentUser)))
-                .message(ResponseMessages.USER_DETAILS_UPDATED)
-                .build();
+        return userConverter.toDTO(saveUserEntity(currentUser));
     }
 
     private User saveUserEntity(User currentUser) {
@@ -209,13 +206,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public GenericMessageResponseDTO<?> deleteUserByUsername(String username) {
+    public String deleteUserByUsername(String username) {
         User user = findByUsername(username);
         user.setIsActive(Boolean.FALSE);
         userRepository.save(user);
-        return GenericMessageResponseDTO.builder()
-                .message(ResponseMessages.ACCOUNT_DELETED_SUCCESSFULLY)
-                .build();
+        return ResponseMessages.ACCOUNT_DELETED_SUCCESSFULLY;
+
     }
 
     private User findActiveUserByEmailOrUsername(String username){
@@ -227,16 +223,14 @@ public class UserServiceImpl implements UserService {
         return replaceRoleIdsWithNamesForUser(user);
     }
     @Override
-    public GenericMessageResponseDTO<?> changeUserPassword(PasswordChangeRequestDTO passwordChangeRequestDTO) {
+    public String changeUserPassword(PasswordChangeRequestDTO passwordChangeRequestDTO) {
         User user = findActiveUserByEmailOrUsername(passwordChangeRequestDTO.getUsername());
         String message = ErrorConstants.SOMETHING_WENT_WRONG;
         if(bCryptPasswordEncoder.matches(passwordChangeRequestDTO.getOldPassword(), user.getPassword())){
             user.setPassword(bCryptPasswordEncoder.encode(passwordChangeRequestDTO.getNewPassword()));
             message = ResponseMessages.PASSWORD_CHANGED_SUCCESSFULLY;
         }
-        return GenericMessageResponseDTO.builder()
-                .message(message)
-                .build();
+        return message;
     }
 
     @Override

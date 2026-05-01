@@ -18,4 +18,8 @@ public class UserRoleRequestDTO {
     @NotEmpty(message = "User Id cannot be empty.")
     private String userUid;
 
+    private String username;
+
+    private String email;
+
 }

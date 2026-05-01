@@ -215,7 +215,7 @@ public class SessionServiceImplTest {
                         .build())
                 .build();
 
-        Mockito.when(refreshTokenService.findEntityByActiveToken(Mockito.anyString())).thenReturn(refreshToken);
+        Mockito.when(refreshTokenService.validateRefreshToken(Mockito.anyString())).thenReturn(refreshToken);
 
         assertThatExceptionOfType(MicroTimeManagementNotFoundException.class).isThrownBy(() -> {
             sessionService.refreshSession(AuthTestDataFactory.MockConstants.JWT_SESSION_REFRESH_TOKEN);
