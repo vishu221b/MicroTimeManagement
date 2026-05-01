@@ -32,6 +32,7 @@ import java.util.List;
 public class RoleController {
     private final RoleService roleService;
 
+    // TODO: Move to ADMIN resource
     @RequestMapping(value = ApiPathConstants.ADD_ROLE_TO_USER, method = RequestMethod.POST)
     @ResponseBody
     public GenericMessageResponseDTO<?> addRoleToUser(
@@ -44,6 +45,7 @@ public class RoleController {
         );
     }
 
+    //TODO: Move to ADMIN resource
     @RequestMapping(value = ApiPathConstants.REMOVE_ROLE_FOR_USER, method = RequestMethod.DELETE)
     public GenericMessageResponseDTO<UserRoleResponseDTO> removeRoleForUser(
             @Valid @RequestBody UserRoleRequestDTO requestDTO,

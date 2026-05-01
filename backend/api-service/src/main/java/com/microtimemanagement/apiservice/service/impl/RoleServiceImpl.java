@@ -76,6 +76,11 @@ public class RoleServiceImpl implements RoleService {
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * TODO: Move Role addition and removal from User to Admin Service
+     * @param requestDTO
+     * @return
+     */
     @Override
     public UserRoleResponseDTO addRoleToUser(UserRoleRequestDTO requestDTO) {
         Role role = findRoleByName(requestDTO.getRoleName());

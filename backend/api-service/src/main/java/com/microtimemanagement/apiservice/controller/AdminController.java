@@ -2,12 +2,16 @@ package com.microtimemanagement.apiservice.controller;
 
 import com.microtimemanagement.apiservice.constants.ApiPathConstants;
 import com.microtimemanagement.apiservice.dto.entity.RoleDTO;
+import com.microtimemanagement.apiservice.dto.entity.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.RoleRequestDTO;
+import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
 import com.microtimemanagement.apiservice.service.AdminService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,5 +40,9 @@ public class AdminController {
         return adminService.getDTOByName(roleName);
     }
 
+    public GenericMessageResponseDTO<List<UserDTO>> getAllUsers(){}
+    public GenericMessageResponseDTO<List<UserDTO>> addRolesToUsers(){}
+
+    public GenericMessageResponseDTO<List<UserDTO>> removeRolesFromUsers(){}
 
 }

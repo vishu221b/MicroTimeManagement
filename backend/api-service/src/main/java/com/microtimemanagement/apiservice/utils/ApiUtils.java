@@ -36,4 +36,9 @@ public class ApiUtils {
     public static <T> GenericMessageResponseDTO<T> buildSuccessResponseDTO(T t) {
         return buildResponseDTO(ResponseMessages.SUCCESS,t);
     }
+
+    public static <T> GenericMessageResponseDTO<T> buildErrorResponseDTO(T t) {
+        return buildResponseDTO(ResponseMessages.ERROR,t);
+    }
+
 }
