@@ -2,7 +2,7 @@ package com.microtimemanagement.apiservice.service;
 
 import com.microtimemanagement.apiservice.dto.entity.RoleDTO;
 import com.microtimemanagement.apiservice.dto.request.RoleRequestDTO;
-import com.microtimemanagement.apiservice.dto.request.UserRoleRequestDTO;
+import com.microtimemanagement.apiservice.dto.request.UsersRolesUpdateRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.UserRoleResponseDTO;
 import com.microtimemanagement.apiservice.model.Role;
 
@@ -18,5 +18,4 @@ public interface AdminService {
 
     RoleDTO setInactive(String roleName);
 
-    UserRoleResponseDTO addRoleToUser(UserRoleRequestDTO requestDTO);
 }

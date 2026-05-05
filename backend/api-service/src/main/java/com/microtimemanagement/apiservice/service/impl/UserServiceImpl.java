@@ -3,12 +3,15 @@ package com.microtimemanagement.apiservice.service.impl;
 import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.constants.ResponseMessages;
 import com.microtimemanagement.apiservice.converter.UserDTOConverter;
+import com.microtimemanagement.apiservice.dto.entity.RoleDTO;
 import com.microtimemanagement.apiservice.dto.entity.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.NewUserRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.PasswordChangeRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.UserDetailsUpdateRequestDTO;
-import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
+import com.microtimemanagement.apiservice.dto.request.UsersRolesUpdateRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.NewUserResponseDTO;
+import com.microtimemanagement.apiservice.dto.response.PaginationResultResponseDTO;
+import com.microtimemanagement.apiservice.enums.UserRoleUpdateAction;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
@@ -17,13 +20,20 @@ import com.microtimemanagement.apiservice.model.User;
 import com.microtimemanagement.apiservice.repository.UserRepository;
 import com.microtimemanagement.apiservice.service.RoleService;
 import com.microtimemanagement.apiservice.service.UserService;
+import com.microtimemanagement.apiservice.utils.ApiUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -160,6 +170,65 @@ public class UserServiceImpl implements UserService {
     public UserDTO saveUser(User user){
         log.info("Saving user: {}", user);
         return userConverter.toDTO(userRepository.save(user));
+    }
+
+    @Override
+    public PaginationResultResponseDTO<UserDTO> getAllUsers(PageRequest pageRequest) {
+        log.info("{}", pageRequest);
+        Page<User> usersPage = userRepository.findAll(pageRequest);
+        log.info("{}", usersPage.getTotalPages());
+        log.info("{}", usersPage.hasContent());
+        log.info("{}", usersPage.hasPrevious());
+        log.info("{}", usersPage.hasNext());
+        log.info("{}", usersPage.getNumber());
+        return PaginationResultResponseDTO.<UserDTO>builder()
+                .payload(usersPage.getContent().stream().map(userConverter::toDTO).toList())
+                .pageSize(usersPage.getSize())
+                .pageNumber(usersPage.getNumber())
+                .sortedByFields(usersPage.getSort().get().map(Sort.Order::getProperty).collect(Collectors.toList()))
+                .totalPages(usersPage.getTotalPages())
+                .build();
+    }
+
+    @Override
+    public List<UserDTO> modifyUserRoles(
+            UsersRolesUpdateRequestDTO usersRolesUpdateRequestDTO,
+            UserRoleUpdateAction updateAction
+    ) {
+        List<User> userList = new ArrayList<>();
+        List<User> users = null;
+
+        if(!usersRolesUpdateRequestDTO.getUserIds().isEmpty()){
+            users = userRepository.findByIdInAndIsActiveTrue(usersRolesUpdateRequestDTO.getUserIds());
+            if(!users.isEmpty()){
+                userList.addAll(users);
+            }
+        }
+
+        if(!usersRolesUpdateRequestDTO.getEmails().isEmpty()){
+            users = userRepository.findByEmailInAndIsActiveTrue(usersRolesUpdateRequestDTO.getEmails());
+            if(!users.isEmpty()){
+                userList.addAll(users);
+            }
+        }
+
+        if(!usersRolesUpdateRequestDTO.getUsernames().isEmpty()){
+            users = userRepository.findByUsernameInAndIsActiveTrue(usersRolesUpdateRequestDTO.getUsernames());
+            if(!users.isEmpty())
+                userList.addAll(users);
+        }
+
+        List<String> roleIds = roleService.findActiveRolesByName(usersRolesUpdateRequestDTO.getRoleNames())
+                .stream().map(RoleDTO::getId).toList();
+
+        userList.forEach(user -> {
+            if(updateAction.equals(UserRoleUpdateAction.ADD))
+                user.getRoles().addAll(roleIds);
+            if(updateAction.equals(UserRoleUpdateAction.REMOVE))
+                user.getRoles().removeAll(roleIds);
+        });
+        userList = userRepository.saveAll(userList);
+        return userList.stream().map(userConverter::toDTO).toList();
     }
 
     @Override

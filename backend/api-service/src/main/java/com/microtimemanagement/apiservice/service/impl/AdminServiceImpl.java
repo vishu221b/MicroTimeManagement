@@ -6,7 +6,7 @@ import com.microtimemanagement.apiservice.converter.RoleConverter;
 import com.microtimemanagement.apiservice.dto.entity.RoleDTO;
 import com.microtimemanagement.apiservice.dto.entity.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.RoleRequestDTO;
-import com.microtimemanagement.apiservice.dto.request.UserRoleRequestDTO;
+import com.microtimemanagement.apiservice.dto.request.UsersRolesUpdateRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.UserRoleResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementException;
@@ -90,42 +90,6 @@ public class AdminServiceImpl implements AdminService {
         roleRepository.save(role);
         log.info("Setting role: {} as Inactive.", role.getName());
         return roleConverter.toDTO(role);
-    }
-
-    @Override
-    public UserRoleResponseDTO addRoleToUser(UserRoleRequestDTO requestDTO) {
-        Role role = getByName(requestDTO.getRoleName());
-        if(null == role)
-            throw new MicroTimeManagementBadRequestException(
-                    String.format(ErrorConstants.ROLE_NOT_FOUND_WTH_NAME_ERROR, requestDTO.getRoleName()));
-        UserDTO userDTO = null;
-        String identifierValue = "";
-        if(null!=requestDTO.getUserUid()){
-            userDTO = userService.findDTOById(requestDTO.getUserUid());
-            identifierValue = requestDTO.getUserUid();
-        } else if(null!=requestDTO.getUsername()){
-            userDTO = userService.findDTOByUsername(requestDTO.getUsername());
-            identifierValue = requestDTO.getUsername();
-        } else if(null!=requestDTO.getEmail()){
-            userDTO = userService.findDTOByEmail(requestDTO.getEmail());
-            identifierValue = requestDTO.getEmail();
-        }
-        else{
-            throw new MicroTimeManagementBadRequestException(ErrorConstants.INVALID_USER_IDENTIFIER_VALUE);
-        }
-        if(null == userDTO)
-            throw new MicroTimeManagementBadRequestException(
-                    String.format(ErrorConstants.USER_NOT_FOUND_FOR_IDENTIFIER,identifierValue));
-        userDTO.getRoles().add(role.getId());
-        userDTO.setRoles(userDTO.getRoles());
-        Boolean isOk = userService.saveUserFromDTO(userDTO, Boolean.FALSE).getIsActive();
-        if(isOk)
-            return UserRoleResponseDTO.builder()
-                    .user(userDTO)
-                    .message(ResponseMessages.ROLE_ASSIGNED_TO_USER_SUCCESSFULLY)
-                    .build();
-        else
-            throw new MicroTimeManagementException(ErrorConstants.SOMETHING_WENT_WRONG);
     }
 
 }

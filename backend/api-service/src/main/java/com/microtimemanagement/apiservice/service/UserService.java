@@ -4,12 +4,17 @@ import com.microtimemanagement.apiservice.dto.entity.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.NewUserRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.PasswordChangeRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.UserDetailsUpdateRequestDTO;
-import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
+import com.microtimemanagement.apiservice.dto.request.UsersRolesUpdateRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.NewUserResponseDTO;
+import com.microtimemanagement.apiservice.dto.response.PaginationResultResponseDTO;
+import com.microtimemanagement.apiservice.enums.UserRoleUpdateAction;
 import com.microtimemanagement.apiservice.model.User;
-import org.springframework.security.core.userdetails.UserDetails;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
+import java.util.List;
 
 public interface UserService extends UserDetailsService {
 
@@ -42,4 +47,8 @@ public interface UserService extends UserDetailsService {
     User replaceRoleIdsWithNamesForUser(User user);
 
     UserDTO saveUser(User user);
+
+    PaginationResultResponseDTO<UserDTO> getAllUsers(PageRequest pageRequest);
+
+    List<UserDTO> modifyUserRoles(@Valid UsersRolesUpdateRequestDTO usersRolesUpdateRequestDTO, UserRoleUpdateAction updateAction);
 }

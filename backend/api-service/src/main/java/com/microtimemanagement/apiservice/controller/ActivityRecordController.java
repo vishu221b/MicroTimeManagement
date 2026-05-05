@@ -1,6 +1,6 @@
 package com.microtimemanagement.apiservice.controller;
 
-import com.microtimemanagement.apiservice.constants.ApiPathConstants;
+import com.microtimemanagement.apiservice.constants.ApiConstants;
 import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordCreationdResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordResponseDTO;
@@ -17,7 +17,7 @@ import java.text.ParseException;
 @RestController
 @RequiredArgsConstructor
 @SecurityRequirement(name = "MTM Auth")
-@RequestMapping(ApiPathConstants.ACTIVITY_BASE_ENDPOINT)
+@RequestMapping(ApiConstants.ActivityEndpoint.API_BASE)
 @Tag(name = "Activity Record", description = "Activity Record Operations")
 public class ActivityRecordController {
 
@@ -29,7 +29,7 @@ public class ActivityRecordController {
 
     private final ActivityRecordService activityRecordService;
 
-    @RequestMapping(value = ApiPathConstants.EMPTY_BASE, method = RequestMethod.POST)
+    @RequestMapping(value = ApiConstants.EMPTY_BASE, method = RequestMethod.POST)
     @ResponseBody
     public ActivityRecordCreationdResponseDTO saveRecord(
             @Valid @RequestBody ActivityRecordCreationRequestDTO activityRecordCreationRequestDTO
@@ -45,7 +45,7 @@ public class ActivityRecordController {
         return activityRecordService.getActivitiesForDate(date);
     }
 
-    @RequestMapping(value = ApiPathConstants.EMPTY_BASE, method = RequestMethod.PUT)
+    @RequestMapping(value = ApiConstants.EMPTY_BASE, method = RequestMethod.PUT)
     @ResponseBody
     public ActivityRecordResponseDTO updateActivity(
             @RequestParam String date
@@ -54,7 +54,7 @@ public class ActivityRecordController {
     }
 
 
-    @RequestMapping(value = ApiPathConstants.EMPTY_BASE, method = RequestMethod.DELETE)
+    @RequestMapping(value = ApiConstants.EMPTY_BASE, method = RequestMethod.DELETE)
     @ResponseBody
     public ActivityRecordResponseDTO deleteActivityById(
             @RequestParam String date,

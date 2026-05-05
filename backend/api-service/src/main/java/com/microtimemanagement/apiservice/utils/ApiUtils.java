@@ -1,8 +1,12 @@
 package com.microtimemanagement.apiservice.utils;
 
+import com.microtimemanagement.apiservice.constants.ApiConstants;
 import com.microtimemanagement.apiservice.constants.ErrorConstants;
+import com.microtimemanagement.apiservice.constants.PaginationConstants;
 import com.microtimemanagement.apiservice.constants.ResponseMessages;
 import com.microtimemanagement.apiservice.dto.response.GenericMessageResponseDTO;
+import com.microtimemanagement.apiservice.dto.response.PaginationRequestFieldsSanitizationResponseDTO;
+import com.microtimemanagement.apiservice.enums.ApiResourceType;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -39,6 +43,42 @@ public class ApiUtils {
 
     public static <T> GenericMessageResponseDTO<T> buildErrorResponseDTO(T t) {
         return buildResponseDTO(ResponseMessages.ERROR,t);
+    }
+
+    public static PaginationRequestFieldsSanitizationResponseDTO sanitizePaginationRequestFields(
+            Integer pageNumber, Integer pageSize
+    ){
+        int defaultPageNumber= Integer.parseInt(PaginationConstants.DEFAULT_PAGE_NUMBER);
+        if(pageNumber < defaultPageNumber){
+            pageNumber = defaultPageNumber;
+        }
+        int defaultPageSize = Integer.parseInt(PaginationConstants.DEFAULT_PAGE_SIZE);
+        int maxPageSize = Integer.parseInt(PaginationConstants.DEFAULT_PAGE_SIZE);
+        if(pageNumber < defaultPageSize){
+            pageSize = defaultPageSize;
+        }
+        if(pageNumber > maxPageSize){
+            pageSize = maxPageSize;
+        }
+        return PaginationRequestFieldsSanitizationResponseDTO.builder()
+                .pageNumber(pageNumber)
+                .pageSize(pageSize)
+                .build();
+    }
+
+    public static String getRequestMatcherPatternForBase(String base){
+        return base + ApiConstants.SecurityConfig.ANY_REQUEST_MATCHER_SUFFIX;
+    }
+
+    public static String buildApiPathForEndpointOfResourceType(String endpoint, ApiResourceType resourceType){
+        String base = switch (resourceType) {
+            case USER -> ApiConstants.UserEndpoint.API_BASE;
+            case ADMIN -> ApiConstants.AdminEndpoint.API_BASE;
+            case AUTH -> ApiConstants.AuthEndpoint.API_BASE;
+            case ROLE -> ApiConstants.RoleEndpoint.API_BASE;
+            case ACTIVITY -> ApiConstants.ActivityEndpoint.API_BASE;
+        };
+        return base + endpoint;
     }
 
 }

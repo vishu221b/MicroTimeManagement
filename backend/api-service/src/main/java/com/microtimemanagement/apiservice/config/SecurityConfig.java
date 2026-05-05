@@ -79,6 +79,9 @@ public class SecurityConfig {
                                 .requestMatchers(SecurityConstants.DEV.OPEN_API_ENDPOINT_REQUEST_MATCHERS)
                                 .permitAll()
 
+                                .requestMatchers(SecurityConstants.DEV.SECURE_ADMIN_API_ENDPOINT_REQUEST_MATCHERS)
+                                .hasRole(RoleConstants.ADMIN_OPS_ROLE)
+
                                 .requestMatchers(SecurityConstants.DEV.SECURE_USER_API_ENDPOINT_REQUEST_MATCHERS)
                                 .hasRole(RoleConstants.USER_OPS_ROLE)
 
@@ -87,9 +90,6 @@ public class SecurityConfig {
 
                                 .requestMatchers(SecurityConstants.DEV.SECURE_ROLE_API_ENDPOINT_REQUEST_MATCHERS)
                                 .hasRole(RoleConstants.ROLE_CRUD)
-
-                                .requestMatchers(SecurityConstants.DEV.SECURE_ADMIN_API_ENDPOINT_REQUEST_MATCHERS)
-                                .hasRole(RoleConstants.ADMIN_OPS_ROLE)
 
                                 .anyRequest().denyAll()
                 )
