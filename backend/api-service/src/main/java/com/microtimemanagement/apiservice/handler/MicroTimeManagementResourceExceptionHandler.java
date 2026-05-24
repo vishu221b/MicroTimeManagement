@@ -5,6 +5,7 @@ import com.microtimemanagement.apiservice.dto.MicroTimeManagementExceptionDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
+import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementUserException;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -41,6 +42,14 @@ public class MicroTimeManagementResourceExceptionHandler {
         System.out.println(webRequest.getRequest().getServletPath());
         log.error("{}", getBuilderForStackTrace(ex.getStackTrace()));
         return buildExceptionDTO(ex, webRequest, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(value = {MicroTimeManagementUserException.class})
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ResponseBody
+    ExceptionDTO<?> handleUserConflictException(MicroTimeManagementUserException ex, ServletWebRequest webRequest){
+        log.error("{}", getBuilderForStackTrace(ex.getStackTrace()));
+        return buildExceptionDTO(ex, webRequest, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(value = {MicroTimeManagementException.class})

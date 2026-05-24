@@ -109,8 +109,7 @@ public class UserController {
     }
 
     /**
-     * Gets user details for any user by id
-     * Ideally should be accessible by Admin only
+     * Gets user details for any user by id. Admin-only.
      * */
     @RequestMapping(value = ApiConstants.UserEndpoint.GET_USER_BY_UID, method = RequestMethod.GET)
     @ResponseBody

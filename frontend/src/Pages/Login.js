@@ -1,8 +1,16 @@
-import React from "react";
+import React, { useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Button from "../components/Button";
 import MtmForm from "../components/forms/MtmForm";
+import { loginUser } from "../service/ApiService";
 
 function Login({ toastState, setToastState }) {
+  const navigate = useNavigate();
+  const refCollection = {
+    username: useRef(),
+    password: useRef(),
+  };
+
   return (
     <div
       className="mtm-min-h-full mtm-bg-cover mtm-bg-center mtm-bg-no-repeat sm:mtm-min-h-full"
@@ -19,20 +27,47 @@ function Login({ toastState, setToastState }) {
           wrapperStyle={{
             style: `
           mtm-py-[3%]
-          
+
           `,
             override: false,
           }}
-          onFormSubmit={(e) => {
+          onFormSubmit={async (e) => {
             e.preventDefault();
             setToastState({ display: false });
-            setTimeout(() => {
-              setToastState({
-                display: true,
-                messages: ["Working Now!!"],
-                variant: "success",
-              });
-            }, 1000);
+
+            const request = {
+              username: refCollection.username.current?.value || "",
+              password: refCollection.password.current?.value || "",
+            };
+
+            await loginUser(request, (response, errorResponse) => {
+              if (response) {
+                setToastState({
+                  display: true,
+                  variant: "success",
+                  messages: ["Logged in successfully."],
+                  includePrefix: true,
+                  includeSuffix: true,
+                  suffix: "Redirecting...",
+                });
+                setTimeout(() => navigate("/"), 1500);
+                return;
+              }
+              if (errorResponse && errorResponse.error) {
+                const finalErrors = [errorResponse.error.message];
+                if (errorResponse.error.errors?.length > 0) {
+                  errorResponse.error.errors.forEach((err) =>
+                    finalErrors.push(err)
+                  );
+                }
+                setToastState({
+                  display: true,
+                  variant: "error",
+                  messages: finalErrors,
+                  includePrefix: true,
+                });
+              }
+            });
           }}
         >
           <div className="mtm-grid mtm-grid-cols-1 mtm-gap-8 mtm-mt-8 mtm-text-white/80">
@@ -46,6 +81,7 @@ function Login({ toastState, setToastState }) {
             </span>
             <hr />
             <MtmForm.Input
+              inputRef={refCollection.username}
               twStyles={{
                 input: {
                   style: "mtm-my-2",
@@ -64,6 +100,7 @@ function Login({ toastState, setToastState }) {
               type={"text"}
             />
             <MtmForm.Input
+              inputRef={refCollection.password}
               twStyles={{
                 input: {
                   style: "mtm-my-2",

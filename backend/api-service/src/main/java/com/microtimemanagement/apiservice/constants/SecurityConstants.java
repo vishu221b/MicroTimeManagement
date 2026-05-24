@@ -51,6 +51,9 @@ public class SecurityConstants {
                 ApiUtils.buildApiPathForEndpointOfResourceType(
                         ApiConstants.UserEndpoint.REMOVE_ROLE_FOR_USER, ApiResourceType.USER
                 ),
+                ApiUtils.buildApiPathForEndpointOfResourceType(
+                        ApiConstants.UserEndpoint.GET_USER_BY_UID, ApiResourceType.USER
+                ),
                 "/actuator/**",
         };
 

@@ -10,9 +10,10 @@ import java.util.Date;
 public class RoleCallbacks implements BeforeConvertCallback<Role> {
     @Override
     public Role onBeforeConvert(Role entity, String collection) {
-        entity.setCreatedAt(new Date());
-        if(null == entity.getLastUpdatedAt())
-            entity.setLastUpdatedAt(new Date());
+        Date now = new Date();
+        if(null == entity.getCreatedAt())
+            entity.setCreatedAt(now);
+        entity.setLastUpdatedAt(now);
         if(null == entity.getIsActive())
             entity.setIsActive(true);
         return entity;

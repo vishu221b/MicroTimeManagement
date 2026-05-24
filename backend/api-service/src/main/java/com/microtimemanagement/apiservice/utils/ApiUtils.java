@@ -48,16 +48,17 @@ public class ApiUtils {
     public static PaginationRequestFieldsSanitizationResponseDTO sanitizePaginationRequestFields(
             Integer pageNumber, Integer pageSize
     ){
-        int defaultPageNumber= Integer.parseInt(PaginationConstants.DEFAULT_PAGE_NUMBER);
-        if(pageNumber < defaultPageNumber){
+        int defaultPageNumber = Integer.parseInt(PaginationConstants.DEFAULT_PAGE_NUMBER);
+        int defaultPageSize = Integer.parseInt(PaginationConstants.DEFAULT_PAGE_SIZE);
+        int maxPageSize = Integer.parseInt(PaginationConstants.MAX_PAGE_SIZE);
+
+        if(pageNumber == null || pageNumber < defaultPageNumber){
             pageNumber = defaultPageNumber;
         }
-        int defaultPageSize = Integer.parseInt(PaginationConstants.DEFAULT_PAGE_SIZE);
-        int maxPageSize = Integer.parseInt(PaginationConstants.DEFAULT_PAGE_SIZE);
-        if(pageNumber < defaultPageSize){
+        if(pageSize == null || pageSize < 1){
             pageSize = defaultPageSize;
         }
-        if(pageNumber > maxPageSize){
+        if(pageSize > maxPageSize){
             pageSize = maxPageSize;
         }
         return PaginationRequestFieldsSanitizationResponseDTO.builder()

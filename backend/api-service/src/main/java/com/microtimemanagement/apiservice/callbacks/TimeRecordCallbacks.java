@@ -13,9 +13,10 @@ public class TimeRecordCallbacks implements BeforeConvertCallback<ActivityRecord
 
     @Override
     public ActivityRecord onBeforeConvert(ActivityRecord entity, String collection) {
-        entity.setCreatedAt(new Date());
-        if(null == entity.getLastUpdatedAt())
-            entity.setLastUpdatedAt(new Date());
+        Date now = new Date();
+        if(null == entity.getCreatedAt())
+            entity.setCreatedAt(now);
+        entity.setLastUpdatedAt(now);
         if(null == entity.getIsActive())
             entity.setIsActive(true);
         return entity;
