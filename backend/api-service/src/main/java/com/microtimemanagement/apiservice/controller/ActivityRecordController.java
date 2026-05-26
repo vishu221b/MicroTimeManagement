@@ -5,6 +5,7 @@ import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequ
 import com.microtimemanagement.apiservice.dto.request.ActivityUpdateRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordCreationdResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordResponseDTO;
+import com.microtimemanagement.apiservice.dto.response.ActivityStatsResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.service.ActivityRecordService;
 import com.microtimemanagement.apiservice.utils.ApiUtils;
@@ -67,6 +68,20 @@ public class ActivityRecordController {
             @RequestParam String recordId
     ){
         return activityRecordService.deleteActivity(date, recordId);
+    }
+
+    /**
+     * Aggregated activity totals for the current user over a date window.
+     * Both bounds are optional — when omitted the service defaults to the
+     * rolling last 7 days ending today. Powers the dashboard summary.
+     */
+    @RequestMapping(value = "/stats", method = RequestMethod.GET)
+    @ResponseBody
+    public ActivityStatsResponseDTO getStats(
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to
+    ){
+        return activityRecordService.getActivityStats(from, to);
     }
 
 }

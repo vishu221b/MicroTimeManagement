@@ -8,6 +8,7 @@ import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequ
 import com.microtimemanagement.apiservice.dto.request.ActivityUpdateRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordCreationdResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordResponseDTO;
+import com.microtimemanagement.apiservice.dto.response.ActivityStatsResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
@@ -26,8 +27,12 @@ import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -386,6 +391,122 @@ public class ActivityRecordServiceImpl implements ActivityRecordService {
     private String formatEpoch(Long epoch){
         return DateFormatUtils.format(epoch, "yyyy-MM-dd HH:mm:ss");
     }
+
+    private static final DateTimeFormatter ISO_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    private LocalDate parseIsoDateOrThrow(String value, String fieldLabel) {
+        try {
+            return LocalDate.parse(value, ISO_DATE);
+        } catch (DateTimeParseException e) {
+            throw new MicroTimeManagementBadRequestException(
+                    String.format("Invalid %s. Expected yyyy-MM-dd, got: %s", fieldLabel, value));
+        }
+    }
+
+    private static String humanizeMinutes(long minutes) {
+        if (minutes <= 0) return "0m";
+        long h = minutes / 60;
+        long m = minutes % 60;
+        if (h == 0) return m + "m";
+        if (m == 0) return h + "h";
+        return h + "h " + m + "m";
+    }
+
+    @Override
+    public ActivityStatsResponseDTO getActivityStats(String fromDate, String toDate) {
+        // Default window: rolling 7 days ending today, inclusive on both ends.
+        // If a caller supplies only one bound we anchor the other to it so
+        // single-day lookups still work (?from=2026-05-20 → that one day).
+        LocalDate today = LocalDate.now();
+        LocalDate to = StringUtils.isNotBlank(toDate)
+                ? parseIsoDateOrThrow(toDate, "toDate") : today;
+        LocalDate from = StringUtils.isNotBlank(fromDate)
+                ? parseIsoDateOrThrow(fromDate, "fromDate") : to.minusDays(6);
+        if (from.isAfter(to)) {
+            throw new MicroTimeManagementBadRequestException("fromDate must be on or before toDate.");
+        }
+
+        String userUid = userService.loadUserDTOByUsername(
+                SecurityContextHolder.getContext().getAuthentication().getName()
+        ).getUid();
+
+        List<ActivityRecord> records = activityRecordRepository
+                .findByCreatedByAndRecordDateBetween(userUid, from.format(ISO_DATE), to.format(ISO_DATE));
+
+        // Flatten activities; defend against null lists from older / partially-migrated records.
+        List<Activity> activities = records.stream()
+                .filter(Objects::nonNull)
+                .flatMap(r -> r.getActivities() == null
+                        ? java.util.stream.Stream.<Activity>empty()
+                        : r.getActivities().stream())
+                .filter(Objects::nonNull)
+                .toList();
+
+        long totalMinutes = activities.stream()
+                .mapToLong(a -> a.getTotalDurationInMinutes() == null
+                        ? 0L : a.getTotalDurationInMinutes())
+                .sum();
+
+        int daysWithActivity = (int) records.stream()
+                .filter(r -> r.getActivities() != null && !r.getActivities().isEmpty())
+                .map(ActivityRecord::getRecordDate)
+                .distinct()
+                .count();
+
+        long avgPerActiveDay = daysWithActivity == 0
+                ? 0L : Math.round((double) totalMinutes / (double) daysWithActivity);
+
+        // Group by name (case-insensitive trim) for the "top activities" breakdown.
+        Map<String, ActivityStatsResponseDTO.ActivityBreakdownDTO> byName = new LinkedHashMap<>();
+        for (Activity a : activities) {
+            String key = StringUtils.lowerCase(StringUtils.trimToEmpty(a.getActivityName()));
+            if (key.isEmpty()) key = "(unnamed)";
+            long mins = a.getTotalDurationInMinutes() == null ? 0L : a.getTotalDurationInMinutes();
+            ActivityStatsResponseDTO.ActivityBreakdownDTO entry = byName.get(key);
+            if (entry == null) {
+                entry = ActivityStatsResponseDTO.ActivityBreakdownDTO.builder()
+                        .activityName(StringUtils.defaultIfBlank(a.getActivityName(), "(unnamed)"))
+                        .occurrenceCount(0)
+                        .totalMinutes(0L)
+                        .build();
+                byName.put(key, entry);
+            }
+            entry.setOccurrenceCount(entry.getOccurrenceCount() + 1);
+            entry.setTotalMinutes(entry.getTotalMinutes() + mins);
+        }
+        List<ActivityStatsResponseDTO.ActivityBreakdownDTO> topByDuration = byName.values().stream()
+                .peek(b -> b.setTotalDurationHuman(humanizeMinutes(b.getTotalMinutes())))
+                .sorted(Comparator.comparingLong(
+                        ActivityStatsResponseDTO.ActivityBreakdownDTO::getTotalMinutes).reversed())
+                .limit(5)
+                .collect(Collectors.toList());
+
+        // Recent activities: newest day first, and within a day reverse the
+        // stored chronological order so the most recent shows up at the top.
+        List<Activity> recent = records.stream()
+                .filter(r -> r.getActivities() != null)
+                .sorted(Comparator.comparing(ActivityRecord::getRecordDate).reversed())
+                .flatMap(r -> {
+                    List<Activity> list = new ArrayList<>(r.getActivities());
+                    Collections.reverse(list);
+                    return list.stream();
+                })
+                .limit(5)
+                .toList();
+
+        return ActivityStatsResponseDTO.builder()
+                .fromDate(from.format(ISO_DATE))
+                .toDate(to.format(ISO_DATE))
+                .daysWithActivity(daysWithActivity)
+                .totalActivities(activities.size())
+                .totalMinutes(totalMinutes)
+                .totalDurationHuman(humanizeMinutes(totalMinutes))
+                .averageMinutesPerActiveDay(avgPerActiveDay)
+                .topActivitiesByDuration(topByDuration)
+                .recentActivities(recent.stream().map(activityConverter::toDTO).toList())
+                .build();
+    }
+
     public ActivityRecordCreationdResponseDTO convertToRecordLogResponseDTO(List<ActivityRecord> activityRecords){
         List<ActivityDTO> activities = new ArrayList<>();
         activityRecords.stream()
