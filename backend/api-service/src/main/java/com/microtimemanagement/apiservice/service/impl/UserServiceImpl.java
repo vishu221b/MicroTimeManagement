@@ -26,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -233,15 +235,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTO updateUserDetails(UserDetailsUpdateRequestDTO userDetailsUpdateRequestDTO) {
+        // A user may only update their own profile. We trust the authenticated
+        // principal as the source of truth and reject any request that points at a
+        // different uid — this closes a horizontal-IDOR on /user/update.
+        String authenticatedUid = currentAuthenticatedUid();
+        if (authenticatedUid == null
+                || !authenticatedUid.equals(userDetailsUpdateRequestDTO.getUid())) {
+            throw new MicroTimeManagementUserException(ErrorConstants.CANNOT_UPDATE_UID_OF_EXISTING_USER);
+        }
+
         User currentUser = userRepository.findByUidAndIsActiveTrue(userDetailsUpdateRequestDTO.getUid());
 
         if(null == currentUser){
             throw new MicroTimeManagementBadRequestException(ErrorConstants.INVALID_USER_IDENTIFIER_VALUE);
-        }
-
-        // UIDs are used to uniquely identify the users
-        if(!currentUser.getUid().equals(userDetailsUpdateRequestDTO.getUid())){
-            throw new MicroTimeManagementUserException(ErrorConstants.CANNOT_UPDATE_UID_OF_EXISTING_USER);
         }
         // Email, username, First Name, Last Name, DOB changes are allowed
         log.info("Update user request: {}", userDetailsUpdateRequestDTO);
@@ -294,12 +300,22 @@ public class UserServiceImpl implements UserService {
     @Override
     public String changeUserPassword(PasswordChangeRequestDTO passwordChangeRequestDTO) {
         User user = findActiveUserByEmailOrUsername(passwordChangeRequestDTO.getUsername());
-        String message = ErrorConstants.SOMETHING_WENT_WRONG;
-        if(bCryptPasswordEncoder.matches(passwordChangeRequestDTO.getOldPassword(), user.getPassword())){
-            user.setPassword(bCryptPasswordEncoder.encode(passwordChangeRequestDTO.getNewPassword()));
-            message = ResponseMessages.PASSWORD_CHANGED_SUCCESSFULLY;
+        if(!bCryptPasswordEncoder.matches(passwordChangeRequestDTO.getOldPassword(), user.getPassword())){
+            throw new MicroTimeManagementBadRequestException(ErrorConstants.INVALID_PASSWORD_VALUE);
         }
-        return message;
+        user.setPassword(bCryptPasswordEncoder.encode(passwordChangeRequestDTO.getNewPassword()));
+        userRepository.save(user);
+        return ResponseMessages.PASSWORD_CHANGED_SUCCESSFULLY;
+    }
+
+    private String currentAuthenticatedUid() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) return null;
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof User user) {
+            return user.getUid();
+        }
+        return null;
     }
 
     @Override
