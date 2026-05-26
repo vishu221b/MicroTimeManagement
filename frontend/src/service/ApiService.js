@@ -135,5 +135,35 @@ export const logoutUser = async () => {
   }
 };
 
+// --- Activity API ---
+
+export const createActivity = async (payload, callback) => {
+  apiClient
+    .post(`/activity`, payload)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const getActivitiesForDate = async (date, callback) => {
+  apiClient
+    .get(`/activity/getAllForDate`, { params: { date } })
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const updateActivity = async (date, payload, callback) => {
+  apiClient
+    .put(`/activity`, payload, { params: { date } })
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const deleteActivity = async (date, recordId, callback) => {
+  apiClient
+    .delete(`/activity`, { params: { date, recordId } })
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
 export { getAccessToken, isAuthenticated } from "./AuthStorage";
 export default apiClient;

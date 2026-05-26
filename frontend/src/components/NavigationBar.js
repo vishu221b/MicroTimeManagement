@@ -71,6 +71,17 @@ function NavigationBar() {
                 className="mtm-mx-auto mtm-my-4 md:mtm-my-0"
                 as={"div"}
               >
+                <Link to={"/activity"} preventScrollReset>
+                  <Button variant="warning" size="md" className={twButton}>
+                    <span className="mtm-tracking-widest">Activity</span>
+                  </Button>
+                </Link>
+              </Nav.Link>
+              <Nav.Link
+                eventKey={3}
+                className="mtm-mx-auto mtm-my-4 md:mtm-my-0"
+                as={"div"}
+              >
                 <Button
                   variant="warning"
                   size="md"
