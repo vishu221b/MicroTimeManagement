@@ -165,5 +165,28 @@ export const deleteActivity = async (date, recordId, callback) => {
     .catch((err) => callback(null, toErrorPayload(err)));
 };
 
+// --- User profile API ---
+
+export const getUserProfile = async (callback) => {
+  apiClient
+    .get(`/user/profile`)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const updateUserDetails = async (payload, callback) => {
+  apiClient
+    .put(`/user/update`, payload)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const changeUserPassword = async (payload, callback) => {
+  apiClient
+    .post(`/user/resetPassword`, payload)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
 export { getAccessToken, isAuthenticated } from "./AuthStorage";
 export default apiClient;

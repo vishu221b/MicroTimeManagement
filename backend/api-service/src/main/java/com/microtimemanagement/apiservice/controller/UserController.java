@@ -70,7 +70,7 @@ public class UserController {
     @ResponseBody
     @SecurityRequirement(name = "MTM Auth")
     public GenericMessageResponseDTO<UserDTO> updateUser(
-            @Valid UserDetailsUpdateRequestDTO userDetailsUpdateRequestDTO,
+            @Valid @RequestBody UserDetailsUpdateRequestDTO userDetailsUpdateRequestDTO,
             BindingResult bindingResult
     ){
         ApiUtils.handleValidationErrors(bindingResult);

@@ -10,6 +10,7 @@ import Login from "./Login";
 import Registration from "./Registration";
 import Dashboard from "./Dashboard";
 import Activity from "./Activity";
+import Profile from "./Profile";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { useState } from "react";
 import Toast from "../components/Toast";
@@ -77,6 +78,17 @@ function App() {
           element={
             <ProtectedRoute>
               <Activity
+                toastState={toastState}
+                setToastState={setToastState}
+              />
+            </ProtectedRoute>
+          }
+        ></Route>
+        <Route
+          path={"/profile"}
+          element={
+            <ProtectedRoute>
+              <Profile
                 toastState={toastState}
                 setToastState={setToastState}
               />
