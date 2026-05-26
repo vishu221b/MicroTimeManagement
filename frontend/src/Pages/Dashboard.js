@@ -1,4 +1,6 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import Button from "react-bootstrap/Button";
 
 function Dashboard() {
   return (
@@ -7,8 +9,15 @@ function Dashboard() {
         Welcome back
       </h1>
       <p className="mtm-mt-4 mtm-text-white/70">
-        Activity tracking dashboard is coming soon.
+        Jump into today's activity tracking.
       </p>
+      <div className="mtm-mt-8">
+        <Link to="/activity">
+          <Button variant="warning" size="lg">
+            <span className="mtm-tracking-widest">Track Activities</span>
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 }

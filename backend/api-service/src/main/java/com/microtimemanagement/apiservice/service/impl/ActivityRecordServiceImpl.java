@@ -193,9 +193,16 @@ public class ActivityRecordServiceImpl implements ActivityRecordService {
 
         if (retime) {
             // Remove the existing entry, then re-insert via the create pipeline so overlap
-            // validation and chronological ordering stay in one place.
+            // validation and chronological ordering stay in one place. If the record becomes
+            // empty, delete it outright — leaving an empty record around would make the
+            // create pipeline trip its "existing record + nothing inserted" guard and falsely
+            // report an overlap.
             activityRecord.getActivities().removeIf(a -> a.getId().equals(updateRequest.getRecordId()));
-            saveRecord(activityRecord);
+            if (activityRecord.getActivities().isEmpty()) {
+                activityRecordRepository.delete(activityRecord);
+            } else {
+                saveRecord(activityRecord);
+            }
 
             ActivityRecordCreationRequestDTO creationDTO = new ActivityRecordCreationRequestDTO();
             creationDTO.setRecordDate(date);
