@@ -1,32 +1,352 @@
-# MICRO TIME MANAGEMENT (Work In Progress)
+<div align="center">
 
-### ABOUT
+# Micro Time Management (MTM)
 
-I’m finally finishing Micro Time Management!
-I started this app to survive my Master’s degree, and while life got in the way for a bit, it’s time to get the final features across the finish line. 
+**A self-hosted, role-aware time tracker for the people who keep meaning to start one.**
 
-Stay tuned for updates!
+[![Java](https://img.shields.io/badge/Java-17-007396?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/17/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.10-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-7-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Maven](https://img.shields.io/badge/Build-Maven-C71A36?logo=apachemaven&logoColor=white)](https://maven.apache.org/)
+[![Status](https://img.shields.io/badge/status-active%20development-blue)](#roadmap)
 
-### What It Does
-It's a **time/activity tracking app** — users register, log in, and record daily "activities" (time blocks with start/end hours, descriptions, and meridian indicators). An admin role manages user roles. Sessions are stored in MongoDB and validated via a custom JWT filter.
+</div>
 
-### Backend Tech Stack
+---
 
-| Component | Current Implementation                                 |
-|-----------|--------------------------------------------------------|
-| Framework | Spring Boot 3.0.0, Java 17                             |
-| Database | MongoDB (Spring Data MongoDB)                          |
-| Auth | Custom JWT with `jjwt` + session-in-DB validation      |
-| API Docs | springdoc-openapi             |
-| Security | Spring Security 6 with custom `MtmSessionFilter`       |
-| Containerization | Docker + Docker Compose (MongoDB + Mongo Express + app) |
-| Build | Maven                                                  |
+## Table of contents
 
-### Frontend Tech Stack
+- [What it is](#what-it-is)
+- [Features](#features)
+- [Architecture at a glance](#architecture-at-a-glance)
+- [Tech stack](#tech-stack)
+- [Project layout](#project-layout)
+- [Getting started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [1. Clone](#1-clone)
+  - [2. Run MongoDB](#2-run-mongodb)
+  - [3. Start the backend](#3-start-the-backend)
+  - [4. Start the frontend](#4-start-the-frontend)
+- [Configuration](#configuration)
+- [API surface](#api-surface)
+- [Testing](#testing)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [Author](#author)
 
-| Component | Current Implementation |
-|-----------|----------------------|
-| Framework | React 18 with React Router v6 |
-| Styling | Tailwind CSS 3.2 + Bootstrap 5 + Ant Design 5 |
-| HTTP Client | Axios |
-| State Management | React `useState` (local) |
+---
+
+## What it is
+
+Micro Time Management is a full-stack web app for tracking how you actually spend your day. You log in, pick a date, and add **activities** — time blocks with a name, description, and start/end times. The backend rejects overlapping blocks, keeps them in chronological order, and scopes everything to the signed-in user. Admins can manage roles from a separate panel.
+
+The project started as a side-project during a Master's degree and is now being finished as a portfolio piece. It is deliberately built around **a real auth stack, a real role model, and real test coverage** rather than a toy backend, so it doubles as a reference for anyone wiring up Spring Security + JWT sessions against MongoDB.
+
+## Features
+
+### For everyone
+- 🔐 **Registration & login** — BCrypt-hashed passwords, JWT access (5h) + opaque refresh (7d) tokens, automatic refresh on `401`.
+- 📅 **Daily activity tracker** — create, edit, delete activities per date. Overlapping time ranges and duplicates are rejected at the service layer; insertions stay chronologically sorted.
+- 👤 **Profile management** — update name, email, username, date of birth, and change password with current-password verification.
+- 🚪 **Logout & session revocation** — server-side session is invalidated on logout (and on re-login: single active session per user).
+
+### For admins (`ROLE_MTM_ADMIN_OPS`)
+- 🛡️ **Role management** — create, rename (with name-conflict detection), and soft-delete roles from a dedicated admin panel.
+- 👥 **Bulk user/role operations** — backend endpoints for adding/removing roles to users in bulk (UI coming soon).
+- 🔎 **Paginated user listing** — sortable, scopable, locked behind `ROLE_MTM_ADMIN_OPS`.
+
+### Under the hood
+- 🧪 **Service-layer test coverage** for activities, users, roles, auth, and pagination utilities.
+- 🪵 **Rolling-file structured logging** via Logback.
+- 📓 **Swagger UI** auto-generated in the dev profile.
+- 🔁 **Single-flight 401 refresh** — concurrent expired requests share one refresh round-trip in the Axios client.
+- 🗂 **Cross-tab auth sync** in the frontend via `storage` events.
+
+## Architecture at a glance
+
+```
+                 ┌──────────────────────────────────────┐
+                 │             React SPA                │
+                 │  Pages: Home · Login · Register      │
+                 │         Dashboard · Activity ·       │
+                 │         Profile · Admin              │
+                 │  ProtectedRoute / AdminRoute         │
+                 │  Axios apiClient (+401 refresh)      │
+                 └──────────────────┬───────────────────┘
+                                    │ HTTPS / JSON
+                                    ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Spring Boot 3.5 API                      │
+│                                                             │
+│  MtmSessionFilter ──► AuthN/AuthZ ──► Controllers ──► Svcs  │
+│        │                                       │            │
+│        ▼                                       ▼            │
+│  JWT validate + session DB check        Domain logic        │
+│                                                             │
+└────────────────────────────┬────────────────────────────────┘
+                             │ Spring Data MongoDB
+                             ▼
+            ┌───────────────────────────────────────┐
+            │              MongoDB                  │
+            │  users · roles · sessions · tokens    │
+            │  micro_activity_record                │
+            └───────────────────────────────────────┘
+```
+
+### Request lifecycle
+
+1. Client hits an endpoint with `Authorization: Bearer <jwt>`.
+2. `MtmSessionFilter` parses the JWT, calls `AuthenticationAndAuthorizationService.validateCurrentUserSessionForAccessToken`, and looks up the access token + session in MongoDB.
+3. Valid → the resolved `User` becomes the Spring Security principal for the rest of the request. Expired/invalid → `401`. Unexpected exception → `500` (deliberately distinct from auth failures).
+4. Controllers route to services, which return either DTOs or a `GenericMessageResponseDTO` envelope.
+
+## Tech stack
+
+### Backend
+
+| Concern | Choice |
+|---|---|
+| Language | Java 17 |
+| Framework | Spring Boot 3.5.10 |
+| Persistence | Spring Data MongoDB |
+| Security | Spring Security 6 + custom `MtmSessionFilter` |
+| Auth tokens | `jjwt 0.13.0` (HS512) + DB-backed sessions / refresh tokens |
+| Validation | `spring-boot-starter-validation` (Bean Validation) |
+| API docs | springdoc-openapi 2.8.15 (Swagger UI) |
+| Build | Maven, fat-jar via `spring-boot-maven-plugin` |
+| Logging | Logback (rolling file) |
+| Testing | JUnit 5, Mockito, AssertJ |
+
+### Frontend
+
+| Concern | Choice |
+|---|---|
+| Framework | React 18 (Create React App) |
+| Routing | React Router v6 |
+| Styling | Tailwind CSS 3 (prefix `mtm-`) + Bootstrap 5 + Ant Design 5 |
+| HTTP | Axios (shared client with request + response interceptors) |
+| State | `useState` + a focused `useAuth` hook + a tiny pub/sub on top of `localStorage` |
+| Icons | `react-icons` |
+
+### Infrastructure
+
+| Concern | Choice |
+|---|---|
+| Local DB | Docker Compose (MongoDB + Mongo Express) |
+| Profiles | `dev` (port 8080, context `/mtm-dev`) · `prod` (env-var driven, locked CORS) |
+
+## Project layout
+
+```
+MicroTimeManagement/
+├── backend/api-service/                Spring Boot REST API
+│   ├── src/main/java/.../apiservice/
+│   │   ├── callbacks/                  BeforeConvertCallback (audit fields)
+│   │   ├── config/                     Profile-aware Spring Security
+│   │   ├── constants/                  Centralised error / role / pagination constants
+│   │   ├── controller/                 Auth · User · Role · Activity · Admin
+│   │   ├── converter/                  Model ↔ DTO
+│   │   ├── dto/{entity,request,response}
+│   │   ├── enums/
+│   │   ├── exceptions/                 Custom hierarchy + @ControllerAdvice
+│   │   ├── filter/                     MtmSessionFilter (per-request session validation)
+│   │   ├── handler/                    Global exception handler
+│   │   ├── model/                      MongoDB documents
+│   │   ├── repository/                 Spring Data interfaces
+│   │   ├── service/{,impl}             Business logic
+│   │   └── utils/                      JWT + API utilities
+│   └── src/test/java/.../apiservice/   Service-layer tests + test factories
+├── frontend/                           React 18 SPA
+│   └── src/
+│       ├── Pages/                      Home · Login · Registration · Dashboard ·
+│       │                               Activity · Profile · Admin
+│       ├── components/                 ProtectedRoute · AdminRoute · NavigationBar ·
+│       │                               MtmForm + inputs · Toast · Footer
+│       ├── hooks/                      useAuth (auth + profile/roles)
+│       ├── service/                    AuthStorage (token store + pub/sub),
+│       │                               ApiService (shared axios + endpoint wrappers)
+│       └── style/                      Tailwind + base CSS
+├── docker-compose.yml                  MongoDB + Mongo Express (app service commented out)
+└── README.md                           You are here.
+```
+
+## Getting started
+
+### Prerequisites
+
+- **Java 17+** (Temurin / Adoptium recommended)
+- **Node.js 18+** and **npm 9+**
+- **Docker** & **Docker Compose** (for MongoDB locally)
+- **Maven** is bundled via `./mvnw`; no global install needed
+
+### 1. Clone
+
+```bash
+git clone git@github.com:vishu221b/MicroTimeManagement.git
+cd MicroTimeManagement
+```
+
+### 2. Run MongoDB
+
+```bash
+docker compose up -d
+```
+
+This starts:
+
+| Service | Port | What it is |
+|---|---|---|
+| `mtm_compose_mongo` | `27017` | MongoDB instance, no auth (local-dev only) |
+| `m_express` | `8081` | Mongo Express UI at <http://localhost:8081> |
+
+> The `mtm_test` app service in `docker-compose.yml` is intentionally commented out — run the Spring app directly while developing so hot-reload + breakpoints work.
+
+### 3. Start the backend
+
+```bash
+cd backend/api-service
+./mvnw spring-boot:run
+```
+
+The API boots on **<http://localhost:8080/mtm-dev>**.
+
+- Swagger UI: <http://localhost:8080/mtm-dev/swagger-ui/index.html>
+- Health endpoint: <http://localhost:8080/mtm-dev/actuator/health>
+
+### 4. Start the frontend
+
+In a separate terminal:
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+The dev server runs on **<http://localhost:3000>** and talks to the backend at `http://localhost:8080/mtm-dev/api/v1`.
+
+## Configuration
+
+The dev profile (`application-dev.yml`) ships with sensible defaults so you can `mvn spring-boot:run` after `docker compose up`. The prod profile (`application-prod.yml`) requires every secret to come from the environment.
+
+| Variable | Scope | Default | Purpose |
+|---|---|---|---|
+| `SPRING_PROFILES_ACTIVE` | both | `dev` | Switches between dev and prod config |
+| `MTM_JWT_SECRET` | dev (optional) / prod (**required**) | bundled dev fallback | Symmetric key for HS512 JWT signing |
+| `MTM_MONGO_USERNAME` | prod | — | Mongo Atlas user |
+| `MTM_MONGO_PASSWORD` | prod | — | Mongo Atlas password |
+| `MONGO_STORE_CLUSTER` | prod | — | Atlas cluster hostname segment |
+| `MONGO_STORE_DATABASE` | prod | — | Atlas database name |
+| `LOG_FILE_PROPERTIES` | prod | — | Path for rolling log file |
+
+> The dev JWT secret has been left in the repo intentionally so the app boots out of the box. **Override it in any environment you don't fully control.**
+
+## API surface
+
+A trimmed map of the v1 API — full schemas live in the Swagger UI.
+
+### Auth
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `POST` | `/api/v1/auth/login` | public | Username/email + password → access + refresh tokens |
+| `POST` | `/api/v1/auth/refresh` | public | Refresh token → new access token |
+| `POST` | `/api/v1/auth/logout` | `USER_OPS` | Revoke current session |
+
+### User
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `POST` | `/api/v1/user/register` | public | Create new account (default roles: `USER_OPS`, `ACTIVITY_CRUD`) |
+| `GET` | `/api/v1/user/profile` | `USER_OPS` | Current user, including roles |
+| `PUT` | `/api/v1/user/update` | `USER_OPS` | Update own first/last name, email, username, DOB |
+| `POST` | `/api/v1/user/resetPassword` | `USER_OPS` | Verify old password, set new password (≥ 8 chars) |
+| `DELETE` | `/api/v1/user/delete` | `USER_OPS` | Soft-delete current account |
+| `GET` | `/api/v1/user/getByUserId` | `ADMIN_OPS` | Look up any user by UID |
+| `GET` | `/api/v1/user/all` | `ADMIN_OPS` | Paginated, sortable user listing |
+| `POST` | `/api/v1/user/addRole` | `ADMIN_OPS` | Bulk add roles by uid/email/username |
+| `DELETE` | `/api/v1/user/removeRole` | `ADMIN_OPS` | Bulk remove roles |
+
+### Activity
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `POST` | `/api/v1/activity` | `ACTIVITY_CRUD` | Create / append activity (overlap-validated) |
+| `GET` | `/api/v1/activity/getAllForDate?date=` | `ACTIVITY_CRUD` | Activities for a date, scoped to current user |
+| `PUT` | `/api/v1/activity?date=` | `ACTIVITY_CRUD` | Update an activity (metadata-only or full re-time) |
+| `DELETE` | `/api/v1/activity?date=&recordId=` | `ACTIVITY_CRUD` | Remove a single activity from a day's record |
+
+### Role
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `POST` | `/api/v1/role` | `ROLE_CRUD` | Create role |
+| `GET` | `/api/v1/role` | `ROLE_CRUD` | List or get by id (paginated) |
+| `PUT` | `/api/v1/role` | `ROLE_CRUD` | Rename role (conflict-checked) |
+| `DELETE` | `/api/v1/role?roleId=` | `ROLE_CRUD` | Soft-delete role |
+
+## Testing
+
+### Backend
+
+```bash
+cd backend/api-service
+./mvnw test                                # full suite
+./mvnw test -Dtest=ActivityRecordServiceImplTest   # one class
+```
+
+Service-layer coverage today (selected highlights):
+
+| Suite | Notes |
+|---|---|
+| `ActivityRecordServiceImplTest` | 14 cases — create / append / overlap / duplicate / invalid date / get / delete / update (metadata + retime + overlap rejection) |
+| `UserServiceImplTest` | Registration, lookup, profile fetch, update (with cross-uid IDOR rejection), password change happy + wrong-old-password rejection |
+| `RoleServiceImplTest` | 8 cases — create / get / list / soft-delete / rename happy / no-op / conflict / not-found |
+| `AuthenticationAndAuthorizationServiceImplTest` | Login happy + bad password |
+| `ApiUtilsTest` | Pagination sanitisation edge cases |
+
+> A small number of `SessionServiceImplTest` cases and `ApiServiceApplicationTests.contextLoads` are known-flaky (Mockito stubbing mismatch + Mongo dependency). They are tracked in `CLAUDE.md` and excluded from the green-bar definition.
+
+### Frontend
+
+```bash
+cd frontend
+npm run build         # production bundle (also runs ESLint)
+npm test              # Jest in watch mode (test coverage is the next milestone)
+```
+
+## Roadmap
+
+### Shipped
+- ✅ Auth flow with single-flight refresh, protected + admin routes
+- ✅ Activity tracker CRUD UI
+- ✅ Profile + password change UI
+- ✅ Admin role management UI
+
+### Next up
+- 📊 Dashboard with recent-activity summary
+- 🧪 React Testing Library coverage for pages + hooks
+- 👥 User → Role assignment UI in the admin panel
+- 📆 Migrate string dates to `LocalDate` and swap the DOB text input for a date picker
+- ⚡ Bulk role lookup (eliminate the per-request N+1 in `UserServiceImpl.replaceRoleIdsWithNamesForUser`)
+- 🐳 Wire the prod Docker Compose app service with env-var-driven config
+
+A complete pending list lives in `CLAUDE.md`.
+
+## Contributing
+
+This is a personal portfolio project, but PRs and issues are welcome.
+
+1. Fork → branch (`feat/<thing>`).
+2. **Backend changes ship with tests.** Service-layer logic is TDD-friendly — write the test first.
+3. Run `./mvnw test` and `npm run build` before pushing.
+4. Open a PR against `main` with a description of *what* changed and *why*.
+
+The development conventions (package layout, exception hierarchy, response wrappers, callback contracts, etc.) are documented in `CLAUDE.md` and updated alongside every feature.
+
+## Author
+
+Built by **[Vishal Dogra](https://github.com/vishu221b)**.
+
+If this project taught you something, or you spot a bug, please open an issue — feedback is the entire point of shipping it publicly.
