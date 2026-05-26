@@ -39,7 +39,6 @@ public class UserDTO {
 
     private Date lastUpdatedAt;
 
-    @JsonIgnore
     private Set<String> roles;
 
     @JsonIgnore
