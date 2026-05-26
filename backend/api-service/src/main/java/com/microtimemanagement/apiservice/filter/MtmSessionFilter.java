@@ -68,21 +68,34 @@ public class MtmSessionFilter extends OncePerRequestFilter {
                 }
             }
             filterChain.doFilter(request, response);
+        }catch (MicroTimeManagementAuthenticationException e){
+            log.info("Rejecting request to {}: {}", request.getServletPath(), e.getMessage());
+            writeErrorResponse(request, response, HttpStatus.UNAUTHORIZED, e.getMessage());
         }catch (Exception e){
-            e.printStackTrace();
-            Map<String, String> errors = new HashMap<>();
-            errors.put("message", e.getMessage());
-            response.setContentType("application/json");
-            response.setStatus(HttpStatus.FORBIDDEN.value());
-            response.getWriter().write(
-                    objectMapper.writeValueAsString(
-                            ExceptionDTO.builder()
-                                    .error(errors)
-                                    .path(request.getServletPath())
-                                    .statusCode(HttpStatus.FORBIDDEN.value())
-                                    .code(System.currentTimeMillis())
-                                    .build()
-                    ));
+            log.error("Unexpected error while authenticating request to {}", request.getServletPath(), e);
+            writeErrorResponse(request, response, HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Unexpected error while authenticating request. Please contact dev.");
         }
+    }
+
+    private void writeErrorResponse(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            HttpStatus status,
+            String message
+    ) throws IOException {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("message", message);
+        response.setContentType("application/json");
+        response.setStatus(status.value());
+        response.getWriter().write(
+                objectMapper.writeValueAsString(
+                        ExceptionDTO.builder()
+                                .error(errors)
+                                .path(request.getServletPath())
+                                .statusCode(status.value())
+                                .code(System.currentTimeMillis())
+                                .build()
+                ));
     }
 }

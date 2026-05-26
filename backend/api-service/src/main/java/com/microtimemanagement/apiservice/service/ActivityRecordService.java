@@ -1,6 +1,7 @@
 package com.microtimemanagement.apiservice.service;
 
 import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequestDTO;
+import com.microtimemanagement.apiservice.dto.request.ActivityUpdateRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordCreationdResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordResponseDTO;
 import com.microtimemanagement.apiservice.model.ActivityRecord;
@@ -17,5 +18,5 @@ public interface ActivityRecordService {
 
     ActivityRecordResponseDTO deleteActivity(String date, String recordId);
 
-    ActivityRecordResponseDTO updateActivity(String date);
+    ActivityRecordResponseDTO updateActivity(String date, ActivityUpdateRequestDTO updateRequest);
 }

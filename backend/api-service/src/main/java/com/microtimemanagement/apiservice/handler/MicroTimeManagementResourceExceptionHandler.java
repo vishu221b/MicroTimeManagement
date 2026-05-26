@@ -27,9 +27,7 @@ public class MicroTimeManagementResourceExceptionHandler {
     @ExceptionHandler(value = {MicroTimeManagementBadRequestException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     private @ResponseBody ExceptionDTO<?> handleBadRequestException(MicroTimeManagementBadRequestException ex, ServletWebRequest webRequest){
-        System.out.println(webRequest.getRequest().getRequestURI());
-        System.out.println(webRequest.getUserPrincipal());
-        System.out.println(webRequest.getRequest().getServletPath());
+        log.debug("Bad request on {} for principal {}", webRequest.getRequest().getRequestURI(), webRequest.getUserPrincipal());
         log.error("{}", getBuilderForStackTrace(ex.getStackTrace()));
         return buildExceptionDTO(ex, webRequest, HttpStatus.BAD_REQUEST);
     }
@@ -37,9 +35,7 @@ public class MicroTimeManagementResourceExceptionHandler {
     @ExceptionHandler(value = {MicroTimeManagementNotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
     private @ResponseBody ExceptionDTO<?> handleNotFoundException(MicroTimeManagementNotFoundException ex, ServletWebRequest webRequest){
-        System.out.println(webRequest.getRequest().getRequestURI());
-        System.out.println(webRequest.getUserPrincipal());
-        System.out.println(webRequest.getRequest().getServletPath());
+        log.debug("Resource not found on {} for principal {}", webRequest.getRequest().getRequestURI(), webRequest.getUserPrincipal());
         log.error("{}", getBuilderForStackTrace(ex.getStackTrace()));
         return buildExceptionDTO(ex, webRequest, HttpStatus.NOT_FOUND);
     }

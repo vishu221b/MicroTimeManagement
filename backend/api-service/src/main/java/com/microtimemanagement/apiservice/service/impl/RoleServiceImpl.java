@@ -1,11 +1,14 @@
 package com.microtimemanagement.apiservice.service.impl;
 
+import com.microtimemanagement.apiservice.constants.ErrorConstants;
 import com.microtimemanagement.apiservice.constants.ResponseMessages;
 import com.microtimemanagement.apiservice.constants.RoleConstants;
 import com.microtimemanagement.apiservice.converter.RoleConverter;
 import com.microtimemanagement.apiservice.dto.entity.RoleDTO;
 import com.microtimemanagement.apiservice.dto.request.NewRoleRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.RoleUpdateRequestDTO;
+import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
+import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
 import com.microtimemanagement.apiservice.model.Role;
 import com.microtimemanagement.apiservice.repository.RoleRepository;
 import com.microtimemanagement.apiservice.service.RoleService;
@@ -81,7 +84,20 @@ public class RoleServiceImpl implements RoleService {
      */
     @Override
     public RoleDTO updateRoleDetails(RoleUpdateRequestDTO roleUpdateRequestDTO) {
-        return null;
+        Role role = roleRepository.findByIdAndIsActiveTrue(roleUpdateRequestDTO.getRoleId());
+        if (null == role) {
+            throw new MicroTimeManagementNotFoundException(ErrorConstants.ROLE_NOT_FOUND_ERROR);
+        }
+        String newName = roleUpdateRequestDTO.getRoleName().trim();
+        if (newName.equals(role.getName())) {
+            return roleConverter.toDTO(role);
+        }
+        Role conflicting = roleRepository.findByNameAndIsActiveTrue(newName);
+        if (null != conflicting && !conflicting.getId().equals(role.getId())) {
+            throw new MicroTimeManagementBadRequestException(ErrorConstants.ACTIVE_ROLE_ALREADY_EXISTS_ERROR);
+        }
+        role.setName(newName);
+        return roleConverter.toDTO(saveRole(role));
     }
 
     /**

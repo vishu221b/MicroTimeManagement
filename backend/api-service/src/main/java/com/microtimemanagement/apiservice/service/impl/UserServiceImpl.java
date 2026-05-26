@@ -93,7 +93,7 @@ public class UserServiceImpl implements UserService {
     private User findById(String id){
         Optional<User> user = userRepository.findById(id);
         if(user.isEmpty()){
-            throw new MicroTimeManagementUserException(ErrorConstants.USER_NOT_FOUND_IN_DB_RECORDS);
+            throw new MicroTimeManagementNotFoundException(ErrorConstants.USER_NOT_FOUND_IN_DB_RECORDS);
         }
         return user.get();
     }
@@ -104,14 +104,14 @@ public class UserServiceImpl implements UserService {
     private User findByUsername(String username){
         Optional<User> user = userRepository.findByUsernameAndIsActiveTrue(username);
         if(user.isEmpty()){
-            throw new MicroTimeManagementUserException(ErrorConstants.USER_NOT_FOUND_IN_DB_RECORDS);
+            throw new MicroTimeManagementNotFoundException(ErrorConstants.USER_NOT_FOUND_IN_DB_RECORDS);
         }
         return user.get();
     }
     private User findByEmail(String email){
         Optional<User> user = userRepository.findByEmailAndIsActiveTrue(email);
         if(user.isEmpty()){
-            throw new MicroTimeManagementUserException(ErrorConstants.USER_NOT_FOUND_IN_DB_RECORDS);
+            throw new MicroTimeManagementNotFoundException(ErrorConstants.USER_NOT_FOUND_IN_DB_RECORDS);
         }
         return user.get();}
 

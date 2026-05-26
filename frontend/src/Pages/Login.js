@@ -1,11 +1,15 @@
 import React, { useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Button from "../components/Button";
 import MtmForm from "../components/forms/MtmForm";
 import { loginUser } from "../service/ApiService";
 
 function Login({ toastState, setToastState }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTarget =
+    (location.state && location.state.from && location.state.from.pathname) ||
+    "/dashboard";
   const refCollection = {
     username: useRef(),
     password: useRef(),
@@ -50,7 +54,7 @@ function Login({ toastState, setToastState }) {
                   includeSuffix: true,
                   suffix: "Redirecting...",
                 });
-                setTimeout(() => navigate("/"), 1500);
+                setTimeout(() => navigate(redirectTarget, { replace: true }), 1500);
                 return;
               }
               if (errorResponse && errorResponse.error) {

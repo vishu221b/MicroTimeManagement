@@ -2,14 +2,17 @@ package com.microtimemanagement.apiservice.controller;
 
 import com.microtimemanagement.apiservice.constants.ApiConstants;
 import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequestDTO;
+import com.microtimemanagement.apiservice.dto.request.ActivityUpdateRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordCreationdResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.service.ActivityRecordService;
+import com.microtimemanagement.apiservice.utils.ApiUtils;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
@@ -48,9 +51,12 @@ public class ActivityRecordController {
     @RequestMapping(value = ApiConstants.EMPTY_BASE, method = RequestMethod.PUT)
     @ResponseBody
     public ActivityRecordResponseDTO updateActivity(
-            @RequestParam String date
+            @RequestParam String date,
+            @Valid @RequestBody ActivityUpdateRequestDTO updateRequest,
+            BindingResult bindingResult
     ){
-        return activityRecordService.updateActivity(date);
+        ApiUtils.handleValidationErrors(bindingResult);
+        return activityRecordService.updateActivity(date, updateRequest);
     }
 
 

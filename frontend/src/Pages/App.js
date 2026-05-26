@@ -8,6 +8,8 @@ import Footer from "../components/Footer";
 import { Route, Routes } from "react-router-dom";
 import Login from "./Login";
 import Registration from "./Registration";
+import Dashboard from "./Dashboard";
+import ProtectedRoute from "../components/ProtectedRoute";
 import { useState } from "react";
 import Toast from "../components/Toast";
 
@@ -59,6 +61,14 @@ function App() {
               toastState={toastState}
               setToastState={setToastState}
             />
+          }
+        ></Route>
+        <Route
+          path={"/dashboard"}
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
           }
         ></Route>
       </Routes>
