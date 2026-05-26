@@ -1,18 +1,26 @@
 import React, { useState } from "react";
 import mtm from "../Micro.gif";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
 import { Button } from "react-bootstrap";
 import { AiOutlineAlignCenter } from "react-icons/ai";
 import { BsCaretUpFill } from "react-icons/bs";
-import Home from "../Pages/Home";
+import useAuth from "../hooks/useAuth";
+import { logoutUser } from "../service/ApiService";
 
 const twButton =
   "mtm-animate-pulse mtm-text-white mtm-w-[130px] mtm-mt-[1%] sm:mtm-my-[0px] hover:mtm-bg-yellow-300 hover:mtm-text-black hover:mtm-animate-none";
 
 function NavigationBar() {
   const [toggled, setToggled] = useState(0);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logoutUser();
+    navigate("/login", { replace: true });
+  };
   return (
     <Navbar
       sticky="top"
@@ -45,28 +53,60 @@ function NavigationBar() {
       </Navbar.Toggle>
       <Navbar.Collapse id="responsive-navbar-nav">
         <Nav className="mtm-ml-auto mtm-py-10 sm:mtm-py-0">
-          <Nav.Link
-            eventKey={2}
-            className="mtm-mx-auto mtm-my-4 md:mtm-my-0"
-            as={"div"}
-          >
-            <Link to={"/login"} preventScrollReset>
-              <Button variant="warning" size="md" className={twButton}>
-                <span className="mtm-tracking-widest">Sign in</span>
-              </Button>
-            </Link>
-          </Nav.Link>
-          <Nav.Link
-            eventKey={2}
-            className="mtm-mx-auto mtm-my-4 md:mtm-my-0"
-            as={"div"}
-          >
-            <Link to={"/register"}>
-              <Button variant="warning" size="md" className={twButton}>
-                <span className="mtm-tracking-widest">Try Now!</span>
-              </Button>
-            </Link>
-          </Nav.Link>
+          {isAuthenticated ? (
+            <>
+              <Nav.Link
+                eventKey={1}
+                className="mtm-mx-auto mtm-my-4 md:mtm-my-0"
+                as={"div"}
+              >
+                <Link to={"/dashboard"} preventScrollReset>
+                  <Button variant="warning" size="md" className={twButton}>
+                    <span className="mtm-tracking-widest">Dashboard</span>
+                  </Button>
+                </Link>
+              </Nav.Link>
+              <Nav.Link
+                eventKey={2}
+                className="mtm-mx-auto mtm-my-4 md:mtm-my-0"
+                as={"div"}
+              >
+                <Button
+                  variant="warning"
+                  size="md"
+                  className={twButton}
+                  onClick={handleLogout}
+                >
+                  <span className="mtm-tracking-widest">Logout</span>
+                </Button>
+              </Nav.Link>
+            </>
+          ) : (
+            <>
+              <Nav.Link
+                eventKey={1}
+                className="mtm-mx-auto mtm-my-4 md:mtm-my-0"
+                as={"div"}
+              >
+                <Link to={"/login"} preventScrollReset>
+                  <Button variant="warning" size="md" className={twButton}>
+                    <span className="mtm-tracking-widest">Sign in</span>
+                  </Button>
+                </Link>
+              </Nav.Link>
+              <Nav.Link
+                eventKey={2}
+                className="mtm-mx-auto mtm-my-4 md:mtm-my-0"
+                as={"div"}
+              >
+                <Link to={"/register"}>
+                  <Button variant="warning" size="md" className={twButton}>
+                    <span className="mtm-tracking-widest">Try Now!</span>
+                  </Button>
+                </Link>
+              </Nav.Link>
+            </>
+          )}
         </Nav>
       </Navbar.Collapse>
     </Navbar>

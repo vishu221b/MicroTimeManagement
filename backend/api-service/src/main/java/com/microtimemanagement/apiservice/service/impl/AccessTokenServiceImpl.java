@@ -127,6 +127,16 @@ public class AccessTokenServiceImpl implements AccessTokenService {
                     .build();
         }
 
+        if(null != accessTokenDTO.getExpiresAt()
+                && accessTokenDTO.getExpiresAt().getTime() <= System.currentTimeMillis()){
+            log.info("Access token expired at {}", accessTokenDTO.getExpiresAt());
+            return ValidSessionTokenDTO.builder()
+                    .isValidSession(Boolean.FALSE)
+                    .principal(null)
+                    .error(ErrorConstants.SESSION_EXPIRED)
+                    .build();
+        }
+
         return jsonWebTokenService.validateJwtSessionAccessToken(token);
     }
 }

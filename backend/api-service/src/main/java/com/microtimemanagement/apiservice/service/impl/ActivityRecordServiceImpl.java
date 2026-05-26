@@ -5,6 +5,7 @@ import com.microtimemanagement.apiservice.converter.ActivityDTOConverter;
 import com.microtimemanagement.apiservice.dto.entity.ActivityDTO;
 import com.microtimemanagement.apiservice.dto.entity.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequestDTO;
+import com.microtimemanagement.apiservice.dto.request.ActivityUpdateRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordCreationdResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
@@ -18,6 +19,7 @@ import com.microtimemanagement.apiservice.service.ActivityService;
 import com.microtimemanagement.apiservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -172,8 +174,55 @@ public class ActivityRecordServiceImpl implements ActivityRecordService {
     }
 
     @Override
-    public ActivityRecordResponseDTO updateActivity(String date) {
-        return null;
+    public ActivityRecordResponseDTO updateActivity(String date, ActivityUpdateRequestDTO updateRequest) {
+        UserDTO userDTO = userService.loadUserDTOByUsername(
+                SecurityContextHolder.getContext().getAuthentication().getName()
+        );
+        ActivityRecord activityRecord = activityRecordRepository
+                .findByRecordDateAndCreatedBy(date, userDTO.getUid())
+                .orElseThrow(() -> new MicroTimeManagementNotFoundException(
+                        String.format("No record found for date %s", date)));
+
+        Activity existing = activityRecord.getActivities().stream()
+                .filter(a -> a.getId().equals(updateRequest.getRecordId()))
+                .findFirst()
+                .orElseThrow(() -> new MicroTimeManagementNotFoundException(ErrorConstants.ACTIVITY_NOT_FOUND));
+
+        boolean retime = StringUtils.isNotBlank(updateRequest.getActivityStartHourMinutes())
+                && StringUtils.isNotBlank(updateRequest.getActivityEndHourMinutes());
+
+        if (retime) {
+            // Remove the existing entry, then re-insert via the create pipeline so overlap
+            // validation and chronological ordering stay in one place.
+            activityRecord.getActivities().removeIf(a -> a.getId().equals(updateRequest.getRecordId()));
+            saveRecord(activityRecord);
+
+            ActivityRecordCreationRequestDTO creationDTO = new ActivityRecordCreationRequestDTO();
+            creationDTO.setRecordDate(date);
+            creationDTO.setActivityName(StringUtils.defaultIfBlank(
+                    updateRequest.getActivityName(), existing.getActivityName()));
+            creationDTO.setActivityDescription(StringUtils.defaultIfBlank(
+                    updateRequest.getActivityDescription(), existing.getActivityDescription()));
+            creationDTO.setActivityStartHourMinutes(updateRequest.getActivityStartHourMinutes());
+            creationDTO.setActivityEndHourMinutes(updateRequest.getActivityEndHourMinutes());
+            creationDTO.setIsNextDaySpan(Boolean.TRUE.equals(updateRequest.getIsNextDaySpan()));
+            try {
+                processCreateUpdateRequest(creationDTO);
+            } catch (MicroTimeManagementException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new MicroTimeManagementBadRequestException(ErrorConstants.INVALID_DATE_VALUE);
+            }
+        } else {
+            if (StringUtils.isNotBlank(updateRequest.getActivityName())) {
+                existing.setActivityName(updateRequest.getActivityName());
+            }
+            if (null != updateRequest.getActivityDescription()) {
+                existing.setActivityDescription(updateRequest.getActivityDescription());
+            }
+            saveRecord(activityRecord);
+        }
+        return getActivitiesForDate(date);
     }
 
     private ActivityRecord insertActivityInTimeRecordAtLocation(

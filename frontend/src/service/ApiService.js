@@ -1,15 +1,93 @@
 import axios from "axios";
-
-const headers = {
-  "content-type": "application/json",
-};
+import {
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  setTokens,
+} from "./AuthStorage";
 
 const BASE_URL = "http://localhost:8080/mtm-dev/api/v1";
 
-const TOKEN_STORAGE_KEYS = {
-  ACCESS: "mtm_access_token",
-  REFRESH: "mtm_refresh_token",
+const PUBLIC_PATHS = ["/auth/login", "/auth/refresh", "/user/register"];
+
+const apiClient = axios.create({
+  baseURL: BASE_URL,
+  headers: { "content-type": "application/json" },
+});
+
+const isPublicPath = (url = "") => PUBLIC_PATHS.some((p) => url.endsWith(p));
+
+apiClient.interceptors.request.use((config) => {
+  const token = getAccessToken();
+  if (token && !isPublicPath(config.url)) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+let pendingRefresh = null;
+
+const refreshAccessToken = async () => {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
+    throw new Error("No refresh token available");
+  }
+  if (!pendingRefresh) {
+    pendingRefresh = axios
+      .post(
+        `${BASE_URL}/auth/refresh`,
+        { token: refreshToken },
+        { headers: { "content-type": "application/json" } }
+      )
+      .then((response) => {
+        const payload = response.data && response.data.data;
+        if (!payload || !payload.accessToken) {
+          throw new Error("Refresh response missing access token");
+        }
+        setTokens({
+          accessToken: payload.accessToken,
+          refreshToken: payload.refreshToken,
+        });
+        return payload.accessToken;
+      })
+      .finally(() => {
+        pendingRefresh = null;
+      });
+  }
+  return pendingRefresh;
 };
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const original = error.config;
+    const status = error.response && error.response.status;
+
+    if (
+      status === 401 &&
+      original &&
+      !original._retried &&
+      !isPublicPath(original.url) &&
+      getRefreshToken()
+    ) {
+      original._retried = true;
+      try {
+        const newAccessToken = await refreshAccessToken();
+        original.headers = original.headers || {};
+        original.headers.Authorization = `Bearer ${newAccessToken}`;
+        return apiClient(original);
+      } catch (refreshError) {
+        clearTokens();
+        if (typeof window !== "undefined") {
+          window.location.assign("/login");
+        }
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 const toErrorPayload = (err) => {
   if (err.name === "AxiosError" && err.code === "ERR_NETWORK") {
@@ -23,30 +101,39 @@ const toErrorPayload = (err) => {
 };
 
 export const registerUser = async (data, callback) => {
-  axios
-    .post(`${BASE_URL}/user/register`, data, { headers: headers })
+  apiClient
+    .post(`/user/register`, data)
     .then((response) => callback(response.data, null))
     .catch((err) => callback(null, toErrorPayload(err)));
 };
 
 export const loginUser = async (data, callback) => {
-  axios
-    .post(`${BASE_URL}/auth/login`, data, { headers: headers })
+  apiClient
+    .post(`/auth/login`, data)
     .then((response) => {
       const payload = response.data && response.data.data;
       if (payload && payload.accessToken) {
-        localStorage.setItem(TOKEN_STORAGE_KEYS.ACCESS, payload.accessToken);
-        localStorage.setItem(TOKEN_STORAGE_KEYS.REFRESH, payload.refreshToken);
+        setTokens({
+          accessToken: payload.accessToken,
+          refreshToken: payload.refreshToken,
+        });
       }
       callback(response.data, null);
     })
     .catch((err) => callback(null, toErrorPayload(err)));
 };
 
-export const logoutUser = () => {
-  localStorage.removeItem(TOKEN_STORAGE_KEYS.ACCESS);
-  localStorage.removeItem(TOKEN_STORAGE_KEYS.REFRESH);
+export const logoutUser = async () => {
+  try {
+    if (getAccessToken()) {
+      await apiClient.post(`/auth/logout`, {});
+    }
+  } catch (e) {
+    // Server-side logout failure shouldn't keep the user signed in locally.
+  } finally {
+    clearTokens();
+  }
 };
 
-export const getStoredAccessToken = () =>
-  localStorage.getItem(TOKEN_STORAGE_KEYS.ACCESS);
+export { getAccessToken, isAuthenticated } from "./AuthStorage";
+export default apiClient;
