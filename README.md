@@ -18,6 +18,7 @@
 ## Table of contents
 
 - [What it is](#what-it-is)
+- [Project journey](#project-journey)
 - [Features](#features)
 - [Architecture at a glance](#architecture-at-a-glance)
 - [Tech stack](#tech-stack)
@@ -33,7 +34,7 @@
 - [Testing](#testing)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
-- [Author](#author)
+- [Authors](#authors)
 
 ---
 
@@ -42,6 +43,16 @@
 Micro Time Management is a full-stack web app for tracking how you actually spend your day. You log in, pick a date, and add **activities** — time blocks with a name, description, and start/end times. The backend rejects overlapping blocks, keeps them in chronological order, and scopes everything to the signed-in user. Admins can manage roles from a separate panel.
 
 The project started as a side-project during a Master's degree and is now being finished as a portfolio piece. It is deliberately built around **a real auth stack, a real role model, and real test coverage** rather than a toy backend, so it doubles as a reference for anyone wiring up Spring Security + JWT sessions against MongoDB.
+
+## Project journey
+
+The bones of this app — the data model, the auth flow, RBAC, the activity logic, the React shell, and most of the early controllers and services — went in back in late 2022 during my Master's. After that the repo sat quiet for a while.
+
+I picked it back up in early 2026 and spent a couple of months getting the foundation back in shape before adding anything new. That stretch was all solo: refactoring the auth flow, isolating the service boundaries, fixing RBAC end-to-end, building out role CRUD with pagination, getting a working user profile + update endpoint in, wiring up the login and registration screens, and giving the test suite some real display names plus a few more supporting tests.
+
+Once the base felt solid again, I brought [Claude](https://www.anthropic.com/claude) in as a co-author to finish the rest. Pair-programming with an AI is becoming a normal part of how software gets built, and I wanted to grow into that workflow rather than work around it. I'm still the one driving the product and reviewing every change; Claude just lets me move at a pace I actually enjoy. The auth hardening, the activity tracker UI, the profile page, the admin panel, and most of the service-layer test coverage came out of that pairing.
+
+The result is an app that's mine in design and direction, built with a workflow I'd happily reach for on the next thing too.
 
 ## Features
 
@@ -345,8 +356,9 @@ This is a personal portfolio project, but PRs and issues are welcome.
 
 The development conventions (package layout, exception hierarchy, response wrappers, callback contracts, etc.) are documented in `CLAUDE.md` and updated alongside every feature.
 
-## Author
+## Authors
 
-Built by **[Vishal Dogra](https://github.com/vishu221b)**.
+- [Vishal Dogra](https://github.com/vishu221b) — design, product direction, original build, review of every change.
+- [Claude (Anthropic)](https://www.anthropic.com/claude) — co-author. Paired on the later milestones: auth hardening, the activity tracker UI, the profile + password flows, the admin role panel, and most of the service-layer test coverage.
 
 If this project taught you something, or you spot a bug, please open an issue — feedback is the entire point of shipping it publicly.
