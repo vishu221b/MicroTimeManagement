@@ -14,7 +14,7 @@ const twButton =
 
 function NavigationBar() {
   const [toggled, setToggled] = useState(0);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -88,8 +88,21 @@ function NavigationBar() {
                   </Button>
                 </Link>
               </Nav.Link>
+              {isAdmin && (
+                <Nav.Link
+                  eventKey={4}
+                  className="mtm-mx-auto mtm-my-4 md:mtm-my-0"
+                  as={"div"}
+                >
+                  <Link to={"/admin"} preventScrollReset>
+                    <Button variant="warning" size="md" className={twButton}>
+                      <span className="mtm-tracking-widest">Admin</span>
+                    </Button>
+                  </Link>
+                </Nav.Link>
+              )}
               <Nav.Link
-                eventKey={4}
+                eventKey={5}
                 className="mtm-mx-auto mtm-my-4 md:mtm-my-0"
                 as={"div"}
               >

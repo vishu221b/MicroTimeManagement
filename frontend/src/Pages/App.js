@@ -11,7 +11,9 @@ import Registration from "./Registration";
 import Dashboard from "./Dashboard";
 import Activity from "./Activity";
 import Profile from "./Profile";
+import Admin from "./Admin";
 import ProtectedRoute from "../components/ProtectedRoute";
+import AdminRoute from "../components/AdminRoute";
 import { useState } from "react";
 import Toast from "../components/Toast";
 
@@ -93,6 +95,17 @@ function App() {
                 setToastState={setToastState}
               />
             </ProtectedRoute>
+          }
+        ></Route>
+        <Route
+          path={"/admin"}
+          element={
+            <AdminRoute>
+              <Admin
+                toastState={toastState}
+                setToastState={setToastState}
+              />
+            </AdminRoute>
           }
         ></Route>
       </Routes>

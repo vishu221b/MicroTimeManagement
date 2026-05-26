@@ -188,5 +188,35 @@ export const changeUserPassword = async (payload, callback) => {
     .catch((err) => callback(null, toErrorPayload(err)));
 };
 
+// --- Role admin API ---
+
+export const listRoles = async (callback, page = 0, size = 50) => {
+  apiClient
+    .get(`/role`, { params: { page, size } })
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const createRole = async (payload, callback) => {
+  apiClient
+    .post(`/role`, payload)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const updateRole = async (payload, callback) => {
+  apiClient
+    .put(`/role`, payload)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const deleteRole = async (roleId, callback) => {
+  apiClient
+    .delete(`/role`, { params: { roleId } })
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
 export { getAccessToken, isAuthenticated } from "./AuthStorage";
 export default apiClient;
