@@ -165,6 +165,21 @@ export const deleteActivity = async (date, recordId, callback) => {
     .catch((err) => callback(null, toErrorPayload(err)));
 };
 
+// Aggregated activity totals for the dashboard. Both `from` and `to` are
+// optional yyyy-MM-dd strings; backend defaults to the rolling last 7 days.
+export const getActivityStats = async (
+  { from, to } = {},
+  callback = () => {}
+) => {
+  const params = {};
+  if (from) params.from = from;
+  if (to) params.to = to;
+  apiClient
+    .get(`/activity/stats`, { params })
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
 // --- User profile API ---
 
 export const getUserProfile = async (callback) => {

@@ -7,6 +7,7 @@ import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequ
 import com.microtimemanagement.apiservice.dto.request.ActivityUpdateRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordCreationdResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordResponseDTO;
+import com.microtimemanagement.apiservice.dto.response.ActivityStatsResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
 import com.microtimemanagement.apiservice.factories.ActivityTestFactory;
@@ -443,5 +444,87 @@ public class ActivityRecordServiceImplTest {
                 .isThrownBy(() -> activityRecordService.updateActivity(
                         ActivityTestFactory.Defaults.RECORD_DATE, request))
                 .withMessageContaining(ErrorConstants.OVERLAPPING_NEW_ACTIVITY_TIME_WITH_PREVIOUS_ACTIVITY);
+    }
+
+    // -- getActivityStats --------------------------------------------------
+
+    @Test
+    @DisplayName("Should aggregate totals, daysWithActivity, top-by-duration, and recent activities for a window.")
+    void shouldAggregateActivityStatsAcrossWindow() {
+        String dayOne = "2026-05-20";
+        String dayTwo = "2026-05-22";
+
+        // dayOne: a 60-minute "Focus block" and a 30-minute "Meetings".
+        Activity focusOne = ActivityTestFactory.activity(dayOne, 9, 0, 10, 0);
+        focusOne.setActivityName("Focus block");
+        Activity meetings = ActivityTestFactory.activity(dayOne, 10, 30, 11, 0);
+        meetings.setActivityName("Meetings");
+        meetings.setTotalDurationInMinutes(30L);
+        ActivityRecord dayOneRecord = ActivityTestFactory.recordForUser(
+                authenticatedUser.getUid(), dayOne, focusOne, meetings);
+
+        // dayTwo: a 90-minute "Focus block" — should bubble to top of the breakdown.
+        Activity focusTwo = ActivityTestFactory.activity(dayTwo, 9, 0, 10, 30);
+        focusTwo.setActivityName("Focus block");
+        focusTwo.setTotalDurationInMinutes(90L);
+        ActivityRecord dayTwoRecord = ActivityTestFactory.recordForUser(
+                authenticatedUser.getUid(), dayTwo, focusTwo);
+
+        Mockito.when(activityRecordRepository.findByCreatedByAndRecordDateBetween(
+                        authenticatedUser.getUid(), dayOne, dayTwo))
+                .thenReturn(List.of(dayOneRecord, dayTwoRecord));
+
+        ActivityStatsResponseDTO stats =
+                activityRecordService.getActivityStats(dayOne, dayTwo);
+
+        assertThat(stats.getFromDate()).isEqualTo(dayOne);
+        assertThat(stats.getToDate()).isEqualTo(dayTwo);
+        assertThat(stats.getDaysWithActivity()).isEqualTo(2);
+        assertThat(stats.getTotalActivities()).isEqualTo(3);
+        assertThat(stats.getTotalMinutes()).isEqualTo(180L);
+        assertThat(stats.getAverageMinutesPerActiveDay()).isEqualTo(90L);
+        assertThat(stats.getTopActivitiesByDuration()).hasSize(2);
+        assertThat(stats.getTopActivitiesByDuration().get(0).getActivityName())
+                .isEqualTo("Focus block");
+        assertThat(stats.getTopActivitiesByDuration().get(0).getTotalMinutes()).isEqualTo(150L);
+        assertThat(stats.getTopActivitiesByDuration().get(1).getActivityName())
+                .isEqualTo("Meetings");
+        // Newest first; dayTwo's activity should lead the recent list.
+        assertThat(stats.getRecentActivities()).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("Should reject an unparseable from/to date.")
+    void shouldRejectInvalidStatsDate() {
+        assertThatExceptionOfType(MicroTimeManagementBadRequestException.class)
+                .isThrownBy(() -> activityRecordService.getActivityStats("not-a-date", "2026-05-26"))
+                .withMessageContaining("Invalid fromDate");
+    }
+
+    @Test
+    @DisplayName("Should reject a window where fromDate is after toDate.")
+    void shouldRejectInvertedWindow() {
+        assertThatExceptionOfType(MicroTimeManagementBadRequestException.class)
+                .isThrownBy(() -> activityRecordService.getActivityStats("2026-05-26", "2026-05-20"))
+                .withMessageContaining("fromDate must be on or before toDate");
+    }
+
+    @Test
+    @DisplayName("Should return zero-valued stats when no records exist in the window.")
+    void shouldReturnEmptyStatsWhenNoRecords() {
+        Mockito.when(activityRecordRepository.findByCreatedByAndRecordDateBetween(
+                        Mockito.eq(authenticatedUser.getUid()), Mockito.anyString(), Mockito.anyString()))
+                .thenReturn(List.of());
+
+        ActivityStatsResponseDTO stats =
+                activityRecordService.getActivityStats("2026-05-20", "2026-05-26");
+
+        assertThat(stats.getDaysWithActivity()).isZero();
+        assertThat(stats.getTotalActivities()).isZero();
+        assertThat(stats.getTotalMinutes()).isZero();
+        assertThat(stats.getAverageMinutesPerActiveDay()).isZero();
+        assertThat(stats.getTopActivitiesByDuration()).isEmpty();
+        assertThat(stats.getRecentActivities()).isEmpty();
+        assertThat(stats.getTotalDurationHuman()).isEqualTo("0m");
     }
 }
