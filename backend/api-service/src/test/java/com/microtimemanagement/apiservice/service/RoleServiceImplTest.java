@@ -24,7 +24,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -189,5 +191,63 @@ public class RoleServiceImplTest {
         assertThatExceptionOfType(MicroTimeManagementNotFoundException.class)
                 .isThrownBy(() -> roleService.updateRoleDetails(request))
                 .withMessage(ErrorConstants.ROLE_NOT_FOUND_ERROR);
+    }
+
+    // -- getRoleNamesForIds (bulk lookup) ----------------------------------
+
+    @Test
+    @DisplayName("getRoleNamesForIds should resolve all ids in a single $in query and return their names.")
+    void shouldResolveRoleNamesInOneQuery() {
+        Role userOps = Role.builder().id("id-1").name("MTM_USER_OPS").build();
+        Role activityOps = Role.builder().id("id-2").name("MTM_ACTIVITY_CRUD").build();
+        userOps.setIsActive(Boolean.TRUE);
+        activityOps.setIsActive(Boolean.TRUE);
+        ArgumentCaptor<Collection<String>> idsCaptor = ArgumentCaptor.forClass(Collection.class);
+        Mockito.when(roleRepository.findByIdInAndIsActiveTrue(idsCaptor.capture()))
+                .thenReturn(List.of(userOps, activityOps));
+
+        Set<String> names = roleService.getRoleNamesForIds(Set.of("id-1", "id-2"));
+
+        assertThat(names).containsExactlyInAnyOrder("MTM_USER_OPS", "MTM_ACTIVITY_CRUD");
+        // Exactly one DB call regardless of how many ids were passed in —
+        // this is the whole point of the refactor.
+        Mockito.verify(roleRepository, Mockito.times(1))
+                .findByIdInAndIsActiveTrue(Mockito.anyCollection());
+        Mockito.verify(roleRepository, Mockito.never())
+                .findByIdAndIsActiveTrue(Mockito.anyString());
+        assertThat(idsCaptor.getValue()).containsExactlyInAnyOrder("id-1", "id-2");
+    }
+
+    @Test
+    @DisplayName("getRoleNamesForIds should short-circuit on an empty input without hitting the database.")
+    void shouldShortCircuitOnEmptyInput() {
+        Set<String> names = roleService.getRoleNamesForIds(Set.of());
+
+        assertThat(names).isEmpty();
+        Mockito.verifyNoInteractions(roleRepository);
+    }
+
+    @Test
+    @DisplayName("getRoleNamesForIds should treat a null input as empty rather than NPE.")
+    void shouldHandleNullInput() {
+        Set<String> names = roleService.getRoleNamesForIds(null);
+
+        assertThat(names).isEmpty();
+        Mockito.verifyNoInteractions(roleRepository);
+    }
+
+    @Test
+    @DisplayName("getRoleNamesForIds should drop ids that no longer resolve to an active role instead of NPE-ing.")
+    void shouldDropMissingRoleIds() {
+        Role userOps = Role.builder().id("id-1").name("MTM_USER_OPS").build();
+        userOps.setIsActive(Boolean.TRUE);
+        // Pre-refactor this path NPE'd on .getName() of the missing role; the
+        // bulk query simply omits it, which is what we want.
+        Mockito.when(roleRepository.findByIdInAndIsActiveTrue(Mockito.anyCollection()))
+                .thenReturn(List.of(userOps));
+
+        Set<String> names = roleService.getRoleNamesForIds(Set.of("id-1", "id-stale"));
+
+        assertThat(names).containsExactly("MTM_USER_OPS");
     }
 }
