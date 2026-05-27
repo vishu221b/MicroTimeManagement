@@ -233,5 +233,36 @@ export const deleteRole = async (roleId, callback) => {
     .catch((err) => callback(null, toErrorPayload(err)));
 };
 
+// --- Admin user management API ---
+
+export const listUsers = async (
+  { page = 0, size = 20, sort, sortBy } = {},
+  callback = () => {}
+) => {
+  const params = { page, size };
+  if (sort) params.sort = sort;
+  if (sortBy) params.sortBy = sortBy;
+  apiClient
+    .get(`/user/all`, { params })
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+// Add one or more role names to one or more users. Identifiers can be any of
+// `userIds` / `usernames` / `emails` (at least one is required by the backend).
+export const addRolesToUsers = async (payload, callback) => {
+  apiClient
+    .post(`/user/addRole`, payload)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const removeRolesFromUsers = async (payload, callback) => {
+  apiClient
+    .delete(`/user/removeRole`, { data: payload })
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
 export { getAccessToken, isAuthenticated } from "./AuthStorage";
 export default apiClient;
