@@ -37,9 +37,16 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Set<String> getRoleNamesForIds(Set<String> roles) {
-        return roles.stream().map(
-                rId -> roleRepository.findByIdAndIsActiveTrue(rId).getName()
-        ).collect(Collectors.toSet());
+        // Hot path: this runs on every authenticated request (via
+        // UserServiceImpl.replaceRoleIdsWithNamesForUser). A single $in query
+        // beats the per-id round-trip even with the typical 1-3 roles per user;
+        // and any future RBAC explosion stays O(1) queries instead of O(N).
+        if (roles == null || roles.isEmpty()) {
+            return java.util.Collections.emptySet();
+        }
+        return roleRepository.findByIdInAndIsActiveTrue(roles).stream()
+                .map(Role::getName)
+                .collect(Collectors.toSet());
     }
 
     /**
