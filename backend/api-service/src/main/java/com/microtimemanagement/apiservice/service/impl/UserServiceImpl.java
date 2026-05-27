@@ -183,8 +183,15 @@ public class UserServiceImpl implements UserService {
         log.info("{}", usersPage.hasPrevious());
         log.info("{}", usersPage.hasNext());
         log.info("{}", usersPage.getNumber());
+        // The persisted `roles` field holds role document IDs. Resolve to names
+        // before responding so the admin UI can render and reason about them
+        // without a second round-trip.
+        List<UserDTO> payload = usersPage.getContent().stream()
+                .peek(this::replaceRoleIdsWithNamesForUser)
+                .map(userConverter::toDTO)
+                .toList();
         return PaginationResultResponseDTO.<UserDTO>builder()
-                .payload(usersPage.getContent().stream().map(userConverter::toDTO).toList())
+                .payload(payload)
                 .pageSize(usersPage.getSize())
                 .pageNumber(usersPage.getNumber())
                 .sortedByFields(usersPage.getSort().get().map(Sort.Order::getProperty).collect(Collectors.toList()))
@@ -197,40 +204,66 @@ public class UserServiceImpl implements UserService {
             UsersRolesUpdateRequestDTO usersRolesUpdateRequestDTO,
             UserRoleUpdateAction updateAction
     ) {
+        // Any of the three identifier lists may be null on the wire (only
+        // `roleNames` is @NotEmpty). Treat null and empty alike, and de-dup so
+        // a user supplied by both username and email isn't updated twice.
         List<User> userList = new ArrayList<>();
-        List<User> users = null;
+        List<String> userIds = nullSafe(usersRolesUpdateRequestDTO.getUserIds());
+        List<String> emails = nullSafe(usersRolesUpdateRequestDTO.getEmails());
+        List<String> usernames = nullSafe(usersRolesUpdateRequestDTO.getUsernames());
 
-        if(!usersRolesUpdateRequestDTO.getUserIds().isEmpty()){
-            users = userRepository.findByIdInAndIsActiveTrue(usersRolesUpdateRequestDTO.getUserIds());
-            if(!users.isEmpty()){
-                userList.addAll(users);
-            }
+        if (!userIds.isEmpty()) {
+            userList.addAll(userRepository.findByIdInAndIsActiveTrue(userIds));
+        }
+        if (!emails.isEmpty()) {
+            userList.addAll(userRepository.findByEmailInAndIsActiveTrue(emails));
+        }
+        if (!usernames.isEmpty()) {
+            userList.addAll(userRepository.findByUsernameInAndIsActiveTrue(usernames));
         }
 
-        if(!usersRolesUpdateRequestDTO.getEmails().isEmpty()){
-            users = userRepository.findByEmailInAndIsActiveTrue(usersRolesUpdateRequestDTO.getEmails());
-            if(!users.isEmpty()){
-                userList.addAll(users);
-            }
-        }
+        List<User> uniqueUsers = userList.stream()
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(User::getId, u -> u, (a, b) -> a, java.util.LinkedHashMap::new),
+                        m -> new ArrayList<>(m.values())));
 
-        if(!usersRolesUpdateRequestDTO.getUsernames().isEmpty()){
-            users = userRepository.findByUsernameInAndIsActiveTrue(usersRolesUpdateRequestDTO.getUsernames());
-            if(!users.isEmpty())
-                userList.addAll(users);
+        if (uniqueUsers.isEmpty()) {
+            throw new MicroTimeManagementNotFoundException(ErrorConstants.USER_NOT_FOUND_IN_DB_RECORDS);
         }
 
         List<String> roleIds = roleService.findActiveRolesByName(usersRolesUpdateRequestDTO.getRoleNames())
                 .stream().map(RoleDTO::getId).toList();
 
-        userList.forEach(user -> {
-            if(updateAction.equals(UserRoleUpdateAction.ADD))
-                user.getRoles().addAll(roleIds);
-            if(updateAction.equals(UserRoleUpdateAction.REMOVE))
-                user.getRoles().removeAll(roleIds);
+        if (roleIds.isEmpty()) {
+            throw new MicroTimeManagementNotFoundException(ErrorConstants.ROLE_NOT_FOUND_ERROR);
+        }
+
+        uniqueUsers.forEach(user -> {
+            // Always copy into a fresh LinkedHashSet — Mongo deserializes into a
+            // mutable set in production, but tests (and other callers using the
+            // User builder with `Set.of(...)`) can hand us an immutable one, and
+            // we don't want this method to be coupled to that choice.
+            java.util.Set<String> roles = user.getRoles() == null
+                    ? new java.util.LinkedHashSet<>()
+                    : new java.util.LinkedHashSet<>(user.getRoles());
+            if (updateAction.equals(UserRoleUpdateAction.ADD)) {
+                roles.addAll(roleIds);
+            } else if (updateAction.equals(UserRoleUpdateAction.REMOVE)) {
+                roles.removeAll(roleIds);
+            }
+            user.setRoles(roles);
         });
-        userList = userRepository.saveAll(userList);
-        return userList.stream().map(userConverter::toDTO).toList();
+        List<User> savedUsers = userRepository.saveAll(uniqueUsers);
+        // Resolve role IDs to names on the return path so the caller can render
+        // them directly — same shape as /user/all.
+        return savedUsers.stream()
+                .peek(this::replaceRoleIdsWithNamesForUser)
+                .map(userConverter::toDTO)
+                .toList();
+    }
+
+    private static <T> List<T> nullSafe(List<T> list) {
+        return list == null ? List.of() : list;
     }
 
     @Override
