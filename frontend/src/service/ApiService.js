@@ -41,7 +41,9 @@ const refreshAccessToken = async () => {
         { headers: { "content-type": "application/json" } }
       )
       .then((response) => {
-        const payload = response.data && response.data.data;
+        // Backend wraps successful responses as GenericMessageResponseDTO
+        // { payload, message } — read the token bundle off `payload`.
+        const payload = response.data && response.data.payload;
         if (!payload || !payload.accessToken) {
           throw new Error("Refresh response missing access token");
         }
@@ -111,14 +113,24 @@ export const loginUser = async (data, callback) => {
   apiClient
     .post(`/auth/login`, data)
     .then((response) => {
-      const payload = response.data && response.data.data;
+      // GenericMessageResponseDTO serializes as { payload, message } —
+      // the access/refresh token pair lives on `payload`, not on `data`.
+      const payload = response.data && response.data.payload;
       if (payload && payload.accessToken) {
         setTokens({
           accessToken: payload.accessToken,
           refreshToken: payload.refreshToken,
         });
+        callback(response.data, null);
+        return;
       }
-      callback(response.data, null);
+      // Defensive: the API gave us a 2xx without a usable token. Surface as
+      // an error so the UI doesn't claim a successful sign-in and then
+      // bounce the user back to /login when the ProtectedRoute can't find
+      // anything in localStorage.
+      callback(null, {
+        error: { message: "Login succeeded but no access token was returned." },
+      });
     })
     .catch((err) => callback(null, toErrorPayload(err)));
 };

@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Button from "../components/Button";
 import MtmForm from "../components/forms/MtmForm";
-import { loginUser } from "../service/ApiService";
+import { isAuthenticated, loginUser } from "../service/ApiService";
 
 function Login({ toastState, setToastState }) {
   const navigate = useNavigate();
@@ -45,7 +45,13 @@ function Login({ toastState, setToastState }) {
             };
 
             await loginUser(request, (response, errorResponse) => {
-              if (response) {
+              // ApiService.loginUser only calls back with a non-null `response`
+              // after tokens have been written to AuthStorage, so the redirect
+              // is safe to fire immediately — ProtectedRoute will see the
+              // access token on the very next paint. We still re-check
+              // isAuthenticated() as a belt-and-braces guard against any
+              // future regression where the success path forgets to persist.
+              if (response && isAuthenticated()) {
                 setToastState({
                   display: true,
                   variant: "success",
@@ -54,7 +60,7 @@ function Login({ toastState, setToastState }) {
                   includeSuffix: true,
                   suffix: "Redirecting...",
                 });
-                setTimeout(() => navigate(redirectTarget, { replace: true }), 1500);
+                navigate(redirectTarget, { replace: true });
                 return;
               }
               if (errorResponse && errorResponse.error) {
