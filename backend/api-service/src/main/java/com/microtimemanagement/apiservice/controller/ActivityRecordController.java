@@ -1,11 +1,15 @@
 package com.microtimemanagement.apiservice.controller;
 
 import com.microtimemanagement.apiservice.constants.ApiConstants;
+import com.microtimemanagement.apiservice.constants.PaginationConstants;
 import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.ActivityUpdateRequestDTO;
+import com.microtimemanagement.apiservice.dto.response.ActivityHistoryItemDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordCreationdResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityStatsResponseDTO;
+import com.microtimemanagement.apiservice.dto.response.PaginationRequestFieldsSanitizationResponseDTO;
+import com.microtimemanagement.apiservice.dto.response.PaginationResultResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.service.ActivityRecordService;
 import com.microtimemanagement.apiservice.utils.ApiUtils;
@@ -13,6 +17,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -82,6 +87,24 @@ public class ActivityRecordController {
             @RequestParam(required = false) String to
     ){
         return activityRecordService.getActivityStats(from, to);
+    }
+
+    /**
+     * Paginated history of every day the current user has tracked, newest first.
+     * Returns lightweight per-day summaries (count + total minutes), not the
+     * full activity list — clients deep-link into /activity/getAllForDate.
+     */
+    @RequestMapping(value = "/history", method = RequestMethod.GET)
+    @ResponseBody
+    public PaginationResultResponseDTO<ActivityHistoryItemDTO> getHistory(
+            @RequestParam(name = "page", required = false, defaultValue = PaginationConstants.DEFAULT_PAGE_NUMBER) Integer pageNumber,
+            @RequestParam(name = "size", required = false, defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE) Integer pageSize
+    ){
+        PaginationRequestFieldsSanitizationResponseDTO sanitized = ApiUtils
+                .sanitizePaginationRequestFields(pageNumber, pageSize);
+        return activityRecordService.getActivityHistory(
+                PageRequest.of(sanitized.getPageNumber(), sanitized.getPageSize())
+        );
     }
 
 }

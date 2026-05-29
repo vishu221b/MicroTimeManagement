@@ -1,6 +1,8 @@
 package com.microtimemanagement.apiservice.repository;
 
 import com.microtimemanagement.apiservice.model.ActivityRecord;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -21,4 +23,11 @@ public interface ActivityRecordRepository extends MongoRepository<ActivityRecord
      */
     List<ActivityRecord> findByCreatedByAndRecordDateBetween(
             String createdBy, String fromDate, String toDate);
+
+    /**
+     * Paginated lookup of every record a user owns, ordered by Spring's
+     * Pageable sort. The history endpoint pins this to recordDate DESC so the
+     * latest day surfaces first.
+     */
+    Page<ActivityRecord> findByCreatedBy(String createdBy, Pageable pageable);
 }

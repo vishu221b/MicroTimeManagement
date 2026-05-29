@@ -82,6 +82,17 @@ function NavigationBar() {
                 className="mtm-mx-auto mtm-my-4 md:mtm-my-0"
                 as={"div"}
               >
+                <Link to={"/history"} preventScrollReset>
+                  <Button variant="warning" size="md" className={twButton}>
+                    <span className="mtm-tracking-widest">History</span>
+                  </Button>
+                </Link>
+              </Nav.Link>
+              <Nav.Link
+                eventKey={4}
+                className="mtm-mx-auto mtm-my-4 md:mtm-my-0"
+                as={"div"}
+              >
                 <Link to={"/profile"} preventScrollReset>
                   <Button variant="warning" size="md" className={twButton}>
                     <span className="mtm-tracking-widest">Profile</span>
@@ -90,7 +101,7 @@ function NavigationBar() {
               </Nav.Link>
               {isAdmin && (
                 <Nav.Link
-                  eventKey={4}
+                  eventKey={5}
                   className="mtm-mx-auto mtm-my-4 md:mtm-my-0"
                   as={"div"}
                 >
@@ -102,7 +113,7 @@ function NavigationBar() {
                 </Nav.Link>
               )}
               <Nav.Link
-                eventKey={5}
+                eventKey={6}
                 className="mtm-mx-auto mtm-my-4 md:mtm-my-0"
                 as={"div"}
               >

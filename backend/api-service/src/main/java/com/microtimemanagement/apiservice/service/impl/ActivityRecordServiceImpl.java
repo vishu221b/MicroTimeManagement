@@ -6,9 +6,11 @@ import com.microtimemanagement.apiservice.dto.entity.ActivityDTO;
 import com.microtimemanagement.apiservice.dto.entity.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.ActivityUpdateRequestDTO;
+import com.microtimemanagement.apiservice.dto.response.ActivityHistoryItemDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordCreationdResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityStatsResponseDTO;
+import com.microtimemanagement.apiservice.dto.response.PaginationResultResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
@@ -22,6 +24,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -504,6 +509,54 @@ public class ActivityRecordServiceImpl implements ActivityRecordService {
                 .averageMinutesPerActiveDay(avgPerActiveDay)
                 .topActivitiesByDuration(topByDuration)
                 .recentActivities(recent.stream().map(activityConverter::toDTO).toList())
+                .build();
+    }
+
+    @Override
+    public PaginationResultResponseDTO<ActivityHistoryItemDTO> getActivityHistory(PageRequest pageRequest) {
+        // Always sort by recordDate DESC regardless of what the controller passed —
+        // recordDate is ISO-8601 strings so lexical sort matches calendar order, and
+        // "newest day first" is the only ordering this view ever wants.
+        PageRequest sorted = PageRequest.of(
+                pageRequest.getPageNumber(),
+                pageRequest.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "recordDate")
+        );
+
+        String userUid = userService.loadUserDTOByUsername(
+                SecurityContextHolder.getContext().getAuthentication().getName()
+        ).getUid();
+
+        Page<ActivityRecord> page = activityRecordRepository.findByCreatedBy(userUid, sorted);
+
+        List<ActivityHistoryItemDTO> items = page.getContent().stream()
+                .map(this::toHistoryItem)
+                .toList();
+
+        return PaginationResultResponseDTO.<ActivityHistoryItemDTO>builder()
+                .payload(items)
+                .pageNumber(page.getNumber())
+                .pageSize(page.getSize())
+                .totalPages(page.getTotalPages())
+                .sortingDirection(Sort.Direction.DESC.name())
+                .sortedByFields(List.of("recordDate"))
+                .build();
+    }
+
+    private ActivityHistoryItemDTO toHistoryItem(ActivityRecord record) {
+        List<Activity> activities = record.getActivities() == null
+                ? List.of() : record.getActivities();
+        long totalMinutes = activities.stream()
+                .filter(Objects::nonNull)
+                .mapToLong(a -> a.getTotalDurationInMinutes() == null
+                        ? 0L : a.getTotalDurationInMinutes())
+                .sum();
+        return ActivityHistoryItemDTO.builder()
+                .recordDate(record.getRecordDate())
+                .activityCount(activities.size())
+                .totalMinutes(totalMinutes)
+                .totalDurationHuman(humanizeMinutes(totalMinutes))
+                .lastUpdatedAt(record.getLastUpdatedAt())
                 .build();
     }
 
