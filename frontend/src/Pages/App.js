@@ -10,6 +10,7 @@ import Login from "./Login";
 import Registration from "./Registration";
 import Dashboard from "./Dashboard";
 import Activity from "./Activity";
+import History from "./History";
 import Profile from "./Profile";
 import Admin from "./Admin";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -83,6 +84,17 @@ function App() {
           element={
             <ProtectedRoute>
               <Activity
+                toastState={toastState}
+                setToastState={setToastState}
+              />
+            </ProtectedRoute>
+          }
+        ></Route>
+        <Route
+          path={"/history"}
+          element={
+            <ProtectedRoute>
+              <History
                 toastState={toastState}
                 setToastState={setToastState}
               />

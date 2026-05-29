@@ -130,6 +130,7 @@ GET    /api/v1/activity/getAllForDate?date= Get activities for date (ACTIVITY_CR
 PUT    /api/v1/activity?date=             Update activity — body: ActivityUpdateRequestDTO (recordId + optional name/description/times) (ACTIVITY_CRUD)
 DELETE /api/v1/activity?date=&recordId=   Delete activity from record (ACTIVITY_CRUD)
 GET    /api/v1/activity/stats?from=&to=   Aggregate stats over window (defaults to last 7 days) (ACTIVITY_CRUD)
+GET    /api/v1/activity/history?page=&size= Paginated per-day history, newest first (ACTIVITY_CRUD)
 
 POST   /api/v1/admin/                     Create role via admin (ADMIN_OPS) [legacy, use /role]
 DELETE /api/v1/admin/                     Soft-delete role via admin (ADMIN_OPS) [legacy]
@@ -189,7 +190,8 @@ src/
 │   ├── Login.js           Login form — wired to /auth/login + redirect to /dashboard (or location.state.from)
 │   ├── Registration.js    Registration form — API fully wired
 │   ├── Dashboard.js       Protected landing page — Today / 7d / 30d preset stat cards (total time, activity count, days tracked, avg/active day), top activities by duration, recent activities. Wired to /activity/stats.
-│   ├── Activity.js        Protected page — date picker + list + create/edit/delete activities
+│   ├── Activity.js        Protected page — date picker + list + create/edit/delete activities. Reads `?date=YYYY-MM-DD` from URL (set by the History page deep-link) and keeps the URL in sync with the picker.
+│   ├── History.js         Protected page — paginated list of every tracked day, newest first. Each row links into /activity?date=. Page-size selector (10/20/50) + prev/next.
 │   ├── Profile.js         Protected page — view/edit profile + change password
 │   ├── Admin.js           Admin-only page — tabbed UI: Roles (CRUD: list/create/rename/soft-delete) + Users (paginated list, edit each user's role membership with checkbox diff)
 │   └── sections/home/     Home page sections (Top, HowItWorks, ButWhy, NextSteps)
@@ -220,7 +222,8 @@ src/
 /login      → Login (public)
 /register   → Registration (public)
 /dashboard  → Dashboard (protected)
-/activity   → Activity tracker (protected)
+/activity   → Activity tracker (protected; accepts `?date=YYYY-MM-DD`)
+/history    → Paginated activity history (protected)
 /profile    → User profile + password change (protected)
 /admin      → Role management (admin-only, gated by ROLE_MTM_ADMIN_OPS)
 ```
@@ -276,8 +279,9 @@ Toast state lives in `App.js` and is passed as `{ toastState, setToastState }` p
 - [x] Activity Record: read by date (scoped to current user)
 - [x] Activity Record: delete individual activity from record
 - [x] Activity Record: update individual activity (metadata-only or full re-time, reuses overlap/ordering validation from create pipeline; deletes the record outright if the re-time empties it so the create-pipeline doesn't false-positive on "overlap")
-- [x] ActivityRecordServiceImpl test suite (18 tests covering create happy path / append / duplicate / overlap / invalid date, get-by-date happy + missing, delete happy + missing + unknown id, update metadata-only / full retime / unknown id / overlap rejection, **plus stats aggregation across a window / invalid from date / inverted window / empty window**) + ActivityTestFactory
+- [x] ActivityRecordServiceImpl test suite (21 tests covering create happy path / append / duplicate / overlap / invalid date, get-by-date happy + missing, delete happy + missing + unknown id, update metadata-only / full retime / unknown id / overlap rejection, stats aggregation across a window / invalid from date / inverted window / empty window, **plus history happy path / null-activities defensive / empty history**) + ActivityTestFactory
 - [x] **Activity stats endpoint** — `GET /api/v1/activity/stats?from=&to=` (both bounds optional; default = rolling last 7 days). Returns total minutes / activity count / days-with-activity / avg-per-active-day, top 5 activities by total time (grouped by name, case-insensitive), and 5 most-recent activities (newest first). Backed by a new `ActivityRecordRepository.findByCreatedByAndRecordDateBetween` range query. Powers the dashboard.
+- [x] **Activity history endpoint** — `GET /api/v1/activity/history?page=&size=` returns a paginated list of per-day summaries (recordDate, activityCount, totalMinutes, totalDurationHuman, lastUpdatedAt) for the current user, newest day first. Sort is always recordDate DESC regardless of what the caller passes — recordDate is stored as ISO-8601 strings so lexical sort matches calendar order. Backed by a new `ActivityRecordRepository.findByCreatedBy(String, Pageable)` paginated query.
 - [x] **`UserServiceImpl.updateUserDetails` horizontal-IDOR closed**: service now reads the authenticated principal's uid from SecurityContext and rejects any request body whose uid doesn't match (returns `MicroTimeManagementUserException` -> 409). The previous dead `currentUser.getUid().equals(...)` check (always true since the record was just looked up by uid) was removed.
 - [x] **`UserController.updateUser` accepts `@RequestBody`** — was implicitly binding from query parameters.
 - [x] **`UserServiceImpl.changeUserPassword`** now throws `MicroTimeManagementBadRequestException` (400) on a wrong old password instead of silently returning the SOMETHING_WENT_WRONG string with HTTP 200, and now persists the new password via `userRepository.save`.
@@ -309,9 +313,10 @@ Toast state lives in `App.js` and is passed as `{ toastState, setToastState }` p
 - [x] `useAuth` hook + `ProtectedRoute` wrapper (redirects to `/login`, preserves intended destination)
 - [x] `/dashboard` placeholder route protected by `ProtectedRoute`; Login redirects there post-auth
 - [x] **Dashboard summary page** — Today / 7d / 30d preset ranges, stat cards (total time, activity count, days tracked, avg/active day), top activities by total time, recent activities. Wired to `getActivityStats`.
-- [x] **Activity tracker page** — date-scoped CRUD UI at `/activity`, full create/edit/delete flow with toast feedback
-- [x] `ApiService.js` extended with Activity API functions (`createActivity`, `getActivitiesForDate`, `updateActivity`, `deleteActivity`)
-- [x] Nav link to Activity tracker shown when authenticated
+- [x] **Activity tracker page** — date-scoped CRUD UI at `/activity`, full create/edit/delete flow with toast feedback. Now reads the active date from `?date=YYYY-MM-DD` and writes it back as the picker changes (replaces URL state, no extra history entries), so deep-links from the History page work and back/forward navigation re-loads the right day.
+- [x] **Activity history page** — `/history` shows a paginated list of every day the current user has tracked, newest first, with page-size selector (10/20/50) and prev/next controls. Each row deep-links into `/activity?date=YYYY-MM-DD`. Empty state nudges users to the tracker. Wired to `getActivityHistory`.
+- [x] `ApiService.js` extended with Activity API functions (`createActivity`, `getActivitiesForDate`, `updateActivity`, `deleteActivity`, `getActivityHistory`)
+- [x] Nav links to Activity tracker + History shown when authenticated
 - [x] **Profile page** — view/edit account details (username/email/first/last/DOB) + change-password panel at `/profile`, with client-side new-password confirm + length check
 - [x] `ApiService.js` extended with Profile API functions (`getUserProfile`, `updateUserDetails`, `changeUserPassword`)
 - [x] Nav link to Profile shown when authenticated
@@ -356,7 +361,6 @@ These are real correctness/security issues identified in a code review. Address 
 - [ ] Populate `SecurityConstants.PROD` (currently empty class) and use it in prod filter chain
 - [ ] `AdminController` is legacy (predates `RoleController`) — evaluate removing or consolidating
 - [ ] Add integration tests for Activity, Role, Admin endpoints
-- [ ] Paginate activity records (get all records across dates)
 - [ ] User UID generation is handled by callbacks but `uid` field isn't visible in `UserCallbacks` — verify it is auto-populated
 - [ ] Prod Docker Compose (app service commented out — needs env vars wired)
 

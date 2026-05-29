@@ -192,6 +192,18 @@ export const getActivityStats = async (
     .catch((err) => callback(null, toErrorPayload(err)));
 };
 
+// Paginated history of tracked days (newest first). Powers the /history page —
+// each item is { recordDate, activityCount, totalMinutes, totalDurationHuman }.
+export const getActivityHistory = async (
+  { page = 0, size = 10 } = {},
+  callback = () => {}
+) => {
+  apiClient
+    .get(`/activity/history`, { params: { page, size } })
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
 // --- User profile API ---
 
 export const getUserProfile = async (callback) => {

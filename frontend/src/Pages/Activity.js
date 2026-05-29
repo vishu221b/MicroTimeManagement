@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import Button from "react-bootstrap/Button";
+import { useSearchParams } from "react-router-dom";
 import {
   createActivity,
   deleteActivity,
@@ -28,6 +29,13 @@ const todayIsoDate = () => {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 };
 
+// Accept only yyyy-MM-dd strings on the way in from the URL — anything else
+// (truncated value, copy-paste from another locale) falls back to today so we
+// never round-trip junk into the backend.
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const sanitizeDateParam = (raw) =>
+  raw && ISO_DATE_RE.test(raw) ? raw : todayIsoDate();
+
 const blankForm = () => ({
   activityName: "",
   activityDescription: "",
@@ -36,7 +44,10 @@ const blankForm = () => ({
 });
 
 function Activity({ toastState, setToastState }) {
-  const [date, setDate] = useState(todayIsoDate());
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [date, setDate] = useState(() =>
+    sanitizeDateParam(searchParams.get("date"))
+  );
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -97,6 +108,16 @@ function Activity({ toastState, setToastState }) {
   useEffect(() => {
     loadActivities(date);
   }, [date, loadActivities]);
+
+  // Pick up date changes that come from outside the date picker — e.g. the
+  // browser back button after a click from the History page.
+  useEffect(() => {
+    const fromUrl = sanitizeDateParam(searchParams.get("date"));
+    if (fromUrl !== date) {
+      setDate(fromUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const resetForm = () => {
     setForm(blankForm());
@@ -194,7 +215,13 @@ function Activity({ toastState, setToastState }) {
             <input
               type="date"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => {
+                const next = e.target.value;
+                setDate(next);
+                // Keep the URL in sync so the date is shareable/back-navigable.
+                if (next) setSearchParams({ date: next }, { replace: true });
+                else setSearchParams({}, { replace: true });
+              }}
               className="mtm-bg-black mtm-text-white mtm-border mtm-border-sky-400 mtm-rounded mtm-px-3 mtm-py-1 mtm-ml-2"
             />
           </label>

@@ -5,9 +5,11 @@ import com.microtimemanagement.apiservice.converter.ActivityDTOConverter;
 import com.microtimemanagement.apiservice.dto.entity.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.ActivityUpdateRequestDTO;
+import com.microtimemanagement.apiservice.dto.response.ActivityHistoryItemDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordCreationdResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityStatsResponseDTO;
+import com.microtimemanagement.apiservice.dto.response.PaginationResultResponseDTO;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementBadRequestException;
 import com.microtimemanagement.apiservice.exceptions.MicroTimeManagementNotFoundException;
 import com.microtimemanagement.apiservice.factories.ActivityTestFactory;
@@ -28,6 +30,10 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -526,5 +532,101 @@ public class ActivityRecordServiceImplTest {
         assertThat(stats.getTopActivitiesByDuration()).isEmpty();
         assertThat(stats.getRecentActivities()).isEmpty();
         assertThat(stats.getTotalDurationHuman()).isEqualTo("0m");
+    }
+
+    // -- getActivityHistory ------------------------------------------------
+
+    @Test
+    @DisplayName("Should return a paginated, newest-first history with per-day count + duration totals.")
+    void shouldReturnPaginatedActivityHistory() {
+        String dayOne = "2026-05-20";
+        String dayTwo = "2026-05-22";
+
+        Activity oneA = ActivityTestFactory.activity(dayOne, 9, 0, 10, 0);   // 60m
+        Activity oneB = ActivityTestFactory.activity(dayOne, 10, 30, 11, 0); // 30m
+        oneB.setTotalDurationInMinutes(30L);
+        ActivityRecord dayOneRecord =
+                ActivityTestFactory.recordForUser(authenticatedUser.getUid(), dayOne, oneA, oneB);
+
+        Activity twoA = ActivityTestFactory.activity(dayTwo, 9, 0, 10, 30);  // 90m
+        twoA.setTotalDurationInMinutes(90L);
+        ActivityRecord dayTwoRecord =
+                ActivityTestFactory.recordForUser(authenticatedUser.getUid(), dayTwo, twoA);
+
+        // Repo returns newest-first because the impl forces a DESC sort.
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        Mockito.when(activityRecordRepository.findByCreatedBy(
+                        Mockito.eq(authenticatedUser.getUid()), pageableCaptor.capture()))
+                .thenReturn(new PageImpl<>(List.of(dayTwoRecord, dayOneRecord),
+                        PageRequest.of(0, 10), 2));
+
+        PaginationResultResponseDTO<ActivityHistoryItemDTO> result =
+                activityRecordService.getActivityHistory(PageRequest.of(0, 10));
+
+        // Forced sort: recordDate DESC regardless of what the caller passed.
+        assertThat(pageableCaptor.getValue().getSort().getOrderFor("recordDate"))
+                .isNotNull()
+                .extracting(Sort.Order::getDirection)
+                .isEqualTo(Sort.Direction.DESC);
+
+        assertThat(result.getPageNumber()).isZero();
+        assertThat(result.getPageSize()).isEqualTo(10);
+        assertThat(result.getTotalPages()).isEqualTo(1);
+        assertThat(result.getSortingDirection()).isEqualTo("DESC");
+        assertThat(result.getSortedByFields()).containsExactly("recordDate");
+
+        assertThat(result.getPayload()).hasSize(2);
+
+        ActivityHistoryItemDTO first = result.getPayload().get(0);
+        assertThat(first.getRecordDate()).isEqualTo(dayTwo);
+        assertThat(first.getActivityCount()).isEqualTo(1);
+        assertThat(first.getTotalMinutes()).isEqualTo(90L);
+        assertThat(first.getTotalDurationHuman()).isEqualTo("1h 30m");
+
+        ActivityHistoryItemDTO second = result.getPayload().get(1);
+        assertThat(second.getRecordDate()).isEqualTo(dayOne);
+        assertThat(second.getActivityCount()).isEqualTo(2);
+        assertThat(second.getTotalMinutes()).isEqualTo(90L);
+        assertThat(second.getTotalDurationHuman()).isEqualTo("1h 30m");
+    }
+
+    @Test
+    @DisplayName("Should treat a null activities list as zero count + zero minutes instead of NPE-ing.")
+    void shouldHandleNullActivitiesListInHistory() {
+        ActivityRecord brokenRecord = ActivityRecord.builder()
+                .id("rec-1")
+                .recordDate("2026-05-15")
+                .createdBy(authenticatedUser.getUid())
+                .activities(null)
+                .build();
+
+        Mockito.when(activityRecordRepository.findByCreatedBy(
+                        Mockito.eq(authenticatedUser.getUid()), Mockito.any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(brokenRecord), PageRequest.of(0, 10), 1));
+
+        PaginationResultResponseDTO<ActivityHistoryItemDTO> result =
+                activityRecordService.getActivityHistory(PageRequest.of(0, 10));
+
+        assertThat(result.getPayload()).hasSize(1);
+        ActivityHistoryItemDTO item = result.getPayload().get(0);
+        assertThat(item.getActivityCount()).isZero();
+        assertThat(item.getTotalMinutes()).isZero();
+        assertThat(item.getTotalDurationHuman()).isEqualTo("0m");
+    }
+
+    @Test
+    @DisplayName("Should return an empty payload + metadata when the user has no records yet.")
+    void shouldReturnEmptyHistoryPayloadWhenNoRecords() {
+        Mockito.when(activityRecordRepository.findByCreatedBy(
+                        Mockito.eq(authenticatedUser.getUid()), Mockito.any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+
+        PaginationResultResponseDTO<ActivityHistoryItemDTO> result =
+                activityRecordService.getActivityHistory(PageRequest.of(0, 10));
+
+        assertThat(result.getPayload()).isEmpty();
+        assertThat(result.getTotalPages()).isZero();
+        assertThat(result.getSortingDirection()).isEqualTo("DESC");
+        assertThat(result.getSortedByFields()).containsExactly("recordDate");
     }
 }
