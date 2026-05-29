@@ -220,6 +220,13 @@ function UsersTab({ showSuccess, showError }) {
   const [selectedRoles, setSelectedRoles] = useState(new Set());
   const [originalRoles, setOriginalRoles] = useState(new Set());
   const [saving, setSaving] = useState(false);
+  // Bulk mode lets an admin apply a set of role add/remove actions to many
+  // users in a single submit. Selection persists across page changes so a
+  // wide sweep is possible without re-checking on every page.
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkSelectedUsernames, setBulkSelectedUsernames] = useState(new Set());
+  // Map<roleName, "add"|"remove">. Absent = no change for that role.
+  const [bulkRoleActions, setBulkRoleActions] = useState(new Map());
 
   // Load the full role catalogue once so the editor can offer every option,
   // not just whatever the user already has.
@@ -288,6 +295,108 @@ function UsersTab({ showSuccess, showError }) {
     setOriginalRoles(new Set());
   };
 
+  const resetBulkState = () => {
+    setBulkSelectedUsernames(new Set());
+    setBulkRoleActions(new Map());
+  };
+
+  const toggleBulkMode = () => {
+    setBulkMode((prev) => {
+      const next = !prev;
+      if (next) {
+        // Entering bulk mode — cancel any in-progress per-user edit.
+        cancelEdit();
+      }
+      resetBulkState();
+      return next;
+    });
+  };
+
+  const toggleBulkUser = (username) => {
+    setBulkSelectedUsernames((prev) => {
+      const next = new Set(prev);
+      if (next.has(username)) next.delete(username);
+      else next.add(username);
+      return next;
+    });
+  };
+
+  const selectAllOnPage = () => {
+    setBulkSelectedUsernames((prev) => {
+      const next = new Set(prev);
+      users.forEach((u) => {
+        if (u.username) next.add(u.username);
+      });
+      return next;
+    });
+  };
+
+  const clearBulkSelection = () => setBulkSelectedUsernames(new Set());
+
+  // Cycle: undefined -> "add" -> "remove" -> undefined.
+  const cycleBulkRoleAction = (roleName) => {
+    setBulkRoleActions((prev) => {
+      const next = new Map(prev);
+      const current = next.get(roleName);
+      if (!current) next.set(roleName, "add");
+      else if (current === "add") next.set(roleName, "remove");
+      else next.delete(roleName);
+      return next;
+    });
+  };
+
+  const handleBulkApply = async () => {
+    const usernames = [...bulkSelectedUsernames];
+    if (usernames.length === 0) {
+      showError("Select at least one user.");
+      return;
+    }
+    const added = [];
+    const removed = [];
+    bulkRoleActions.forEach((action, roleName) => {
+      if (action === "add") added.push(roleName);
+      else if (action === "remove") removed.push(roleName);
+    });
+    if (added.length === 0 && removed.length === 0) {
+      showError("Pick at least one role to add or remove.");
+      return;
+    }
+    setSaving(true);
+    const runAdd = () =>
+      new Promise((resolve, reject) => {
+        if (added.length === 0) {
+          resolve();
+          return;
+        }
+        addRolesToUsers({ roleNames: added, usernames }, (data, err) =>
+          err ? reject(err) : resolve(data)
+        );
+      });
+    const runRemove = () =>
+      new Promise((resolve, reject) => {
+        if (removed.length === 0) {
+          resolve();
+          return;
+        }
+        removeRolesFromUsers({ roleNames: removed, usernames }, (data, err) =>
+          err ? reject(err) : resolve(data)
+        );
+      });
+    try {
+      await runAdd();
+      await runRemove();
+      showSuccess(
+        `Updated ${usernames.length} user${usernames.length === 1 ? "" : "s"}.`
+      );
+      resetBulkState();
+      load(pageNumber);
+    } catch (err) {
+      showError(errorMessageFrom(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSaveRoles = async (user) => {
     const added = [...selectedRoles].filter((r) => !originalRoles.has(r));
     const removed = [...originalRoles].filter((r) => !selectedRoles.has(r));
@@ -332,8 +441,107 @@ function UsersTab({ showSuccess, showError }) {
     }
   };
 
+  const bulkApplyDisabled =
+    saving ||
+    bulkSelectedUsernames.size === 0 ||
+    bulkRoleActions.size === 0;
+
   return (
     <>
+      <div className="mtm-flex mtm-flex-wrap mtm-gap-2 mtm-items-center mtm-mb-4">
+        <Button
+          size="sm"
+          variant={bulkMode ? "warning" : "outline-warning"}
+          onClick={toggleBulkMode}
+        >
+          {bulkMode ? "Exit bulk edit" : "Bulk edit"}
+        </Button>
+        {bulkMode && (
+          <>
+            <Button
+              size="sm"
+              variant="outline-light"
+              disabled={loading || users.length === 0}
+              onClick={selectAllOnPage}
+            >
+              Select all on page
+            </Button>
+            <Button
+              size="sm"
+              variant="outline-light"
+              disabled={bulkSelectedUsernames.size === 0}
+              onClick={clearBulkSelection}
+            >
+              Clear selection
+            </Button>
+            <span className="mtm-text-sm mtm-text-white/60 mtm-ml-2">
+              {bulkSelectedUsernames.size} selected
+            </span>
+          </>
+        )}
+      </div>
+
+      {bulkMode && (
+        <div className="mtm-bg-white/5 mtm-border mtm-border-white/20 mtm-rounded mtm-p-4 mtm-mb-6">
+          <div className="mtm-text-sm mtm-text-white/70 mtm-mb-2">
+            Click each role to cycle through{" "}
+            <span className="mtm-text-white/40">no change</span> →{" "}
+            <span className="mtm-text-emerald-300">+ add</span> →{" "}
+            <span className="mtm-text-rose-300">− remove</span>.
+          </div>
+          {allRoleNames.length === 0 ? (
+            <p className="mtm-text-white/40 mtm-mb-3">
+              No roles defined yet. Create one in the Roles tab first.
+            </p>
+          ) : (
+            <div className="mtm-flex mtm-flex-wrap mtm-gap-2 mtm-mb-3">
+              {allRoleNames.map((roleName) => {
+                const action = bulkRoleActions.get(roleName);
+                const base =
+                  "mtm-text-sm mtm-px-3 mtm-py-1 mtm-rounded mtm-border";
+                const styled =
+                  action === "add"
+                    ? "mtm-bg-emerald-400/20 mtm-text-emerald-200 mtm-border-emerald-400/50"
+                    : action === "remove"
+                    ? "mtm-bg-rose-400/20 mtm-text-rose-200 mtm-border-rose-400/50"
+                    : "mtm-bg-transparent mtm-text-white/70 mtm-border-white/30";
+                const prefix =
+                  action === "add" ? "+ " : action === "remove" ? "− " : "";
+                return (
+                  <button
+                    key={roleName}
+                    type="button"
+                    onClick={() => cycleBulkRoleAction(roleName)}
+                    className={`${base} ${styled}`}
+                  >
+                    {prefix}
+                    {displayRoleName(roleName)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <div className="mtm-flex mtm-gap-2">
+            <Button
+              size="sm"
+              variant="warning"
+              disabled={bulkApplyDisabled}
+              onClick={handleBulkApply}
+            >
+              {saving ? "Applying…" : "Apply changes"}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline-light"
+              disabled={saving}
+              onClick={resetBulkState}
+            >
+              Reset
+            </Button>
+          </div>
+        </div>
+      )}
+
       {loading && <p className="mtm-text-white/60">Loading users…</p>}
       {!loading && users.length === 0 && (
         <p className="mtm-text-white/60">No users found.</p>
@@ -343,75 +551,92 @@ function UsersTab({ showSuccess, showError }) {
         {users.map((user) => {
           const userRoles = user.roles || [];
           const isEditing = editingUid === user.uid;
+          const isBulkSelected =
+            !!user.username && bulkSelectedUsernames.has(user.username);
           return (
             <li
               key={user.uid || user.id}
               className="mtm-bg-white/5 mtm-border mtm-border-white/20 mtm-rounded mtm-p-4"
             >
               <div className="mtm-flex mtm-flex-col sm:mtm-flex-row sm:mtm-justify-between sm:mtm-items-start mtm-gap-3">
-                <div>
-                  <div className="mtm-text-lg mtm-text-white">
-                    {user.firstName} {user.lastName}{" "}
-                    <span className="mtm-text-white/40 mtm-text-sm">
-                      @{user.username}
-                    </span>
-                  </div>
-                  <div className="mtm-text-sm mtm-text-white/60">
-                    {user.email}
-                  </div>
-                  <div className="mtm-text-xs mtm-text-white/40 mtm-mt-1">
-                    uid: {user.uid}
-                  </div>
-                  <div className="mtm-flex mtm-flex-wrap mtm-gap-1 mtm-mt-2">
-                    {userRoles.length === 0 ? (
-                      <span className="mtm-text-xs mtm-text-white/40">
-                        no roles
+                <div className="mtm-flex mtm-gap-3 mtm-items-start">
+                  {bulkMode && (
+                    <input
+                      type="checkbox"
+                      className="mtm-mt-1"
+                      checked={isBulkSelected}
+                      disabled={!user.username}
+                      onChange={() =>
+                        user.username && toggleBulkUser(user.username)
+                      }
+                    />
+                  )}
+                  <div>
+                    <div className="mtm-text-lg mtm-text-white">
+                      {user.firstName} {user.lastName}{" "}
+                      <span className="mtm-text-white/40 mtm-text-sm">
+                        @{user.username}
                       </span>
-                    ) : (
-                      userRoles.map((r) => (
-                        <span
-                          key={r}
-                          className="mtm-text-xs mtm-px-2 mtm-py-0.5 mtm-rounded mtm-bg-sky-400/20 mtm-text-sky-200 mtm-border mtm-border-sky-400/40"
-                        >
-                          {displayRoleName(r)}
+                    </div>
+                    <div className="mtm-text-sm mtm-text-white/60">
+                      {user.email}
+                    </div>
+                    <div className="mtm-text-xs mtm-text-white/40 mtm-mt-1">
+                      uid: {user.uid}
+                    </div>
+                    <div className="mtm-flex mtm-flex-wrap mtm-gap-1 mtm-mt-2">
+                      {userRoles.length === 0 ? (
+                        <span className="mtm-text-xs mtm-text-white/40">
+                          no roles
                         </span>
-                      ))
+                      ) : (
+                        userRoles.map((r) => (
+                          <span
+                            key={r}
+                            className="mtm-text-xs mtm-px-2 mtm-py-0.5 mtm-rounded mtm-bg-sky-400/20 mtm-text-sky-200 mtm-border mtm-border-sky-400/40"
+                          >
+                            {displayRoleName(r)}
+                          </span>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+                {!bulkMode && (
+                  <div className="mtm-flex mtm-gap-2">
+                    {!isEditing ? (
+                      <Button
+                        size="sm"
+                        variant="outline-warning"
+                        onClick={() => startEditing(user)}
+                      >
+                        Edit roles
+                      </Button>
+                    ) : (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="warning"
+                          disabled={saving}
+                          onClick={() => handleSaveRoles(user)}
+                        >
+                          {saving ? "Saving…" : "Save"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline-light"
+                          disabled={saving}
+                          onClick={cancelEdit}
+                        >
+                          Cancel
+                        </Button>
+                      </>
                     )}
                   </div>
-                </div>
-                <div className="mtm-flex mtm-gap-2">
-                  {!isEditing ? (
-                    <Button
-                      size="sm"
-                      variant="outline-warning"
-                      onClick={() => startEditing(user)}
-                    >
-                      Edit roles
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="warning"
-                        disabled={saving}
-                        onClick={() => handleSaveRoles(user)}
-                      >
-                        {saving ? "Saving…" : "Save"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline-light"
-                        disabled={saving}
-                        onClick={cancelEdit}
-                      >
-                        Cancel
-                      </Button>
-                    </>
-                  )}
-                </div>
+                )}
               </div>
 
-              {isEditing && (
+              {!bulkMode && isEditing && (
                 <div className="mtm-mt-4 mtm-grid sm:mtm-grid-cols-2 mtm-gap-2">
                   {allRoleNames.length === 0 ? (
                     <p className="mtm-text-white/40">
