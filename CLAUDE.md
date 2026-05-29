@@ -317,6 +317,7 @@ Toast state lives in `App.js` and is passed as `{ toastState, setToastState }` p
 - [x] Nav link to Profile shown when authenticated
 - [x] **Admin role panel** — role CRUD UI at `/admin` (list, create, rename inline, soft-delete with confirm) gated by `AdminRoute`
 - [x] **Admin user-role assignment UI** — `/admin` now has a Roles / Users tab toggle. Users tab lists users (paginated 20/page), shows role chips, and the "Edit roles" inline panel lets admins check/uncheck the full role catalogue; on save it diffs against the original set and dispatches `addRolesToUsers` + `removeRolesFromUsers` against `usernames`. `ROLE_` prefix is stripped only at render time so the wire format matches what the backend stores.
+- [x] **Admin bulk role assignment** — "Bulk edit" toggle on the Users tab adds per-row checkboxes + a "Select all on page" / "Clear selection" pair. Selection persists across pagination. A tri-state per-role action chip cycles `no change → + add → − remove`; Apply dispatches a single `addRolesToUsers` (all "add" roles) followed by `removeRolesFromUsers` (all "remove" roles) against the entire selection. Per-user editing is hidden while bulk mode is active and any in-progress per-user edit is cancelled when bulk mode is entered.
 - [x] `ApiService.js` extended with Admin Role API (`listRoles`, `createRole`, `updateRole`, `deleteRole`) and Admin User API (`listUsers`, `addRolesToUsers`, `removeRolesFromUsers`)
 - [x] `useAuth` extended to fetch profile + expose `roles` + `isAdmin`; nav shows Admin link only for `MTM_ADMIN_OPS` users
 
@@ -361,8 +362,7 @@ These are real correctness/security issues identified in a code review. Address 
 
 ### Frontend
 - [ ] **Profile DOB picker**: currently a text input (`DD-MM-YYYY`) because the backend stores DOB as a string; swap to a date picker once dates are migrated to `LocalDate`.
-- [ ] **Admin: multi-select bulk role assignment**: per-user role editing is done; remaining work is a bulk mode (pick multiple users at once and apply a set of role changes in a single submit).
-- [ ] **Frontend test coverage**: unit/integration tests for ProtectedRoute, AdminRoute, useAuth, Activity, Profile, and Admin pages.
+- [ ] **Frontend test coverage**: unit/integration tests for ProtectedRoute, AdminRoute, useAuth, Activity, Profile, and Admin pages (including bulk-mode flows).
 - [ ] **Profile page**: show current user details, allow updates
 - [ ] **Admin panel**: role management UI (only visible to `ROLE_MTM_ADMIN_OPS` users)
 - [ ] **ApiService.js**: add functions for remaining backend endpoints (activity CRUD, user profile, role admin, etc.)
