@@ -5,6 +5,7 @@ import {
   createActivity,
   deleteActivity,
   getActivitiesForDate,
+  getActivityNames,
   updateActivity,
 } from "../service/ApiService";
 
@@ -53,6 +54,7 @@ function Activity({ toastState, setToastState }) {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState(blankForm());
   const [editingId, setEditingId] = useState(null);
+  const [nameSuggestions, setNameSuggestions] = useState([]);
 
   const showSuccess = (message) =>
     setToastState({
@@ -109,6 +111,17 @@ function Activity({ toastState, setToastState }) {
     loadActivities(date);
   }, [date, loadActivities]);
 
+  const refreshNameSuggestions = useCallback(() => {
+    getActivityNames((data, err) => {
+      if (err) return; // Autocomplete is a nicety — failure should be silent.
+      setNameSuggestions((data && data.names) || []);
+    });
+  }, []);
+
+  useEffect(() => {
+    refreshNameSuggestions();
+  }, [refreshNameSuggestions]);
+
   // Pick up date changes that come from outside the date picker — e.g. the
   // browser back button after a click from the History page.
   useEffect(() => {
@@ -150,6 +163,7 @@ function Activity({ toastState, setToastState }) {
       showSuccess("Activity created.");
       resetForm();
       loadActivities(date);
+      refreshNameSuggestions();
     });
   };
 
@@ -175,6 +189,7 @@ function Activity({ toastState, setToastState }) {
       showSuccess("Activity updated.");
       resetForm();
       loadActivities(date);
+      refreshNameSuggestions();
     });
   };
 
@@ -255,8 +270,15 @@ function Activity({ toastState, setToastState }) {
                   onChange={(e) =>
                     setForm((s) => ({ ...s, activityName: e.target.value }))
                   }
+                  list="mtm-activity-name-suggestions"
+                  autoComplete="off"
                   className="mtm-bg-black mtm-border mtm-border-white/30 mtm-rounded mtm-px-3 mtm-py-2"
                 />
+                <datalist id="mtm-activity-name-suggestions">
+                  {nameSuggestions.map((name) => (
+                    <option key={name} value={name} />
+                  ))}
+                </datalist>
               </label>
               <label className="mtm-flex mtm-flex-col sm:mtm-col-span-2">
                 <span className="mtm-text-sm mtm-text-white/70 mtm-mb-1">

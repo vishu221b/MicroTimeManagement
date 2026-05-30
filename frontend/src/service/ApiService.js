@@ -204,6 +204,15 @@ export const getActivityHistory = async (
     .catch((err) => callback(null, toErrorPayload(err)));
 };
 
+// Distinct activity names the current user has used before, most-recent first.
+// Feeds the create/edit form's autocomplete datalist.
+export const getActivityNames = async (callback = () => {}) => {
+  apiClient
+    .get(`/activity/names`)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
 // --- User profile API ---
 
 export const getUserProfile = async (callback) => {
