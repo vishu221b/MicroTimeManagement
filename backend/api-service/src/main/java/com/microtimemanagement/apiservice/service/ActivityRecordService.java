@@ -3,6 +3,7 @@ package com.microtimemanagement.apiservice.service;
 import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.ActivityUpdateRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityHistoryItemDTO;
+import com.microtimemanagement.apiservice.dto.response.ActivityNamesResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordCreationdResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityStatsResponseDTO;
@@ -37,4 +38,11 @@ public interface ActivityRecordService {
      * full activity list — the frontend deep-links into /activity for detail.
      */
     PaginationResultResponseDTO<ActivityHistoryItemDTO> getActivityHistory(PageRequest pageRequest);
+
+    /**
+     * Distinct activity names the current user has previously logged, ordered
+     * by most-recent use first. Powers the create/edit form's autocomplete.
+     * Names are deduped case-insensitively; the most-recent variant wins.
+     */
+    ActivityNamesResponseDTO getActivityNamesForCurrentUser();
 }

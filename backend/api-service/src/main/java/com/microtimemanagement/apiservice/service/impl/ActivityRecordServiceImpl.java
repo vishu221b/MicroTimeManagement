@@ -7,6 +7,7 @@ import com.microtimemanagement.apiservice.dto.entity.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.ActivityUpdateRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityHistoryItemDTO;
+import com.microtimemanagement.apiservice.dto.response.ActivityNamesResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordCreationdResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityStatsResponseDTO;
@@ -540,6 +541,33 @@ public class ActivityRecordServiceImpl implements ActivityRecordService {
                 .totalPages(page.getTotalPages())
                 .sortingDirection(Sort.Direction.DESC.name())
                 .sortedByFields(List.of("recordDate"))
+                .build();
+    }
+
+    @Override
+    public ActivityNamesResponseDTO getActivityNamesForCurrentUser() {
+        String userUid = userService.loadUserDTOByUsername(
+                SecurityContextHolder.getContext().getAuthentication().getName()
+        ).getUid();
+
+        // Walk every record newest-first so the most-recent variant of a
+        // case-insensitively duplicated name wins the dedup ("Coding" logged
+        // today beats "coding" from last month).
+        List<ActivityRecord> records = activityRecordRepository
+                .findByCreatedBy(userUid, Sort.by(Sort.Direction.DESC, "recordDate"));
+
+        LinkedHashMap<String, String> firstSeen = new LinkedHashMap<>();
+        for (ActivityRecord record : records) {
+            if (record.getActivities() == null) continue;
+            for (Activity activity : record.getActivities()) {
+                if (activity == null) continue;
+                String name = StringUtils.trimToNull(activity.getActivityName());
+                if (name == null) continue;
+                firstSeen.putIfAbsent(name.toLowerCase(), name);
+            }
+        }
+        return ActivityNamesResponseDTO.builder()
+                .names(new ArrayList<>(firstSeen.values()))
                 .build();
     }
 

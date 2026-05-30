@@ -5,6 +5,7 @@ import com.microtimemanagement.apiservice.constants.PaginationConstants;
 import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.ActivityUpdateRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityHistoryItemDTO;
+import com.microtimemanagement.apiservice.dto.response.ActivityNamesResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordCreationdResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityStatsResponseDTO;
@@ -105,6 +106,17 @@ public class ActivityRecordController {
         return activityRecordService.getActivityHistory(
                 PageRequest.of(sanitized.getPageNumber(), sanitized.getPageSize())
         );
+    }
+
+    /**
+     * Distinct activity names the current user has used before, ordered by
+     * most-recent use. Powers the create/edit form autocomplete so users don't
+     * retype recurring names like "Standup" or "Email".
+     */
+    @RequestMapping(value = "/names", method = RequestMethod.GET)
+    @ResponseBody
+    public ActivityNamesResponseDTO getActivityNames(){
+        return activityRecordService.getActivityNamesForCurrentUser();
     }
 
 }

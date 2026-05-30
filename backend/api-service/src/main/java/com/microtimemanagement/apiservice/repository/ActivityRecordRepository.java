@@ -3,6 +3,7 @@ package com.microtimemanagement.apiservice.repository;
 import com.microtimemanagement.apiservice.model.ActivityRecord;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -30,4 +31,12 @@ public interface ActivityRecordRepository extends MongoRepository<ActivityRecord
      * latest day surfaces first.
      */
     Page<ActivityRecord> findByCreatedBy(String createdBy, Pageable pageable);
+
+    /**
+     * Unpaginated lookup of every record a user owns, ordered by the supplied
+     * Sort. Used by the activity-name autocomplete, which needs to walk every
+     * record to collect distinct names; recordDate DESC ensures the
+     * most-recently-used variant of a name wins the dedup.
+     */
+    List<ActivityRecord> findByCreatedBy(String createdBy, Sort sort);
 }

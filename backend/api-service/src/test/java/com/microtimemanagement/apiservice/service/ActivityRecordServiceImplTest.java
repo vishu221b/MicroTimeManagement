@@ -6,6 +6,7 @@ import com.microtimemanagement.apiservice.dto.entity.UserDTO;
 import com.microtimemanagement.apiservice.dto.request.ActivityRecordCreationRequestDTO;
 import com.microtimemanagement.apiservice.dto.request.ActivityUpdateRequestDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityHistoryItemDTO;
+import com.microtimemanagement.apiservice.dto.response.ActivityNamesResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordCreationdResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityRecordResponseDTO;
 import com.microtimemanagement.apiservice.dto.response.ActivityStatsResponseDTO;
@@ -628,5 +629,97 @@ public class ActivityRecordServiceImplTest {
         assertThat(result.getTotalPages()).isZero();
         assertThat(result.getSortingDirection()).isEqualTo("DESC");
         assertThat(result.getSortedByFields()).containsExactly("recordDate");
+    }
+
+    // -- getActivityNamesForCurrentUser ------------------------------------
+
+    @Test
+    @DisplayName("Should return distinct activity names with the most-recent variant winning a case-insensitive dedup.")
+    void shouldReturnDistinctActivityNamesNewestFirst() {
+        String older = "2026-05-20";
+        String newer = "2026-05-22";
+
+        // Newer day: "Coding" and "Standup" — these should lead the result.
+        Activity newCoding = ActivityTestFactory.activity(newer, 9, 0, 10, 0);
+        newCoding.setActivityName("Coding");
+        Activity newStandup = ActivityTestFactory.activity(newer, 10, 30, 11, 0);
+        newStandup.setActivityName("Standup");
+        ActivityRecord newerRecord = ActivityTestFactory.recordForUser(
+                authenticatedUser.getUid(), newer, newCoding, newStandup);
+
+        // Older day: "coding" (lowercase) and "Email". "coding" should collapse
+        // into "Coding" from the newer day; "Email" stays as its own entry.
+        Activity oldCoding = ActivityTestFactory.activity(older, 9, 0, 10, 0);
+        oldCoding.setActivityName("coding");
+        Activity oldEmail = ActivityTestFactory.activity(older, 10, 30, 11, 0);
+        oldEmail.setActivityName("Email");
+        ActivityRecord olderRecord = ActivityTestFactory.recordForUser(
+                authenticatedUser.getUid(), older, oldCoding, oldEmail);
+
+        ArgumentCaptor<Sort> sortCaptor = ArgumentCaptor.forClass(Sort.class);
+        Mockito.when(activityRecordRepository.findByCreatedBy(
+                        Mockito.eq(authenticatedUser.getUid()), sortCaptor.capture()))
+                .thenReturn(List.of(newerRecord, olderRecord));
+
+        ActivityNamesResponseDTO response =
+                activityRecordService.getActivityNamesForCurrentUser();
+
+        // Repo must be hit with a recordDate DESC sort so the dedup picks the
+        // most-recent variant.
+        assertThat(sortCaptor.getValue().getOrderFor("recordDate"))
+                .isNotNull()
+                .extracting(Sort.Order::getDirection)
+                .isEqualTo(Sort.Direction.DESC);
+
+        // "Coding" (from newer day) wins over "coding"; "Standup" before "Email"
+        // because both come from days but newer-day activities are processed first.
+        assertThat(response.getNames()).containsExactly("Coding", "Standup", "Email");
+    }
+
+    @Test
+    @DisplayName("Should skip null/blank activity names and tolerate a null activities list.")
+    void shouldSkipBlankAndNullNames() {
+        Activity named = ActivityTestFactory.activity(
+                ActivityTestFactory.Defaults.RECORD_DATE, 9, 0, 10, 0);
+        named.setActivityName("Reading");
+        Activity blank = ActivityTestFactory.activity(
+                ActivityTestFactory.Defaults.RECORD_DATE, 10, 30, 11, 0);
+        blank.setActivityName("   ");
+        Activity nullName = ActivityTestFactory.activity(
+                ActivityTestFactory.Defaults.RECORD_DATE, 11, 30, 12, 0);
+        nullName.setActivityName(null);
+
+        ActivityRecord record = ActivityTestFactory.recordForUser(
+                authenticatedUser.getUid(),
+                ActivityTestFactory.Defaults.RECORD_DATE,
+                named, blank, nullName);
+        ActivityRecord brokenRecord = ActivityRecord.builder()
+                .id("rec-2")
+                .recordDate("2026-05-15")
+                .createdBy(authenticatedUser.getUid())
+                .activities(null)
+                .build();
+
+        Mockito.when(activityRecordRepository.findByCreatedBy(
+                        Mockito.eq(authenticatedUser.getUid()), Mockito.any(Sort.class)))
+                .thenReturn(List.of(record, brokenRecord));
+
+        ActivityNamesResponseDTO response =
+                activityRecordService.getActivityNamesForCurrentUser();
+
+        assertThat(response.getNames()).containsExactly("Reading");
+    }
+
+    @Test
+    @DisplayName("Should return an empty list when the user has no records yet.")
+    void shouldReturnEmptyNamesListWhenNoRecords() {
+        Mockito.when(activityRecordRepository.findByCreatedBy(
+                        Mockito.eq(authenticatedUser.getUid()), Mockito.any(Sort.class)))
+                .thenReturn(List.of());
+
+        ActivityNamesResponseDTO response =
+                activityRecordService.getActivityNamesForCurrentUser();
+
+        assertThat(response.getNames()).isEmpty();
     }
 }
