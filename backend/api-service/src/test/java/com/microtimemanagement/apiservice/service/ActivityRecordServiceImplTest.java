@@ -185,6 +185,91 @@ public class ActivityRecordServiceImplTest {
     }
 
     @Test
+    @DisplayName("Should slot a new activity between two existing activities, keeping the list chronological.")
+    void shouldInsertBetweenTwoExistingActivities() throws ParseException {
+        Activity earlier = ActivityTestFactory.activity(
+                ActivityTestFactory.Defaults.RECORD_DATE, 7, 0, 8, 0
+        );
+        Activity later = ActivityTestFactory.activity(
+                ActivityTestFactory.Defaults.RECORD_DATE, 11, 0, 12, 0
+        );
+        ActivityRecord existingRecord = ActivityTestFactory.recordForUser(
+                authenticatedUser.getUid(),
+                ActivityTestFactory.Defaults.RECORD_DATE,
+                earlier, later
+        );
+        Mockito.when(activityRecordRepository.findByRecordDate(ActivityTestFactory.Defaults.RECORD_DATE))
+                .thenReturn(Optional.of(existingRecord));
+
+        // Default creation request lands at 09:00 - 10:00, which slots between
+        // the existing 07-08 and 11-12 blocks.
+        ActivityRecordCreationRequestDTO request = ActivityTestFactory.creationRequest();
+
+        activityRecordService.processCreateUpdateRequest(request);
+
+        assertThat(existingRecord.getActivities()).hasSize(3);
+        assertThat(existingRecord.getActivities().get(0).getId()).isEqualTo(earlier.getId());
+        assertThat(existingRecord.getActivities().get(2).getId()).isEqualTo(later.getId());
+        assertThat(existingRecord.getActivities().get(1).getStartHourValue()).isEqualTo(9);
+        assertThat(existingRecord.getActivities().get(1).getEndHourValue()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Should insert a new activity before the existing first when it ends before the first starts.")
+    void shouldInsertBeforeFirstExistingActivity() throws ParseException {
+        Activity later = ActivityTestFactory.activity(
+                ActivityTestFactory.Defaults.RECORD_DATE, 11, 0, 12, 0
+        );
+        ActivityRecord existingRecord = ActivityTestFactory.recordForUser(
+                authenticatedUser.getUid(),
+                ActivityTestFactory.Defaults.RECORD_DATE,
+                later
+        );
+        Mockito.when(activityRecordRepository.findByRecordDate(ActivityTestFactory.Defaults.RECORD_DATE))
+                .thenReturn(Optional.of(existingRecord));
+
+        // Default 09:00 - 10:00 ends before the existing 11:00 - 12:00 starts,
+        // so it should land at the head of the list.
+        ActivityRecordCreationRequestDTO request = ActivityTestFactory.creationRequest();
+
+        activityRecordService.processCreateUpdateRequest(request);
+
+        assertThat(existingRecord.getActivities()).hasSize(2);
+        assertThat(existingRecord.getActivities().get(1).getId()).isEqualTo(later.getId());
+        assertThat(existingRecord.getActivities().get(0).getStartHourValue()).isEqualTo(9);
+        assertThat(existingRecord.getActivities().get(0).getEndHourValue()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Should append a new activity after multiple existing activities when it starts after the last one ends.")
+    void shouldInsertAfterMultipleExistingActivities() throws ParseException {
+        Activity first = ActivityTestFactory.activity(
+                ActivityTestFactory.Defaults.RECORD_DATE, 7, 0, 7, 30
+        );
+        Activity second = ActivityTestFactory.activity(
+                ActivityTestFactory.Defaults.RECORD_DATE, 8, 0, 8, 30
+        );
+        ActivityRecord existingRecord = ActivityTestFactory.recordForUser(
+                authenticatedUser.getUid(),
+                ActivityTestFactory.Defaults.RECORD_DATE,
+                first, second
+        );
+        Mockito.when(activityRecordRepository.findByRecordDate(ActivityTestFactory.Defaults.RECORD_DATE))
+                .thenReturn(Optional.of(existingRecord));
+
+        // Default 09:00 - 10:00 starts after both existing entries end.
+        ActivityRecordCreationRequestDTO request = ActivityTestFactory.creationRequest();
+
+        activityRecordService.processCreateUpdateRequest(request);
+
+        assertThat(existingRecord.getActivities()).hasSize(3);
+        assertThat(existingRecord.getActivities().get(0).getId()).isEqualTo(first.getId());
+        assertThat(existingRecord.getActivities().get(1).getId()).isEqualTo(second.getId());
+        assertThat(existingRecord.getActivities().get(2).getStartHourValue()).isEqualTo(9);
+        assertThat(existingRecord.getActivities().get(2).getEndHourValue()).isEqualTo(10);
+    }
+
+    @Test
     @DisplayName("Should reject creation when the record date is not a valid yyyy-MM-dd value.")
     void shouldRejectInvalidDateString() {
         ActivityRecordCreationRequestDTO request = ActivityTestFactory.creationRequest(
