@@ -343,6 +343,12 @@ npm test              # Jest in watch mode (test coverage is the next milestone)
 - ⚡ Bulk role lookup (eliminate the per-request N+1 in `UserServiceImpl.replaceRoleIdsWithNamesForUser`)
 - 🐳 Wire the prod Docker Compose app service with env-var-driven config
 
+### Planned — AI chat integration (not started; gated on the above shipping + user testing)
+
+- **In-app AI chat** — a chat panel inside MTM that talks to an LLM (Anthropic at MVP, pluggable later) and uses task-shaped tools to act on the user's behalf — logging activities, summarising windows, looking up the day's entries. Auth is the user's normal MTM session, so there's no new token type, no new protocol surface. Single-turn-with-tools by design (no chatbot rabbit-hole): no persisted conversation memory across sessions, no general chit-chat fallback. Per-user daily token cap on an app key, with optional BYOK so power users can lift the cap with their own Anthropic key.
+
+Architecture, premortem (the failure modes we're deliberately designing around), phasing, and the full task list live in `CLAUDE.md` under **"AI Chat Integration (Planned, not started)"**.
+
 A complete pending list lives in `CLAUDE.md`.
 
 ## Contributing
