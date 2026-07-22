@@ -60,6 +60,15 @@ public class SecurityConstants {
         public static String[] SECURE_ACTIVITY_API_ENDPOINT_REQUEST_MATCHERS = {
                 ApiUtils.getRequestMatcherPatternForBase(
                         ApiConstants.ActivityEndpoint.API_BASE
+                ),
+                ApiUtils.getRequestMatcherPatternForBase(
+                        ApiConstants.ProjectEndpoint.API_BASE
+                ),
+                ApiUtils.getRequestMatcherPatternForBase(
+                        ApiConstants.TaskEndpoint.API_BASE
+                ),
+                ApiUtils.getRequestMatcherPatternForBase(
+                        ApiConstants.LinkEndpoint.API_BASE
                 )
         };
 

@@ -30,6 +30,18 @@ public class ApiConstants {
     public static final class ActivityEndpoint {
         public static final String API_BASE = API_PREFIX_V1 + "/activity";
     }
+
+    public static final class ProjectEndpoint {
+        public static final String API_BASE = API_PREFIX_V1 + "/project";
+    }
+
+    public static final class TaskEndpoint {
+        public static final String API_BASE = API_PREFIX_V1 + "/task";
+    }
+
+    public static final class LinkEndpoint {
+        public static final String API_BASE = API_PREFIX_V1 + "/link";
+    }
     public static final class AuthEndpoint {
         public static final String API_BASE = API_PREFIX_V1 + "/auth";
         public static final String LOGIN = "/login";
