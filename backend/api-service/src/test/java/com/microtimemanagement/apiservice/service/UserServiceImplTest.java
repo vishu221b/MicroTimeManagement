@@ -419,7 +419,7 @@ public class UserServiceImplTest {
         // saveAll, so an ArgumentCaptor would observe the post-resolution state.
         java.util.concurrent.atomic.AtomicReference<Set<String>> savedRoleIds =
                 new java.util.concurrent.atomic.AtomicReference<>();
-        Mockito.when(userRepository.saveAll(Mockito.anyList()))
+        Mockito.when(userRepository.saveAllAndFlush(Mockito.anyList()))
                 .thenAnswer(invocation -> {
                     List<User> savedArg = invocation.getArgument(0);
                     savedRoleIds.set(new java.util.LinkedHashSet<>(savedArg.get(0).getRoles()));
@@ -449,7 +449,7 @@ public class UserServiceImplTest {
                         .id(RoleTestFactory.MtmRoleIds.ADMIN_OPS)
                         .name(RoleTestFactory.MtmRoleNames.ADMIN_OPS)
                         .build()));
-        Mockito.when(userRepository.saveAll(Mockito.anyList()))
+        Mockito.when(userRepository.saveAllAndFlush(Mockito.anyList()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         Mockito.when(roleService.getRoleNamesForIds(Mockito.anySet()))
                 .thenReturn(UserTestFactory.MtmAppUserAttributes.DEFAULT_USER_ROLE_NAMES);
@@ -476,7 +476,7 @@ public class UserServiceImplTest {
 
         assertThatExceptionOfType(MicroTimeManagementNotFoundException.class)
                 .isThrownBy(() -> userService.modifyUserRoles(request, UserRoleUpdateAction.ADD));
-        Mockito.verify(userRepository, Mockito.never()).saveAll(Mockito.anyList());
+        Mockito.verify(userRepository, Mockito.never()).saveAllAndFlush(Mockito.anyList());
     }
 
     @Test
@@ -496,6 +496,6 @@ public class UserServiceImplTest {
 
         assertThatExceptionOfType(MicroTimeManagementNotFoundException.class)
                 .isThrownBy(() -> userService.modifyUserRoles(request, UserRoleUpdateAction.ADD));
-        Mockito.verify(userRepository, Mockito.never()).saveAll(Mockito.anyList());
+        Mockito.verify(userRepository, Mockito.never()).saveAllAndFlush(Mockito.anyList());
     }
 }

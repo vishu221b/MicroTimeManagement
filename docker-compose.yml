@@ -1,26 +1,31 @@
 # Full-stack Micro Time Management deployment.
 #
-#   docker compose up --build            → mongo + backend + frontend
-#   docker compose --profile tools up    → also starts mongo-express (DB UI)
+#   docker compose up --build            → postgres + backend + frontend + adminer
 #
 # Frontend:  http://localhost:3000
 # Backend:   http://localhost:8080/mtm-dev  (Swagger at /swagger-ui.html)
-# Mongo:     localhost:27017
+# Adminer:   http://localhost:8081          (DB UI — system: PostgreSQL,
+#                                            server: mtm_postgres, user/pass/db: mtm/mtm/mtm_dev)
+# Postgres:  localhost:5432
 
 services:
-  mtm_mongo:
-    container_name: mtm_mongo
-    image: mongo:7
+  mtm_postgres:
+    container_name: mtm_postgres
+    image: postgres:16
     ports:
-      - "27017:27017"
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${MTM_DB_NAME:-mtm_dev}
+      POSTGRES_USER: ${MTM_DB_USER:-mtm}
+      POSTGRES_PASSWORD: ${MTM_DB_PASSWORD:-mtm}
     volumes:
-      - mtm_mongo_data:/data/db
+      - mtm_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD-SHELL", "pg_isready -U ${MTM_DB_USER:-mtm} -d ${MTM_DB_NAME:-mtm_dev}"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 20s
+      start_period: 15s
 
   mtm_backend:
     container_name: mtm_backend
@@ -32,12 +37,14 @@ services:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: dev
-      SPRING_DATA_MONGODB_URI: mongodb://mtm_mongo:27017/mtm_dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://mtm_postgres:5432/${MTM_DB_NAME:-mtm_dev}
+      SPRING_DATASOURCE_USERNAME: ${MTM_DB_USER:-mtm}
+      SPRING_DATASOURCE_PASSWORD: ${MTM_DB_PASSWORD:-mtm}
       MTM_JWT_SECRET: ${MTM_JWT_SECRET:-jnv89h4qp98hon98q34opf0934ur0f2iqk40if0935ut09843u908fu4309gh03589rjf0934j0fj304jf930j094f0934o}
       MTM_CORS_ORIGINS: ${MTM_CORS_ORIGINS:-http://localhost:3000,http://localhost:8080}
       JAVA_OPTS: "-Xms128m -Xmx512m"
     depends_on:
-      mtm_mongo:
+      mtm_postgres:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/mtm-dev/actuator/health"]
@@ -59,18 +66,17 @@ services:
     depends_on:
       - mtm_backend
 
-  mtm_mongo_express:
-    container_name: mtm_mongo_express
-    image: mongo-express
-    profiles: ["tools"]
+  # Lightweight DB UI for poking at Postgres during development.
+  mtm_adminer:
+    container_name: mtm_adminer
+    image: adminer:4
     ports:
-      - "8081:8081"
+      - "8081:8080"
     environment:
-      ME_CONFIG_MONGODB_URL: mongodb://mtm_mongo:27017
-      ME_CONFIG_BASICAUTH: "false"
+      ADMINER_DEFAULT_SERVER: mtm_postgres
     depends_on:
-      mtm_mongo:
+      mtm_postgres:
         condition: service_healthy
 
 volumes:
-  mtm_mongo_data:
+  mtm_postgres_data:

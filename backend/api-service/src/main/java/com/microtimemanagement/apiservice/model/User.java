@@ -1,29 +1,41 @@
 package com.microtimemanagement.apiservice.model;
 
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "mtm_user")
+@Entity
+@Table(name = "mtm_user")
 @EqualsAndHashCode(callSuper = true)
 public class User extends BaseModel implements UserDetails {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     private String firstName;
@@ -40,7 +52,20 @@ public class User extends BaseModel implements UserDetails {
 
     private String uid;
 
+    // Role IDs, resolved to role-name authorities at auth time. Kept as a
+    // simple string collection (join table) to preserve the "roles as IDs"
+    // design. Eager so getAuthorities() works outside an open session.
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "mtm_user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role_id")
     private Set<String> roles;
+
+    @PrePersist
+    void assignUid() {
+        if (uid == null) {
+            uid = UUID.randomUUID().toString();
+        }
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

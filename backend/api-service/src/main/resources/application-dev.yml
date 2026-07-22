@@ -3,9 +3,18 @@ server:
     context-path: /mtm-dev
   port: 8080
 spring:
-  data:
-    mongodb:
-      uri: mongodb://localhost:27017/mtm_dev
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/mtm_dev}
+    username: ${SPRING_DATASOURCE_USERNAME:mtm}
+    password: ${SPRING_DATASOURCE_PASSWORD:mtm}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: true
+    properties:
+      hibernate:
+        format_sql: false
 springdoc:
   swagger-ui:
     default-model-expand-depth: 5
