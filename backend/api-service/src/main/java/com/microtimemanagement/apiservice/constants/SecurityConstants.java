@@ -72,6 +72,9 @@ public class SecurityConstants {
                 ),
                 ApiUtils.getRequestMatcherPatternForBase(
                         ApiConstants.ReminderEndpoint.API_BASE
+                ),
+                ApiUtils.getRequestMatcherPatternForBase(
+                        ApiConstants.BillingEndpoint.API_BASE
                 )
         };
 

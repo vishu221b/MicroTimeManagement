@@ -409,5 +409,27 @@ export const deleteReminder = async (id, callback = () => {}) => {
     .catch((err) => callback(null, toErrorPayload(err)));
 };
 
+// ---- Billing (stubbed) ----
+export const getBilling = async (callback = () => {}) => {
+  apiClient
+    .get(`/billing`)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const startCheckout = async (callback = () => {}) => {
+  apiClient
+    .post(`/billing/checkout`)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const cancelSubscription = async (callback = () => {}) => {
+  apiClient
+    .post(`/billing/cancel`)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
 export { getAccessToken, isAuthenticated } from "./AuthStorage";
 export default apiClient;

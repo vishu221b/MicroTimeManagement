@@ -293,6 +293,16 @@ To send **real** email (before or after deploy):
    }
    ```
 
+### Payments / subscription (optional — stubbed by default)
+
+There's a Free/Pro plan model (`Subscription`, `BillingService`, `/api/v1/billing`) with a **Plan** card on the Profile page. Billing is **stubbed**: with no `STRIPE_SECRET_KEY` set, "Upgrade" *simulates* a Pro upgrade so the paid-tier flow is testable — no real charge happens.
+
+To enable real **Stripe** subscriptions (before or after deploy):
+
+1. Add the Stripe SDK to `backend/api-service/pom.xml` (`com.stripe:stripe-java`).
+2. Set env on `mtm_backend`: `STRIPE_SECRET_KEY=sk_live_…` and your recurring `STRIPE_PRICE_ID=price_…`.
+3. In `BillingServiceImpl.checkout()`, replace the "simulate" branch with a real **Stripe Checkout Session** creation (return its URL — the frontend already redirects to `checkoutUrl` when present), and add a webhook endpoint to flip the plan to `PRO` on `checkout.session.completed` / back to `FREE` on cancellation.
+
 ## API surface
 
 A trimmed map of the v1 API — full schemas live in the Swagger UI.

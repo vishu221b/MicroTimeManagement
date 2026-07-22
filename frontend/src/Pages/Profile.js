@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { FiUser, FiLock } from "react-icons/fi";
+import { FiUser, FiLock, FiStar, FiCheck } from "react-icons/fi";
 import {
+  cancelSubscription,
   changeUserPassword,
+  getBilling,
   getUserProfile,
+  startCheckout,
   updateUserDetails,
 } from "../service/ApiService";
 
@@ -33,6 +36,8 @@ function Profile({ setToastState }) {
     newPassword: "",
     confirmPassword: "",
   });
+  const [billing, setBilling] = useState(null);
+  const [billingBusy, setBillingBusy] = useState(false);
 
   const showSuccess = (message) =>
     setToastState({
@@ -137,6 +142,37 @@ function Profile({ setToastState }) {
         showSuccess("Password updated.");
       }
     );
+  };
+
+  useEffect(() => {
+    getBilling((data, err) => {
+      if (!err) setBilling(data);
+    });
+  }, []);
+
+  const handleUpgrade = () => {
+    setBillingBusy(true);
+    startCheckout((data, err) => {
+      setBillingBusy(false);
+      if (err) return showError(errorMessageFrom(err));
+      setBilling(data);
+      if (data && data.checkoutUrl) {
+        window.location = data.checkoutUrl;
+        return;
+      }
+      showSuccess((data && data.message) || "Plan updated.");
+    });
+  };
+
+  const handleCancelPlan = () => {
+    if (!window.confirm("Cancel Pro and return to the Free plan?")) return;
+    setBillingBusy(true);
+    cancelSubscription((data, err) => {
+      setBillingBusy(false);
+      if (err) return showError(errorMessageFrom(err));
+      setBilling(data);
+      showSuccess((data && data.message) || "Cancelled.");
+    });
   };
 
   const initials = `${(profile.firstName || profile.username || "?")[0] || ""}${
@@ -263,6 +299,45 @@ function Profile({ setToastState }) {
           </button>
         </div>
       </form>
+
+      {billing && (
+        <div className="ui-card mtm-p-6 mtm-mt-6">
+          <div className="mtm-flex mtm-items-center mtm-gap-2 mtm-mb-5">
+            <span className="ui-icon-tile mtm-h-9 mtm-w-9">
+              <FiStar size={16} />
+            </span>
+            <h2 className="mtm-text-lg mtm-font-semibold mtm-text-content mtm-m-0">Plan</h2>
+          </div>
+          <div className="mtm-flex mtm-flex-col sm:mtm-flex-row sm:mtm-items-center sm:mtm-justify-between mtm-gap-4">
+            <div>
+              <div className="mtm-flex mtm-items-center mtm-gap-2">
+                <span className="mtm-font-display mtm-font-bold mtm-text-xl mtm-text-content">
+                  {billing.plan === "PRO" ? "Pro" : "Free"}
+                </span>
+                {billing.plan === "PRO" && (
+                  <span className="ui-badge mtm-text-xs"><FiCheck size={12} /> active</span>
+                )}
+              </div>
+              <p className="ui-muted mtm-text-sm mtm-mt-1 mtm-mb-0">
+                {billing.paymentsConfigured
+                  ? "Billing is configured."
+                  : "Payments are stubbed in this build — upgrades are simulated. See the README to enable Stripe."}
+              </p>
+            </div>
+            <div className="mtm-flex mtm-gap-2">
+              {billing.plan === "PRO" ? (
+                <button className="ui-btn ui-btn-ghost" disabled={billingBusy} onClick={handleCancelPlan}>
+                  {billingBusy ? "Working…" : "Cancel plan"}
+                </button>
+              ) : (
+                <button className="ui-btn ui-btn-primary" disabled={billingBusy} onClick={handleUpgrade}>
+                  {billingBusy ? "Working…" : "Upgrade to Pro"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
