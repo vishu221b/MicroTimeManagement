@@ -8,6 +8,7 @@ import {
   FiTrendingUp,
 } from "react-icons/fi";
 import { getActivityStats } from "../service/ApiService";
+import { VerticalBars, HorizontalBars } from "../components/charts/Charts";
 
 // Three quick presets the dashboard offers out of the box.
 const RANGES = [
@@ -163,6 +164,21 @@ function Dashboard({ setToastState }) {
             />
           </div>
 
+          {/* Time-per-day chart (full width) */}
+          <section className="ui-card mtm-p-6 mtm-mb-5">
+            <h2 className="mtm-text-lg mtm-font-semibold mtm-text-content mtm-mb-1">
+              Time per day
+            </h2>
+            <p className="ui-muted mtm-text-sm mtm-mb-5">
+              {params.from} → {params.to}
+            </p>
+            {(stats.dailyBreakdown || []).length === 0 ? (
+              <p className="ui-muted mtm-m-0">No data for this window yet.</p>
+            ) : (
+              <VerticalBars data={stats.dailyBreakdown} />
+            )}
+          </section>
+
           <div className="mtm-grid mtm-gap-5 lg:mtm-grid-cols-2">
             <section className="ui-card mtm-p-6">
               <h2 className="mtm-text-lg mtm-font-semibold mtm-text-content mtm-mb-4">
@@ -173,27 +189,7 @@ function Dashboard({ setToastState }) {
                   Nothing logged in this window yet.
                 </p>
               ) : (
-                <ul className="mtm-flex mtm-flex-col mtm-gap-3 mtm-list-none mtm-p-0 mtm-m-0">
-                  {stats.topActivitiesByDuration.map((item) => (
-                    <li
-                      key={item.activityName}
-                      className="mtm-flex mtm-justify-between mtm-items-center mtm-gap-3"
-                    >
-                      <div className="mtm-min-w-0">
-                        <div className="mtm-text-content mtm-font-medium mtm-truncate">
-                          {item.activityName}
-                        </div>
-                        <div className="mtm-text-xs ui-muted">
-                          {item.occurrenceCount}{" "}
-                          {item.occurrenceCount === 1 ? "entry" : "entries"}
-                        </div>
-                      </div>
-                      <span className="ui-badge mtm-shrink-0">
-                        {item.totalDurationHuman}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <HorizontalBars data={stats.topActivitiesByDuration} />
               )}
             </section>
 

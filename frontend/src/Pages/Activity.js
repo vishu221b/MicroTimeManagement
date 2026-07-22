@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { FiPlus, FiEdit2, FiTrash2, FiClock, FiX } from "react-icons/fi";
+import { FiPlus, FiEdit2, FiTrash2, FiClock, FiX, FiCalendar } from "react-icons/fi";
 import {
   createActivity,
   deleteActivity,
@@ -42,6 +42,30 @@ const blankForm = () => ({
   startTime: "",
   endTime: "",
 });
+
+// Turn the backend's "HH:MM:AM"/"HH:MM:PM" display time into 24h "HHMMSS".
+const displayTimeTo24 = (t) => {
+  if (!t) return "000000";
+  const [hStr, mStr, mer] = t.split(":");
+  let h = parseInt(hStr, 10) % 12;
+  if ((mer || "").toUpperCase() === "PM") h += 12;
+  const pad = (n) => `${n}`.padStart(2, "0");
+  return `${pad(h)}${pad(parseInt(mStr, 10))}00`;
+};
+
+// Build a "add to Google Calendar" link pre-filled from the activity.
+const googleCalendarUrl = (a, date) => {
+  const day = (date || a.activityDate || "").replaceAll("-", "");
+  const start = `${day}T${displayTimeTo24(a.activityStartTime)}`;
+  const end = `${day}T${displayTimeTo24(a.activityEndTime)}`;
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: a.activityName || "Activity",
+    details: a.activityDescription || "",
+    dates: `${start}/${end}`,
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+};
 
 function Activity({ setToastState }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -392,6 +416,15 @@ function Activity({ setToastState }) {
               </div>
             </div>
             <div className="mtm-flex mtm-gap-2 mtm-shrink-0">
+              <a
+                className="ui-btn ui-btn-ghost ui-btn-sm"
+                href={googleCalendarUrl(activity, date)}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Add to Google Calendar"
+              >
+                <FiCalendar size={14} />
+              </a>
               <button
                 className="ui-btn ui-btn-ghost ui-btn-sm"
                 onClick={() => startEditing(activity)}
