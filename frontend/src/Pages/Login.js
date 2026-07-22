@@ -1,140 +1,119 @@
-import React, { useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import Button from "../components/Button";
-import MtmForm from "../components/forms/MtmForm";
+import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { FiClock, FiLogIn } from "react-icons/fi";
 import { isAuthenticated, loginUser } from "../service/ApiService";
 
-function Login({ toastState, setToastState }) {
+function Login({ setToastState }) {
   const navigate = useNavigate();
   const location = useLocation();
   const redirectTarget =
     (location.state && location.state.from && location.state.from.pathname) ||
     "/dashboard";
-  const refCollection = {
-    username: useRef(),
-    password: useRef(),
+
+  const [form, setForm] = useState({ username: "", password: "" });
+  const [submitting, setSubmitting] = useState(false);
+
+  const onChange = (e) =>
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setToastState({ display: false });
+    setSubmitting(true);
+
+    await loginUser(
+      { username: form.username, password: form.password },
+      (response, errorResponse) => {
+        setSubmitting(false);
+        if (response && isAuthenticated()) {
+          setToastState({
+            display: true,
+            variant: "success",
+            messages: ["Logged in successfully."],
+            includePrefix: true,
+            includeSuffix: true,
+            suffix: "Redirecting...",
+          });
+          navigate(redirectTarget, { replace: true });
+          return;
+        }
+        if (errorResponse && errorResponse.error) {
+          const finalErrors = [errorResponse.error.message];
+          if (errorResponse.error.errors?.length > 0) {
+            errorResponse.error.errors.forEach((err) => finalErrors.push(err));
+          }
+          setToastState({
+            display: true,
+            variant: "error",
+            messages: finalErrors,
+            includePrefix: true,
+          });
+        }
+      }
+    );
   };
 
   return (
-    <div
-      className="mtm-min-h-full mtm-bg-cover mtm-bg-center mtm-bg-no-repeat sm:mtm-min-h-full"
-      style={{
-        backgroundImage:
-          "url('https://media0.giphy.com/media/l0NwGpoOVLTAyUJSo/giphy.gif')",
-      }}
-    >
-      <div className="mtm-py-20 md:mtm-py-15 mtm-bg-black/60">
-        <MtmForm
-          bgStyle={"mtm-bg-green-400/20"}
-          shadowStyle={"mtm-shadow-green-600"}
-          opactity={"mtm-opacity-90"}
-          wrapperStyle={{
-            style: `
-          mtm-py-[3%]
+    <div className="mtm-flex-1 mtm-flex mtm-items-center mtm-justify-center mtm-px-4 mtm-py-12">
+      <div className="ui-card ui-fade-in mtm-w-full mtm-max-w-md mtm-p-8">
+        <div className="mtm-flex mtm-flex-col mtm-items-center mtm-text-center mtm-mb-7">
+          <span className="mtm-inline-flex mtm-items-center mtm-justify-center mtm-h-12 mtm-w-12 mtm-rounded-2xl mtm-bg-gradient-to-br mtm-from-primary mtm-to-accent mtm-text-white mtm-mb-4">
+            <FiClock size={24} />
+          </span>
+          <h1 className="mtm-text-2xl mtm-font-display mtm-font-bold mtm-text-content mtm-m-0">
+            Welcome back
+          </h1>
+          <p className="mtm-text-sm ui-muted mtm-mt-1 mtm-mb-0">
+            Sign in to continue tracking your time.
+          </p>
+        </div>
 
-          `,
-            override: false,
-          }}
-          onFormSubmit={async (e) => {
-            e.preventDefault();
-            setToastState({ display: false });
-
-            const request = {
-              username: refCollection.username.current?.value || "",
-              password: refCollection.password.current?.value || "",
-            };
-
-            await loginUser(request, (response, errorResponse) => {
-              // ApiService.loginUser only calls back with a non-null `response`
-              // after tokens have been written to AuthStorage, so the redirect
-              // is safe to fire immediately — ProtectedRoute will see the
-              // access token on the very next paint. We still re-check
-              // isAuthenticated() as a belt-and-braces guard against any
-              // future regression where the success path forgets to persist.
-              if (response && isAuthenticated()) {
-                setToastState({
-                  display: true,
-                  variant: "success",
-                  messages: ["Logged in successfully."],
-                  includePrefix: true,
-                  includeSuffix: true,
-                  suffix: "Redirecting...",
-                });
-                navigate(redirectTarget, { replace: true });
-                return;
-              }
-              if (errorResponse && errorResponse.error) {
-                const finalErrors = [errorResponse.error.message];
-                if (errorResponse.error.errors?.length > 0) {
-                  errorResponse.error.errors.forEach((err) =>
-                    finalErrors.push(err)
-                  );
-                }
-                setToastState({
-                  display: true,
-                  variant: "error",
-                  messages: finalErrors,
-                  includePrefix: true,
-                });
-              }
-            });
-          }}
-        >
-          <div className="mtm-grid mtm-grid-cols-1 mtm-gap-8 mtm-mt-8 mtm-text-white/80">
-            <span
-              className="mtm-text-3xl mtm-tracking-wider md:mtm-text-4xl mtm-mx-auto mtm-text-sky-400 mtm-animate-pulse"
-              style={{
-                textShadow: "0px 0px 30px green",
-              }}
-            >
-              Portal Login
-            </span>
-            <hr />
-            <MtmForm.Input
-              inputRef={refCollection.username}
-              twStyles={{
-                input: {
-                  style: "mtm-my-2",
-                  override: false,
-                },
-                labelText: {
-                  style:
-                    "mtm-tracking-widest mtm-text-lg mtm-mx-[5%] md:mtm-mx-auto",
-                  override: true,
-                },
-              }}
-              labelName={"MTM Username"}
-              name={"username"}
+        <form onSubmit={handleSubmit} className="mtm-flex mtm-flex-col mtm-gap-4">
+          <div>
+            <label className="ui-label" htmlFor="username">
+              Username
+            </label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              autoComplete="username"
               required
-              placeholder={"username"}
-              type={"text"}
-            />
-            <MtmForm.Input
-              inputRef={refCollection.password}
-              twStyles={{
-                input: {
-                  style: "mtm-my-2",
-                  override: false,
-                },
-                labelText: {
-                  style:
-                    "mtm-tracking-widest mtm-text-lg sm:mtm-text-xl mtm-mx-[5%] md:mtm-mx-auto",
-                  override: true,
-                },
-              }}
-              labelName={"Mtm Password"}
-              name={"password"}
-              required
-              placeholder={"password"}
-              type={"password"}
-            />
-            <Button
-              label={"Access !!"}
-              type={"submit"}
-              bgStyle="mtm-bg-yellow-500 hover:mtm-bg-yellow-600 active:mtm-bg-yellow-700 mtm-text-black/60"
+              className="ui-input"
+              placeholder="your username"
+              value={form.username}
+              onChange={onChange}
             />
           </div>
-        </MtmForm>
+          <div>
+            <label className="ui-label" htmlFor="password">
+              Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              className="ui-input"
+              placeholder="••••••••"
+              value={form.password}
+              onChange={onChange}
+            />
+          </div>
+
+          <button type="submit" className="ui-btn ui-btn-primary mtm-mt-2" disabled={submitting}>
+            {submitting ? <span className="ui-spinner" /> : <FiLogIn size={18} />}
+            {submitting ? "Signing in…" : "Sign in"}
+          </button>
+        </form>
+
+        <p className="mtm-text-sm ui-muted mtm-text-center mtm-mt-6 mtm-mb-0">
+          New here?{" "}
+          <Link to="/register" className="ui-link">
+            Create an account
+          </Link>
+        </p>
       </div>
     </div>
   );

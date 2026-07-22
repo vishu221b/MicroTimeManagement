@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
-import Button from "react-bootstrap/Button";
 import { useSearchParams } from "react-router-dom";
+import { FiPlus, FiEdit2, FiTrash2, FiClock, FiX } from "react-icons/fi";
 import {
   createActivity,
   deleteActivity,
@@ -31,8 +31,7 @@ const todayIsoDate = () => {
 };
 
 // Accept only yyyy-MM-dd strings on the way in from the URL — anything else
-// (truncated value, copy-paste from another locale) falls back to today so we
-// never round-trip junk into the backend.
+// falls back to today so we never round-trip junk into the backend.
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const sanitizeDateParam = (raw) =>
   raw && ISO_DATE_RE.test(raw) ? raw : todayIsoDate();
@@ -44,7 +43,7 @@ const blankForm = () => ({
   endTime: "",
 });
 
-function Activity({ toastState, setToastState }) {
+function Activity({ setToastState }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [date, setDate] = useState(() =>
     sanitizeDateParam(searchParams.get("date"))
@@ -122,8 +121,7 @@ function Activity({ toastState, setToastState }) {
     refreshNameSuggestions();
   }, [refreshNameSuggestions]);
 
-  // Pick up date changes that come from outside the date picker — e.g. the
-  // browser back button after a click from the History page.
+  // Pick up date changes from outside the picker — e.g. browser back button.
   useEffect(() => {
     const fromUrl = sanitizeDateParam(searchParams.get("date"));
     if (fromUrl !== date) {
@@ -140,11 +138,7 @@ function Activity({ toastState, setToastState }) {
 
   const handleCreate = (e) => {
     e.preventDefault();
-    if (
-      !form.activityName ||
-      !form.startTime ||
-      !form.endTime
-    ) {
+    if (!form.activityName || !form.startTime || !form.endTime) {
       showError("Name, start time, and end time are required.");
       return;
     }
@@ -217,184 +211,203 @@ function Activity({ toastState, setToastState }) {
     });
   };
 
-  return (
-    <div className="mtm-min-h-[80vh] mtm-bg-black mtm-text-white mtm-py-12 mtm-px-4 sm:mtm-px-12">
-      <div className="mtm-max-w-4xl mtm-mx-auto">
-        <h1 className="mtm-text-3xl mtm-tracking-wider mtm-text-sky-400 mtm-mb-8">
-          Activity Tracker
-        </h1>
+  const formOpen = creating || editingId;
 
-        <div className="mtm-flex mtm-flex-col sm:mtm-flex-row mtm-items-start sm:mtm-items-center mtm-gap-4 mtm-mb-8">
-          <label className="mtm-text-white/80 mtm-tracking-wide">
-            Date:&nbsp;
+  return (
+    <div className="ui-page ui-fade-in">
+      <div className="mtm-flex mtm-flex-col sm:mtm-flex-row sm:mtm-items-end sm:mtm-justify-between mtm-gap-4 mtm-mb-8">
+        <div>
+          <p className="ui-eyebrow">Tracker</p>
+          <h1 className="mtm-text-3xl mtm-font-display mtm-font-bold mtm-text-content mtm-mt-1 mtm-mb-0">
+            Activity tracker
+          </h1>
+        </div>
+        <div className="mtm-flex mtm-flex-wrap mtm-items-center mtm-gap-3">
+          <label className="mtm-flex mtm-items-center mtm-gap-2 mtm-text-sm ui-muted">
+            Date
             <input
               type="date"
               value={date}
               onChange={(e) => {
                 const next = e.target.value;
                 setDate(next);
-                // Keep the URL in sync so the date is shareable/back-navigable.
                 if (next) setSearchParams({ date: next }, { replace: true });
                 else setSearchParams({}, { replace: true });
               }}
-              className="mtm-bg-black mtm-text-white mtm-border mtm-border-sky-400 mtm-rounded mtm-px-3 mtm-py-1 mtm-ml-2"
+              className="ui-input mtm-w-auto mtm-py-1.5"
             />
           </label>
-          <Button
-            variant="warning"
+          <button
+            className="ui-btn ui-btn-primary"
             onClick={() => {
               resetForm();
               setCreating(true);
             }}
           >
-            + New Activity
-          </Button>
+            <FiPlus size={18} /> New activity
+          </button>
         </div>
+      </div>
 
-        {(creating || editingId) && (
-          <form
-            onSubmit={editingId ? handleUpdate : handleCreate}
-            className="mtm-bg-white/5 mtm-border mtm-border-white/20 mtm-rounded mtm-p-6 mtm-mb-8"
-          >
-            <h2 className="mtm-text-lg mtm-text-yellow-300 mtm-mb-4">
+      {formOpen && (
+        <form
+          onSubmit={editingId ? handleUpdate : handleCreate}
+          className="ui-card mtm-p-6 mtm-mb-8"
+        >
+          <div className="mtm-flex mtm-items-center mtm-justify-between mtm-mb-5">
+            <h2 className="mtm-text-lg mtm-font-semibold mtm-text-content mtm-m-0">
               {editingId ? "Edit activity" : "New activity"}
             </h2>
-            <div className="mtm-grid mtm-gap-4 sm:mtm-grid-cols-2">
-              <label className="mtm-flex mtm-flex-col">
-                <span className="mtm-text-sm mtm-text-white/70 mtm-mb-1">
-                  Name
-                </span>
-                <input
-                  type="text"
-                  value={form.activityName}
-                  onChange={(e) =>
-                    setForm((s) => ({ ...s, activityName: e.target.value }))
-                  }
-                  list="mtm-activity-name-suggestions"
-                  autoComplete="off"
-                  className="mtm-bg-black mtm-border mtm-border-white/30 mtm-rounded mtm-px-3 mtm-py-2"
-                />
-                <datalist id="mtm-activity-name-suggestions">
-                  {nameSuggestions.map((name) => (
-                    <option key={name} value={name} />
-                  ))}
-                </datalist>
-              </label>
-              <label className="mtm-flex mtm-flex-col sm:mtm-col-span-2">
-                <span className="mtm-text-sm mtm-text-white/70 mtm-mb-1">
-                  Description
-                </span>
-                <textarea
-                  rows={2}
-                  value={form.activityDescription}
-                  onChange={(e) =>
-                    setForm((s) => ({
-                      ...s,
-                      activityDescription: e.target.value,
-                    }))
-                  }
-                  className="mtm-bg-black mtm-border mtm-border-white/30 mtm-rounded mtm-px-3 mtm-py-2"
-                />
-              </label>
-              <label className="mtm-flex mtm-flex-col">
-                <span className="mtm-text-sm mtm-text-white/70 mtm-mb-1">
-                  Start time
-                  {editingId ? " (leave blank to keep)" : ""}
-                </span>
-                <input
-                  type="time"
-                  value={form.startTime}
-                  onChange={(e) =>
-                    setForm((s) => ({ ...s, startTime: e.target.value }))
-                  }
-                  className="mtm-bg-black mtm-border mtm-border-white/30 mtm-rounded mtm-px-3 mtm-py-2"
-                />
-              </label>
-              <label className="mtm-flex mtm-flex-col">
-                <span className="mtm-text-sm mtm-text-white/70 mtm-mb-1">
-                  End time
-                  {editingId ? " (leave blank to keep)" : ""}
-                </span>
-                <input
-                  type="time"
-                  value={form.endTime}
-                  onChange={(e) =>
-                    setForm((s) => ({ ...s, endTime: e.target.value }))
-                  }
-                  className="mtm-bg-black mtm-border mtm-border-white/30 mtm-rounded mtm-px-3 mtm-py-2"
-                />
-              </label>
-            </div>
-            <div className="mtm-mt-4 mtm-flex mtm-gap-2">
-              <Button type="submit" variant="warning">
-                {editingId ? "Save changes" : "Create activity"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline-light"
-                onClick={resetForm}
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        )}
-
-        <h2 className="mtm-text-xl mtm-text-yellow-300 mtm-mb-4">
-          Activities for {date}
-        </h2>
-
-        {loading && (
-          <p className="mtm-text-white/60">Loading activities…</p>
-        )}
-
-        {!loading && activities.length === 0 && (
-          <p className="mtm-text-white/60">
-            No activities recorded for this date.
-          </p>
-        )}
-
-        <ul className="mtm-space-y-3">
-          {activities.map((activity) => (
-            <li
-              key={activity.id}
-              className="mtm-bg-white/5 mtm-border mtm-border-white/20 mtm-rounded mtm-p-4 mtm-flex mtm-flex-col sm:mtm-flex-row sm:mtm-justify-between sm:mtm-items-center mtm-gap-2"
+            <button
+              type="button"
+              onClick={resetForm}
+              aria-label="Close"
+              className="mtm-text-muted hover:mtm-text-content"
             >
-              <div>
-                <div className="mtm-text-lg mtm-text-white">
+              <FiX size={18} />
+            </button>
+          </div>
+          <div className="mtm-grid mtm-gap-4 sm:mtm-grid-cols-2">
+            <div>
+              <label className="ui-label" htmlFor="activityName">
+                Name
+              </label>
+              <input
+                id="activityName"
+                type="text"
+                value={form.activityName}
+                onChange={(e) =>
+                  setForm((s) => ({ ...s, activityName: e.target.value }))
+                }
+                list="mtm-activity-name-suggestions"
+                autoComplete="off"
+                className="ui-input"
+                placeholder="e.g. Standup"
+              />
+              <datalist id="mtm-activity-name-suggestions">
+                {nameSuggestions.map((name) => (
+                  <option key={name} value={name} />
+                ))}
+              </datalist>
+            </div>
+            <div className="sm:mtm-col-span-2">
+              <label className="ui-label" htmlFor="activityDescription">
+                Description
+              </label>
+              <textarea
+                id="activityDescription"
+                rows={2}
+                value={form.activityDescription}
+                onChange={(e) =>
+                  setForm((s) => ({
+                    ...s,
+                    activityDescription: e.target.value,
+                  }))
+                }
+                className="ui-textarea"
+                placeholder="Optional notes"
+              />
+            </div>
+            <div>
+              <label className="ui-label" htmlFor="startTime">
+                Start time{editingId ? " (leave blank to keep)" : ""}
+              </label>
+              <input
+                id="startTime"
+                type="time"
+                value={form.startTime}
+                onChange={(e) =>
+                  setForm((s) => ({ ...s, startTime: e.target.value }))
+                }
+                className="ui-input"
+              />
+            </div>
+            <div>
+              <label className="ui-label" htmlFor="endTime">
+                End time{editingId ? " (leave blank to keep)" : ""}
+              </label>
+              <input
+                id="endTime"
+                type="time"
+                value={form.endTime}
+                onChange={(e) =>
+                  setForm((s) => ({ ...s, endTime: e.target.value }))
+                }
+                className="ui-input"
+              />
+            </div>
+          </div>
+          <div className="mtm-mt-5 mtm-flex mtm-gap-2">
+            <button type="submit" className="ui-btn ui-btn-primary">
+              {editingId ? "Save changes" : "Create activity"}
+            </button>
+            <button type="button" className="ui-btn ui-btn-ghost" onClick={resetForm}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+
+      <h2 className="mtm-text-lg mtm-font-semibold mtm-text-content mtm-mb-4">
+        Activities for {date}
+      </h2>
+
+      {loading && (
+        <div className="ui-card mtm-p-10 mtm-text-center ui-muted">
+          Loading activities…
+        </div>
+      )}
+
+      {!loading && activities.length === 0 && (
+        <div className="ui-card mtm-p-10 mtm-text-center ui-muted">
+          No activities recorded for this date.
+        </div>
+      )}
+
+      <ul className="mtm-flex mtm-flex-col mtm-gap-3 mtm-list-none mtm-p-0 mtm-m-0">
+        {activities.map((activity) => (
+          <li
+            key={activity.id}
+            className="ui-card-flat mtm-p-4 mtm-flex mtm-flex-col sm:mtm-flex-row sm:mtm-justify-between sm:mtm-items-center mtm-gap-3"
+          >
+            <div className="mtm-flex mtm-items-start mtm-gap-3 mtm-min-w-0">
+              <span className="ui-icon-tile mtm-shrink-0 mtm-mt-0.5">
+                <FiClock size={17} />
+              </span>
+              <div className="mtm-min-w-0">
+                <div className="mtm-text-content mtm-font-semibold">
                   {activity.activityName}
                 </div>
-                <div className="mtm-text-sm mtm-text-white/70">
-                  {activity.activityStartTime} → {activity.activityEndTime}
-                  &nbsp;·&nbsp;
-                  {activity.activityTotalDuration}
+                <div className="mtm-text-sm ui-muted">
+                  {activity.activityStartTime} → {activity.activityEndTime} ·{" "}
+                  <span className="mtm-text-primary mtm-font-medium">
+                    {activity.activityTotalDuration}
+                  </span>
                 </div>
                 {activity.activityDescription && (
-                  <div className="mtm-text-sm mtm-text-white/60 mtm-mt-1">
+                  <div className="mtm-text-sm ui-muted mtm-mt-1">
                     {activity.activityDescription}
                   </div>
                 )}
               </div>
-              <div className="mtm-flex mtm-gap-2">
-                <Button
-                  size="sm"
-                  variant="outline-warning"
-                  onClick={() => startEditing(activity)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline-danger"
-                  onClick={() => handleDelete(activity.id)}
-                >
-                  Delete
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+            </div>
+            <div className="mtm-flex mtm-gap-2 mtm-shrink-0">
+              <button
+                className="ui-btn ui-btn-ghost ui-btn-sm"
+                onClick={() => startEditing(activity)}
+              >
+                <FiEdit2 size={14} /> Edit
+              </button>
+              <button
+                className="ui-btn ui-btn-danger ui-btn-sm"
+                onClick={() => handleDelete(activity.id)}
+              >
+                <FiTrash2 size={14} /> Delete
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

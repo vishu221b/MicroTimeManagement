@@ -135,16 +135,20 @@ The result is an app that's mine in design and direction, built with a workflow 
 |---|---|
 | Framework | React 18 (Create React App) |
 | Routing | React Router v6 |
-| Styling | Tailwind CSS 3 (prefix `mtm-`) + Bootstrap 5 + Ant Design 5 |
+| Styling | Tailwind CSS 3 (prefix `mtm-`) + a custom CSS-variable design system (emerald/teal, light + dark) |
+| Fonts | Inter (body) + Sora (display) |
 | HTTP | Axios (shared client with request + response interceptors) |
 | State | `useState` + a focused `useAuth` hook + a tiny pub/sub on top of `localStorage` |
+| Theme | `useTheme` hook — persisted light/dark toggle with no-flash boot |
 | Icons | `react-icons` |
 
 ### Infrastructure
 
 | Concern | Choice |
 |---|---|
-| Local DB | Docker Compose (MongoDB + Mongo Express) |
+| Full stack | Docker Compose (MongoDB + backend + frontend; Mongo Express behind the `tools` profile) |
+| Images | Multi-stage `Dockerfile`s — backend (Maven → JRE), frontend (Node → nginx) |
+| CI | GitHub Actions (`.github/workflows/ci.yml`) — backend tests on a `mongo:7` service + frontend build/test |
 | Profiles | `dev` (port 8080, context `/mtm-dev`) · `prod` (env-var driven, locked CORS) |
 
 ## Project layout
@@ -173,12 +177,15 @@ MicroTimeManagement/
 │       ├── Pages/                      Home · Login · Registration · Dashboard ·
 │       │                               Activity · Profile · Admin
 │       ├── components/                 ProtectedRoute · AdminRoute · NavigationBar ·
-│       │                               MtmForm + inputs · Toast · Footer
-│       ├── hooks/                      useAuth (auth + profile/roles)
+│       │                               ThemeToggle · Toast · Footer
+│       ├── hooks/                      useAuth (auth + profile/roles) · useTheme (light/dark)
 │       ├── service/                    AuthStorage (token store + pub/sub),
 │       │                               ApiService (shared axios + endpoint wrappers)
-│       └── style/                      Tailwind + base CSS
-├── docker-compose.yml                  MongoDB + Mongo Express (app service commented out)
+│       └── style/                      Tailwind + CSS-variable design system (light/dark)
+│   ├── Dockerfile                      Multi-stage build → nginx
+│   └── nginx.conf                      SPA fallback
+├── .github/workflows/ci.yml            GitHub Actions CI
+├── docker-compose.yml                  Full stack: MongoDB + backend + frontend (+ mongo-express via `tools`)
 └── README.md                           You are here.
 ```
 
@@ -198,41 +205,45 @@ git clone git@github.com:vishu221b/MicroTimeManagement.git
 cd MicroTimeManagement
 ```
 
-### 2. Run MongoDB
+### Option A — run the whole app with Docker (recommended)
 
 ```bash
-docker compose up -d
+docker compose up --build
 ```
 
-This starts:
+That builds and starts everything:
 
 | Service | Port | What it is |
 |---|---|---|
-| `mtm_compose_mongo` | `27017` | MongoDB instance, no auth (local-dev only) |
-| `m_express` | `8081` | Mongo Express UI at <http://localhost:8081> |
+| `mtm_frontend` | `3000` | React SPA (nginx) at <http://localhost:3000> |
+| `mtm_backend` | `8080` | Spring Boot API at <http://localhost:8080/mtm-dev> |
+| `mtm_mongo` | `27017` | MongoDB (data persisted in the `mtm_mongo_data` volume) |
 
-> The `mtm_test` app service in `docker-compose.yml` is intentionally commented out — run the Spring app directly while developing so hot-reload + breakpoints work.
-
-### 3. Start the backend
+Add the DB UI when you need it:
 
 ```bash
-cd backend/api-service
-./mvnw spring-boot:run
+docker compose --profile tools up   # also starts mongo-express on :8081
 ```
 
-The API boots on **<http://localhost:8080/mtm-dev>**.
-
 - Swagger UI: <http://localhost:8080/mtm-dev/swagger-ui/index.html>
-- Health endpoint: <http://localhost:8080/mtm-dev/actuator/health>
+- Health endpoint (open): <http://localhost:8080/mtm-dev/actuator/health>
 
-### 4. Start the frontend
+Overridable env: `MTM_JWT_SECRET`, `MTM_CORS_ORIGINS`, `SPRING_DATA_MONGODB_URI` (backend) and the `REACT_APP_API_BASE_URL` build arg (frontend). Defaults work out of the box on `localhost`.
 
-In a separate terminal:
+### Option B — local dev (hot reload + breakpoints)
+
+Run just MongoDB in Docker, then the apps directly.
 
 ```bash
-cd frontend
-npm install
-npm start
+docker compose up -d mtm_mongo        # MongoDB on :27017
+```
+
+```bash
+cd backend/api-service && ./mvnw spring-boot:run   # API on :8080/mtm-dev
+```
+
+```bash
+cd frontend && npm install && npm start            # SPA on :3000
 ```
 
 The dev server runs on **<http://localhost:3000>** and talks to the backend at `http://localhost:8080/mtm-dev/api/v1`.

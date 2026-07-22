@@ -6,7 +6,10 @@ import {
   setTokens,
 } from "./AuthStorage";
 
-const BASE_URL = "http://localhost:8080/mtm-dev/api/v1";
+// Overridable at build time (baked into the CRA bundle). Falls back to the
+// local dev backend so `yarn start` works with no configuration.
+const BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/mtm-dev/api/v1";
 
 const PUBLIC_PATHS = ["/auth/login", "/auth/refresh", "/user/register"];
 

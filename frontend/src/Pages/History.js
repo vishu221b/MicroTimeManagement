@@ -1,6 +1,11 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Button from "react-bootstrap/Button";
+import {
+  FiChevronLeft,
+  FiChevronRight,
+  FiCalendar,
+  FiArrowRight,
+} from "react-icons/fi";
 import { getActivityHistory } from "../service/ApiService";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
@@ -16,34 +21,38 @@ const errorMessageFrom = (errorPayload) => {
 function HistoryRow({ item, onOpen }) {
   return (
     <li
-      className="mtm-bg-white/5 mtm-border mtm-border-white/20 mtm-rounded mtm-p-4 mtm-flex mtm-flex-col sm:mtm-flex-row sm:mtm-justify-between sm:mtm-items-center mtm-gap-3 hover:mtm-bg-white/10 mtm-cursor-pointer mtm-transition"
+      className="ui-card-flat mtm-p-4 mtm-flex mtm-flex-col sm:mtm-flex-row sm:mtm-justify-between sm:mtm-items-center mtm-gap-3 hover:mtm-border-primary/50 mtm-cursor-pointer mtm-transition-colors"
       onClick={() => onOpen(item.recordDate)}
     >
-      <div>
-        <div className="mtm-text-lg mtm-text-white mtm-tracking-wider">
-          {item.recordDate}
-        </div>
-        <div className="mtm-text-sm mtm-text-white/70">
-          {item.activityCount} {item.activityCount === 1 ? "activity" : "activities"}
-          &nbsp;·&nbsp;
-          {item.totalDurationHuman || "0m"}
+      <div className="mtm-flex mtm-items-center mtm-gap-3">
+        <span className="ui-icon-tile mtm-shrink-0">
+          <FiCalendar size={17} />
+        </span>
+        <div>
+          <div className="mtm-text-content mtm-font-semibold">
+            {item.recordDate}
+          </div>
+          <div className="mtm-text-sm ui-muted">
+            {item.activityCount}{" "}
+            {item.activityCount === 1 ? "activity" : "activities"} ·{" "}
+            {item.totalDurationHuman || "0m"}
+          </div>
         </div>
       </div>
-      <Button
-        size="sm"
-        variant="outline-warning"
+      <button
+        className="ui-btn ui-btn-soft ui-btn-sm"
         onClick={(e) => {
           e.stopPropagation();
           onOpen(item.recordDate);
         }}
       >
-        Open day
-      </Button>
+        Open day <FiArrowRight size={15} />
+      </button>
     </li>
   );
 }
 
-function History({ toastState, setToastState }) {
+function History({ setToastState }) {
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
@@ -74,7 +83,6 @@ function History({ toastState, setToastState }) {
         setTotalPages(0);
         return;
       }
-      // Backend returns PaginationResultResponseDTO: { results, page, size, totalPages }.
       setItems((data && data.results) || []);
       setTotalPages((data && data.totalPages) || 0);
     });
@@ -88,84 +96,83 @@ function History({ toastState, setToastState }) {
     navigate(`/activity?date=${encodeURIComponent(recordDate)}`);
   };
 
-  // totalPages is 0 when there are no records — clamp display to "1 / 1" so we
-  // don't render a confusing "Page 1 of 0".
   const displayTotal = totalPages > 0 ? totalPages : 1;
   const canPrev = page > 0;
   const canNext = page + 1 < totalPages;
 
   return (
-    <div className="mtm-min-h-[80vh] mtm-bg-black mtm-text-white mtm-py-12 mtm-px-4 sm:mtm-px-12">
-      <div className="mtm-max-w-4xl mtm-mx-auto">
-        <h1 className="mtm-text-3xl mtm-tracking-wider mtm-text-sky-400 mtm-mb-2">
-          Activity History
-        </h1>
-        <p className="mtm-text-white/60 mtm-mb-8">
-          Every day you've tracked, newest first. Click a row to open that day's activities.
-        </p>
+    <div className="ui-page ui-fade-in">
+      <p className="ui-eyebrow">History</p>
+      <h1 className="mtm-text-3xl mtm-font-display mtm-font-bold mtm-text-content mtm-mt-1 mtm-mb-2">
+        Activity history
+      </h1>
+      <p className="ui-muted mtm-mb-8">
+        Every day you've tracked, newest first. Click a row to open that day's
+        activities.
+      </p>
 
-        <div className="mtm-flex mtm-flex-col sm:mtm-flex-row mtm-justify-between mtm-items-start sm:mtm-items-center mtm-mb-6 mtm-gap-3">
-          <label className="mtm-text-white/80 mtm-text-sm">
-            Page size:&nbsp;
-            <select
-              value={size}
-              onChange={(e) => {
-                setPage(0);
-                setSize(parseInt(e.target.value, 10));
-              }}
-              className="mtm-bg-black mtm-text-white mtm-border mtm-border-sky-400 mtm-rounded mtm-px-2 mtm-py-1 mtm-ml-1"
-            >
-              {PAGE_SIZE_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="mtm-flex mtm-items-center mtm-gap-3">
-            <Button
-              size="sm"
-              variant="outline-light"
-              disabled={!canPrev || loading}
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-            >
-              ← Prev
-            </Button>
-            <span className="mtm-text-white/70 mtm-text-sm">
-              Page {page + 1} of {displayTotal}
-            </span>
-            <Button
-              size="sm"
-              variant="outline-light"
-              disabled={!canNext || loading}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next →
-            </Button>
-          </div>
+      <div className="mtm-flex mtm-flex-col sm:mtm-flex-row mtm-justify-between mtm-items-start sm:mtm-items-center mtm-mb-6 mtm-gap-3">
+        <label className="mtm-text-sm ui-muted mtm-flex mtm-items-center mtm-gap-2">
+          Page size
+          <select
+            value={size}
+            onChange={(e) => {
+              setPage(0);
+              setSize(parseInt(e.target.value, 10));
+            }}
+            className="ui-select mtm-w-auto mtm-py-1.5"
+          >
+            {PAGE_SIZE_OPTIONS.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="mtm-flex mtm-items-center mtm-gap-2">
+          <button
+            className="ui-btn ui-btn-ghost ui-btn-sm"
+            disabled={!canPrev || loading}
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+          >
+            <FiChevronLeft size={16} /> Prev
+          </button>
+          <span className="ui-muted mtm-text-sm mtm-min-w-[92px] mtm-text-center">
+            Page {page + 1} of {displayTotal}
+          </span>
+          <button
+            className="ui-btn ui-btn-ghost ui-btn-sm"
+            disabled={!canNext || loading}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next <FiChevronRight size={16} />
+          </button>
         </div>
-
-        {loading && <p className="mtm-text-white/60">Loading history…</p>}
-
-        {!loading && items.length === 0 && (
-          <div className="mtm-bg-white/5 mtm-border mtm-border-white/20 mtm-rounded mtm-p-6 mtm-text-white/70">
-            No tracked days yet. Head to the{" "}
-            <span
-              className="mtm-text-yellow-300 mtm-cursor-pointer mtm-underline"
-              onClick={() => navigate("/activity")}
-            >
-              Activity tracker
-            </span>{" "}
-            to log your first one.
-          </div>
-        )}
-
-        <ul className="mtm-space-y-3">
-          {items.map((item) => (
-            <HistoryRow key={item.recordDate} item={item} onOpen={openDay} />
-          ))}
-        </ul>
       </div>
+
+      {loading && (
+        <div className="ui-card mtm-p-10 mtm-text-center ui-muted">
+          Loading history…
+        </div>
+      )}
+
+      {!loading && items.length === 0 && (
+        <div className="ui-card mtm-p-10 mtm-text-center">
+          <p className="ui-muted mtm-mb-4">No tracked days yet.</p>
+          <button
+            className="ui-btn ui-btn-primary"
+            onClick={() => navigate("/activity")}
+          >
+            Log your first activity <FiArrowRight size={16} />
+          </button>
+        </div>
+      )}
+
+      <ul className="mtm-flex mtm-flex-col mtm-gap-3 mtm-list-none mtm-p-0 mtm-m-0">
+        {items.map((item) => (
+          <HistoryRow key={item.recordDate} item={item} onOpen={openDay} />
+        ))}
+      </ul>
     </div>
   );
 }

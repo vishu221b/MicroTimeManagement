@@ -1,6 +1,4 @@
 import NavigationBar from "../components/NavigationBar";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "antd/dist/reset.css";
 import "../style/tailwind.css";
 import "../style/App.css";
 import Home from "./Home";
@@ -19,7 +17,7 @@ import { useState } from "react";
 import Toast from "../components/Toast";
 
 function App() {
-  let defaultToastState = {
+  const defaultToastState = {
     display: false,
     variant: "",
     messages: [],
@@ -28,104 +26,82 @@ function App() {
     suffix: "",
   };
   const [toastState, setToastState] = useState(defaultToastState);
+
+  const toastProps = { toastState, setToastState };
+
   return (
-    <>
+    <div className="mtm-app-shell mtm-flex mtm-flex-col mtm-min-h-screen">
       <NavigationBar />
-      <div className="mtm-z-40 mtm-w-[60%] sm:mtm-w-[45%] md:mtm-w-[35%] lg:mtm-w-[25%] mtm-fixed mtm-right-1 mtm-flex mtm-flex-col mtm-pr-0">
-        {toastState.display ? (
+
+      {/* Toast overlay */}
+      <div className="mtm-fixed mtm-top-20 mtm-right-3 sm:mtm-right-5 mtm-z-[60] mtm-w-[88%] sm:mtm-w-[360px] mtm-flex mtm-flex-col mtm-pointer-events-none">
+        {toastState.display &&
           toastState.messages.map((message, index) => (
             <Toast
               variant={toastState.variant}
-              key={index}
+              key={`${index}-${message}`}
               show={true}
               autoHide
               autoHideDelayInMs={5000}
-              includePrefix={toastState.variant === "success" ? true : false}
+              includePrefix={toastState.variant === "success"}
               includeSuffix={toastState.includeSuffix}
               suffix={toastState.suffix}
             >
               {message}
             </Toast>
-          ))
-        ) : (
-          <></>
-        )}
+          ))}
       </div>
-      <Routes>
-        <Route path={"/"} element={<Home />}></Route>
-        <Route
-          path={"/login"}
-          element={
-            <Login toastState={toastState} setToastState={setToastState} />
-          }
-        ></Route>
-        <Route
-          path={"/register"}
-          element={
-            <Registration
-              toastState={toastState}
-              setToastState={setToastState}
-            />
-          }
-        ></Route>
-        <Route
-          path={"/dashboard"}
-          element={
-            <ProtectedRoute>
-              <Dashboard
-                toastState={toastState}
-                setToastState={setToastState}
-              />
-            </ProtectedRoute>
-          }
-        ></Route>
-        <Route
-          path={"/activity"}
-          element={
-            <ProtectedRoute>
-              <Activity
-                toastState={toastState}
-                setToastState={setToastState}
-              />
-            </ProtectedRoute>
-          }
-        ></Route>
-        <Route
-          path={"/history"}
-          element={
-            <ProtectedRoute>
-              <History
-                toastState={toastState}
-                setToastState={setToastState}
-              />
-            </ProtectedRoute>
-          }
-        ></Route>
-        <Route
-          path={"/profile"}
-          element={
-            <ProtectedRoute>
-              <Profile
-                toastState={toastState}
-                setToastState={setToastState}
-              />
-            </ProtectedRoute>
-          }
-        ></Route>
-        <Route
-          path={"/admin"}
-          element={
-            <AdminRoute>
-              <Admin
-                toastState={toastState}
-                setToastState={setToastState}
-              />
-            </AdminRoute>
-          }
-        ></Route>
-      </Routes>
+
+      <main className="mtm-flex-1 mtm-flex mtm-flex-col">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login {...toastProps} />} />
+          <Route path="/register" element={<Registration {...toastProps} />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard {...toastProps} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/activity"
+            element={
+              <ProtectedRoute>
+                <Activity {...toastProps} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/history"
+            element={
+              <ProtectedRoute>
+                <History {...toastProps} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile {...toastProps} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <Admin {...toastProps} />
+              </AdminRoute>
+            }
+          />
+        </Routes>
+      </main>
+
       <Footer />
-    </>
+    </div>
   );
 }
 
