@@ -257,6 +257,42 @@ The dev profile (`application-dev.yml`) ships with sensible defaults so you can 
 
 > The dev JWT secret has been left in the repo intentionally so the app boots out of the box. **Override it in any environment you don't fully control.**
 
+### Email reminders (optional — stubbed by default)
+
+Reminders always fire **in-app + browser notifications** while MTM is open (no setup). The **email** channel is **stubbed**: `LoggingEmailSender` just logs `[EMAIL STUB — not actually sent]`, and a `@Scheduled` job (`ReminderEmailScheduler`, every 60s — tune with `MTM_REMINDERS_EMAIL_POLL_MS`) marks due email-reminders as processed so nothing double-sends.
+
+To send **real** email (before or after deploy):
+
+1. Add the dependency to `backend/api-service/pom.xml`:
+   ```xml
+   <dependency>
+     <groupId>org.springframework.boot</groupId>
+     <artifactId>spring-boot-starter-mail</artifactId>
+   </dependency>
+   ```
+2. Provide SMTP config via env (e.g. in `docker-compose.yml` under `mtm_backend`):
+   ```
+   SPRING_MAIL_HOST=smtp.yourprovider.com
+   SPRING_MAIL_PORT=587
+   SPRING_MAIL_USERNAME=apikey-or-user
+   SPRING_MAIL_PASSWORD=secret
+   SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=true
+   SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=true
+   ```
+   (SendGrid/Mailgun/Amazon SES all expose an SMTP endpoint that fits these.)
+3. Add a `@Primary @Component` implementing `com.microtimemanagement.apiservice.email.EmailSender` backed by Spring's `JavaMailSender` — it overrides the stub with **no other code changes**:
+   ```java
+   @Primary @Component @RequiredArgsConstructor
+   class SmtpEmailSender implements EmailSender {
+     private final JavaMailSender mail;
+     public void send(String to, String subject, String body) {
+       var msg = new SimpleMailMessage();
+       msg.setTo(to); msg.setSubject(subject); msg.setText(body);
+       mail.send(msg);
+     }
+   }
+   ```
+
 ## API surface
 
 A trimmed map of the v1 API — full schemas live in the Swagger UI.

@@ -42,6 +42,10 @@ public class ApiConstants {
     public static final class LinkEndpoint {
         public static final String API_BASE = API_PREFIX_V1 + "/link";
     }
+
+    public static final class ReminderEndpoint {
+        public static final String API_BASE = API_PREFIX_V1 + "/reminder";
+    }
     public static final class AuthEndpoint {
         public static final String API_BASE = API_PREFIX_V1 + "/auth";
         public static final String LOGIN = "/login";

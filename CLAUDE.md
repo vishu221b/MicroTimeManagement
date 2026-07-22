@@ -166,6 +166,12 @@ POST   /api/v1/link                          Create workflow link (ACTIVITY_CRUD
 GET    /api/v1/link[?sourceType=&sourceId=]  List links — all / originating from an entity (ACTIVITY_CRUD)
 DELETE /api/v1/link/{id}                     Soft-delete link (ACTIVITY_CRUD)
 
+POST   /api/v1/reminder                      Create reminder (ACTIVITY_CRUD)
+GET    /api/v1/reminder                      List current user's reminders, soonest first (ACTIVITY_CRUD)
+GET    /api/v1/reminder/{id}                 Get reminder (ACTIVITY_CRUD)
+PUT    /api/v1/reminder/{id}                 Update reminder — partial incl. status (ACTIVITY_CRUD)
+DELETE /api/v1/reminder/{id}                 Soft-delete reminder (ACTIVITY_CRUD)
+
 POST   /api/v1/admin/                     Create role via admin (ADMIN_OPS) [legacy, use /role]
 DELETE /api/v1/admin/                     Soft-delete role via admin (ADMIN_OPS) [legacy]
 GET    /api/v1/admin/?roleName=           Get role by name (ADMIN_OPS) [legacy]
@@ -274,6 +280,7 @@ src/
 /history    → Paginated activity history (protected)
 /projects   → Projects grid + create (protected)
 /projects/:id → Project detail — task board (TODO/In-progress/Done) + sub-tasks (protected)
+/reminders  → Reminders — schedule + in-app/browser notify (protected)
 /profile    → User profile + password change (protected)
 /admin      → Role management (admin-only, gated by ROLE_MTM_ADMIN_OPS)
 ```
@@ -501,6 +508,7 @@ The following are not in this feature. If they become desirable later, they get 
 - [x] **GitHub Actions CI** (`.github/workflows/ci.yml`) — backend job runs `mvnw test` (against in-memory H2, no DB service needed) then packages; frontend job runs `yarn test` + `yarn build`. Triggers on every push and PRs to `main`.
 - [x] **Activity create cross-user scoping bug fixed** — the create pipeline looked up the existing day-record via `findByRecordDate(date)` (no owner filter), so a user creating an activity on a date another user already had a record for would collide with ("Record already exists") or append into that other user's record — routing the activity under the wrong `createdBy` so it never showed in the owner's History. Now scoped via `findByRecordDateAndCreatedBy(date, currentUid)` (the unscoped repo finder was removed). `recordDate` is a literal `yyyy-MM-dd` string end-to-end, so this was a scoping bug, not a timezone one. Verified: two users can log the same time on the same date independently and each sees only their own in `getAllForDate` + History.
 - [x] **Activity base-path routing 500 fixed** — `POST/PUT/DELETE /api/v1/activity` were mapped via `EMPTY_BASE ("/")` → `/api/v1/activity/`, which Spring Boot 3 no longer matches against the slash-less request, so create/update/delete 500'd with "No static resource" and the dashboard showed nothing. Now bare `@PostMapping`/`@PutMapping`/`@DeleteMapping` (same as `RoleController`); legacy `AdminController` fixed too. Standalone-MockMvc routing regression test added.
+- [x] **Reminders (in-app + browser + email stub)** — new user-owned `Reminder` entity (title, `remindAt` epoch ms, notes, `status` PENDING/DONE/DISMISSED, `emailReminder` flag, optional linked entity), owner-scoped CRUD at `/api/v1/reminder` (`ReminderService`/controller, gated under ACTIVITY_CRUD), 5 service tests. **Email is stubbed**: `email/EmailSender` + `LoggingEmailSender` (logs only) + a `@Scheduled` `ReminderEmailScheduler` (60s, `mtm.reminders.email-poll-ms`) that marks due email-reminders processed so nothing double-sends — README documents wiring real SMTP via a `@Primary` `JavaMailSender` impl. `@EnableScheduling` added. Frontend: `/reminders` page (create with datetime + email toggle, mark done/dismiss, delete) + `useReminderNotifications` hook that requests Web Notification permission and fires an in-app toast + browser notification for due reminders while the app is open. Nav link added.
 - [x] **Activity chaining** — each activity row gets a **"Next"** action that opens the create form pre-filled with that activity's end time as the new start time (back-to-back logging). On save, a `FOLLOWS` `EntityLink` (ACTIVITY→ACTIVITY) is persisted between the two, so the chain is recorded as a workflow link. `ApiService` gains `createLink`/`listLinks`.
 - [x] **Activity image attachments** — activities can carry an optional image stored as a data-URL base64 string (`Activity.imageBase64`, a `text` column), capped at **5 MB** via `@Size(max=7_000_000)` on the create + update request DTOs. Threaded through the create pipeline (single + day-one split), the update path (metadata set + full-retime carry-through), the DTO/converter. Frontend: a file picker with size check + preview/remove in the activity form, and a clickable thumbnail on each activity row.
 - [x] **Dashboard charts + add-to-calendar** — the dashboard gains a dependency-free **"Time per day"** bar chart (single-hue, primary→accent gradient, rounded bars, per-bar hover; zero-days included) and renders **top activities** as horizontal magnitude bars. Backed by a new `dailyBreakdown` field on the stats response (`ActivityStatsResponseDTO.DailyStatDTO` — every date in the window incl. zeros). Each activity row also gets an **"Add to Google Calendar"** link (opens a pre-filled `calendar.google.com/render` event). Charts follow the dataviz method (single series → one hue, no legend, text in ink tokens).

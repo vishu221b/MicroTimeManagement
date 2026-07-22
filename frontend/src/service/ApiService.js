@@ -380,5 +380,34 @@ export const listLinks = async (params, callback = () => {}) => {
     .catch((err) => callback(null, toErrorPayload(err)));
 };
 
+// ---- Reminders ----
+export const listReminders = async (callback = () => {}) => {
+  apiClient
+    .get(`/reminder`)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const createReminder = async (payload, callback = () => {}) => {
+  apiClient
+    .post(`/reminder`, payload)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const updateReminder = async (id, payload, callback = () => {}) => {
+  apiClient
+    .put(`/reminder/${id}`, payload)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const deleteReminder = async (id, callback = () => {}) => {
+  apiClient
+    .delete(`/reminder/${id}`)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
 export { getAccessToken, isAuthenticated } from "./AuthStorage";
 export default apiClient;

@@ -8,9 +8,11 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @SpringBootApplication
+@EnableScheduling
 @OpenAPIDefinition(info = @Info(title = "MTM API", description = "APIs for managing time."))
 @SecurityScheme(name = "MTM Auth",paramName = "Authorization",type = SecuritySchemeType.APIKEY, in = SecuritySchemeIn.HEADER)
 public class ApiServiceApplication {
