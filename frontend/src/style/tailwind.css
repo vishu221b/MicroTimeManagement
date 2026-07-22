@@ -280,3 +280,80 @@
 :root[data-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator {
   filter: invert(0.85);
 }
+
+/* ---------- Polish pass ---------- */
+
+/* Themed text selection. */
+::selection {
+  background-color: rgb(var(--mtm-primary-rgb) / 0.22);
+  color: rgb(var(--mtm-content-rgb));
+}
+
+/* Slim, themed scrollbars (WebKit). */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgb(var(--mtm-border-rgb));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(var(--mtm-muted-rgb) / 0.6);
+  background-clip: content-box;
+}
+
+/* Cards animate their shadow/border smoothly (e.g. the hover-border rows). */
+.ui-card,
+.ui-card-flat,
+.ui-stat {
+  transition: box-shadow 0.22s ease, transform 0.18s ease, border-color 0.15s ease;
+}
+
+/* Stat cards get a gentle lift on hover — they're display surfaces, safe to move. */
+.ui-stat:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 22px 44px -20px rgb(var(--mtm-primary-rgb) / 0.28);
+  border-color: rgb(var(--mtm-primary-rgb) / 0.35);
+}
+
+/* Primary buttons lift slightly on hover for tactility (active still presses down). */
+.ui-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px -10px rgb(var(--mtm-primary-rgb) / 0.55);
+}
+.ui-btn-primary:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Icon tiles get a hair more depth. */
+.ui-icon-tile {
+  box-shadow: inset 0 0 0 1px rgb(var(--mtm-primary-rgb) / 0.10);
+}
+
+/* Gradient-text helper (used for accents). */
+.ui-gradient-text {
+  background: linear-gradient(120deg, rgb(var(--mtm-primary-rgb)), rgb(var(--mtm-accent-rgb)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Respect reduced-motion: drop the lifts/animations. */
+@media (prefers-reduced-motion: reduce) {
+  .ui-card,
+  .ui-card-flat,
+  .ui-stat,
+  .ui-btn,
+  .ui-fade-in {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+}
