@@ -39,7 +39,11 @@ public class ActivityRecordController {
 
     private final ActivityRecordService activityRecordService;
 
-    @RequestMapping(value = ApiConstants.EMPTY_BASE, method = RequestMethod.POST)
+    // Bare @PostMapping maps to the class base path with no trailing slash.
+    // Using EMPTY_BASE ("/") would map to "/api/v1/activity/", which Spring
+    // Boot 3 no longer matches against the trailing-slash-less request the
+    // clients send — see RoleController for the same (correct) pattern.
+    @PostMapping
     @ResponseBody
     public ActivityRecordCreationdResponseDTO saveRecord(
             @Valid @RequestBody ActivityRecordCreationRequestDTO activityRecordCreationRequestDTO
@@ -55,7 +59,7 @@ public class ActivityRecordController {
         return activityRecordService.getActivitiesForDate(date);
     }
 
-    @RequestMapping(value = ApiConstants.EMPTY_BASE, method = RequestMethod.PUT)
+    @PutMapping
     @ResponseBody
     public ActivityRecordResponseDTO updateActivity(
             @RequestParam String date,
@@ -67,7 +71,7 @@ public class ActivityRecordController {
     }
 
 
-    @RequestMapping(value = ApiConstants.EMPTY_BASE, method = RequestMethod.DELETE)
+    @DeleteMapping
     @ResponseBody
     public ActivityRecordResponseDTO deleteActivityById(
             @RequestParam String date,

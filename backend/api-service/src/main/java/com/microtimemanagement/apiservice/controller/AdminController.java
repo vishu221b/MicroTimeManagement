@@ -18,19 +18,22 @@ public class AdminController {
 
     final AdminService adminService;
 
-    @RequestMapping(value = ApiConstants.EMPTY_BASE, method = RequestMethod.POST)
+    // Bare mappings map to the class base path with no trailing slash. EMPTY_BASE
+    // ("/") would produce "/api/v1/admin/", which Spring Boot 3 no longer matches
+    // against a trailing-slash-less request.
+    @PostMapping
     @ResponseBody
     public RoleDTO createNew(@RequestBody RoleRequestDTO requestDTO){
         return adminService.createNew(requestDTO);
     }
 
-    @RequestMapping(value = ApiConstants.EMPTY_BASE, method = RequestMethod.DELETE)
+    @DeleteMapping
     @ResponseBody
     public RoleDTO deleteRole(@RequestBody RoleRequestDTO requestDTO){
         return adminService.setInactive(requestDTO.getName());
     }
 
-    @RequestMapping(value = ApiConstants.EMPTY_BASE, method = RequestMethod.GET)
+    @GetMapping
     @ResponseBody
     public RoleDTO getRole(@RequestParam String roleName){
         return adminService.getDTOByName(roleName);
