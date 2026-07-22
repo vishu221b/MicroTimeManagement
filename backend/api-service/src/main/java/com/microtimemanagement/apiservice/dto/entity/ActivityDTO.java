@@ -25,4 +25,6 @@ public class ActivityDTO {
 
     private String activityTotalDuration;
 
+    private String imageBase64;
+
 }

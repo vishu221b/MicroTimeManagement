@@ -225,6 +225,8 @@ public class ActivityRecordServiceImpl implements ActivityRecordService {
                     updateRequest.getActivityDescription(), existing.getActivityDescription()));
             creationDTO.setActivityStartHourMinutes(updateRequest.getActivityStartHourMinutes());
             creationDTO.setActivityEndHourMinutes(updateRequest.getActivityEndHourMinutes());
+            creationDTO.setImageBase64(updateRequest.getImageBase64() != null
+                    ? updateRequest.getImageBase64() : existing.getImageBase64());
             creationDTO.setIsNextDaySpan(Boolean.TRUE.equals(updateRequest.getIsNextDaySpan()));
             try {
                 processCreateUpdateRequest(creationDTO);
@@ -239,6 +241,9 @@ public class ActivityRecordServiceImpl implements ActivityRecordService {
             }
             if (null != updateRequest.getActivityDescription()) {
                 existing.setActivityDescription(updateRequest.getActivityDescription());
+            }
+            if (null != updateRequest.getImageBase64()) {
+                existing.setImageBase64(updateRequest.getImageBase64());
             }
             saveRecord(activityRecord);
         }

@@ -107,6 +107,7 @@ public class ActivityServiceImpl implements ActivityService {
                             calculateActivityHourDurationStringFromMilliseconds(activityFirstDayDurationMillis)
                     )
                     .activityDate(recordDate)
+                    .imageBase64(activityRecordCreationRequestDTO.getImageBase64())
                     .id(UUID.randomUUID().toString())
                     .build();
 
@@ -168,6 +169,7 @@ public class ActivityServiceImpl implements ActivityService {
                         calculateActivityHourDurationStringFromMilliseconds(activityDurationInEpoch)
                 )
                 .activityDate(recordDate)
+                .imageBase64(activityRecordCreationRequestDTO.getImageBase64())
                 .id(UUID.randomUUID().toString())
                 .build());
 
