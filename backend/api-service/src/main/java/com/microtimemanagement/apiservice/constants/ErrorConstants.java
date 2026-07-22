@@ -30,6 +30,8 @@ public class ErrorConstants {
     public static final String TASK_NOT_FOUND = "No task found.";
 
     public static final String LINK_NOT_FOUND = "No link found.";
+
+    public static final String REMINDER_NOT_FOUND = "No reminder found.";
     public static final String PLEASE_FIX_THE_FOLLOWING_ERRORS = "Please fix the following errors:";
     public static final String SESSION_EXPIRY_CANNOT_BE_NULL = "Session expiry date cannot be null.";
     public static final String PASSWORD_CANNOT_BE_BLANK = "Password cannot be Blank.";

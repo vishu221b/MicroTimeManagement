@@ -9,6 +9,7 @@ const authedLinks = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/activity", label: "Activity" },
   { to: "/projects", label: "Projects" },
+  { to: "/reminders", label: "Reminders" },
   { to: "/history", label: "History" },
   { to: "/profile", label: "Profile" },
 ];

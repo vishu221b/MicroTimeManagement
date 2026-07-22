@@ -11,12 +11,14 @@ import Activity from "./Activity";
 import History from "./History";
 import Projects from "./Projects";
 import ProjectDetail from "./ProjectDetail";
+import Reminders from "./Reminders";
 import Profile from "./Profile";
 import Admin from "./Admin";
 import ProtectedRoute from "../components/ProtectedRoute";
 import AdminRoute from "../components/AdminRoute";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Toast from "../components/Toast";
+import useReminderNotifications from "../hooks/useReminderNotifications";
 
 function App() {
   const defaultToastState = {
@@ -30,6 +32,19 @@ function App() {
   const [toastState, setToastState] = useState(defaultToastState);
 
   const toastProps = { toastState, setToastState };
+
+  // App-wide: fire in-app + browser notifications for due reminders.
+  const onReminderFire = useCallback(
+    (r) =>
+      setToastState({
+        display: true,
+        variant: "success",
+        messages: [`Reminder: ${r.title}`],
+        includePrefix: false,
+      }),
+    []
+  );
+  useReminderNotifications({ onFire: onReminderFire });
 
   return (
     <div className="mtm-app-shell mtm-flex mtm-flex-col mtm-min-h-screen">
@@ -96,6 +111,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ProjectDetail {...toastProps} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reminders"
+            element={
+              <ProtectedRoute>
+                <Reminders {...toastProps} />
               </ProtectedRoute>
             }
           />
