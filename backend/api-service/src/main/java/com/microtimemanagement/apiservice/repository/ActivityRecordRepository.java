@@ -13,8 +13,6 @@ import java.util.Optional;
 @Repository
 public interface ActivityRecordRepository extends JpaRepository<ActivityRecord, String> {
 
-    Optional<ActivityRecord> findByRecordDate(String recordDate);
-
     Optional<ActivityRecord> findByRecordDateAndCreatedBy(String date, String userId);
 
     /**
