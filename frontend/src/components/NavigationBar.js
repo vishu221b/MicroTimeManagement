@@ -8,6 +8,7 @@ import ThemeToggle from "./ThemeToggle";
 const authedLinks = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/activity", label: "Activity" },
+  { to: "/projects", label: "Projects" },
   { to: "/history", label: "History" },
   { to: "/profile", label: "Profile" },
 ];
