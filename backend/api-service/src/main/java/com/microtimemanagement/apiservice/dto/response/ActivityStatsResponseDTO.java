@@ -46,6 +46,22 @@ public class ActivityStatsResponseDTO {
     /** Most recent activities across the window, newest first. */
     private List<ActivityDTO> recentActivities;
 
+    /** Per-day totals for every date in the window (zeros included), oldest first. */
+    private List<DailyStatDTO> dailyBreakdown;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DailyStatDTO {
+        /** The day, as yyyy-MM-dd. */
+        private String date;
+        /** Total minutes logged that day. */
+        private Long totalMinutes;
+        /** Number of activities logged that day. */
+        private Integer activityCount;
+    }
+
     @Data
     @Builder
     @NoArgsConstructor

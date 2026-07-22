@@ -480,6 +480,28 @@ public class ActivityRecordServiceImpl implements ActivityRecordService {
                 .limit(5)
                 .toList();
 
+        // Per-day series across the full window (including zero days) for charts.
+        Map<String, ActivityStatsResponseDTO.DailyStatDTO> byDate = new HashMap<>();
+        for (ActivityRecord r : records) {
+            if (r.getActivities() == null || r.getActivities().isEmpty()) continue;
+            long mins = r.getActivities().stream()
+                    .filter(Objects::nonNull)
+                    .mapToLong(a -> a.getTotalDurationInMinutes() == null ? 0L : a.getTotalDurationInMinutes())
+                    .sum();
+            byDate.put(r.getRecordDate(), ActivityStatsResponseDTO.DailyStatDTO.builder()
+                    .date(r.getRecordDate())
+                    .totalMinutes(mins)
+                    .activityCount(r.getActivities().size())
+                    .build());
+        }
+        List<ActivityStatsResponseDTO.DailyStatDTO> dailyBreakdown = new ArrayList<>();
+        for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
+            String key = d.format(ISO_DATE);
+            dailyBreakdown.add(byDate.getOrDefault(key,
+                    ActivityStatsResponseDTO.DailyStatDTO.builder()
+                            .date(key).totalMinutes(0L).activityCount(0).build()));
+        }
+
         return ActivityStatsResponseDTO.builder()
                 .fromDate(from.format(ISO_DATE))
                 .toDate(to.format(ISO_DATE))
@@ -490,6 +512,7 @@ public class ActivityRecordServiceImpl implements ActivityRecordService {
                 .averageMinutesPerActiveDay(avgPerActiveDay)
                 .topActivitiesByDuration(topByDuration)
                 .recentActivities(recent.stream().map(activityConverter::toDTO).toList())
+                .dailyBreakdown(dailyBreakdown)
                 .build();
     }
 
