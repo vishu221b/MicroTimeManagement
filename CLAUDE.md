@@ -150,6 +150,22 @@ GET    /api/v1/activity/stats?from=&to=   Aggregate stats over window (defaults 
 GET    /api/v1/activity/history?page=&size= Paginated per-day history, newest first (ACTIVITY_CRUD)
 GET    /api/v1/activity/names                Distinct activity names previously used, most-recent first (ACTIVITY_CRUD)
 
+POST   /api/v1/project                       Create project (ACTIVITY_CRUD)
+GET    /api/v1/project                       List current user's projects (ACTIVITY_CRUD)
+GET    /api/v1/project/{id}                  Get project (ACTIVITY_CRUD)
+PUT    /api/v1/project/{id}                  Update project — partial (ACTIVITY_CRUD)
+DELETE /api/v1/project/{id}                  Soft-delete project (ACTIVITY_CRUD)
+
+POST   /api/v1/task                          Create task (ACTIVITY_CRUD)
+GET    /api/v1/task[?projectId=|?parentTaskId=] List tasks — all / by project / sub-tasks (ACTIVITY_CRUD)
+GET    /api/v1/task/{id}                     Get task (ACTIVITY_CRUD)
+PUT    /api/v1/task/{id}                      Update task — partial (ACTIVITY_CRUD)
+DELETE /api/v1/task/{id}                     Soft-delete task (ACTIVITY_CRUD)
+
+POST   /api/v1/link                          Create workflow link (ACTIVITY_CRUD)
+GET    /api/v1/link[?sourceType=&sourceId=]  List links — all / originating from an entity (ACTIVITY_CRUD)
+DELETE /api/v1/link/{id}                     Soft-delete link (ACTIVITY_CRUD)
+
 POST   /api/v1/admin/                     Create role via admin (ADMIN_OPS) [legacy, use /role]
 DELETE /api/v1/admin/                     Soft-delete role via admin (ADMIN_OPS) [legacy]
 GET    /api/v1/admin/?roleName=           Get role by name (ADMIN_OPS) [legacy]
@@ -483,6 +499,7 @@ The following are not in this feature. If they become desirable later, they get 
 - [x] **GitHub Actions CI** (`.github/workflows/ci.yml`) — backend job runs `mvnw test` (against in-memory H2, no DB service needed) then packages; frontend job runs `yarn test` + `yarn build`. Triggers on every push and PRs to `main`.
 - [x] **Activity create cross-user scoping bug fixed** — the create pipeline looked up the existing day-record via `findByRecordDate(date)` (no owner filter), so a user creating an activity on a date another user already had a record for would collide with ("Record already exists") or append into that other user's record — routing the activity under the wrong `createdBy` so it never showed in the owner's History. Now scoped via `findByRecordDateAndCreatedBy(date, currentUid)` (the unscoped repo finder was removed). `recordDate` is a literal `yyyy-MM-dd` string end-to-end, so this was a scoping bug, not a timezone one. Verified: two users can log the same time on the same date independently and each sees only their own in `getAllForDate` + History.
 - [x] **Activity base-path routing 500 fixed** — `POST/PUT/DELETE /api/v1/activity` were mapped via `EMPTY_BASE ("/")` → `/api/v1/activity/`, which Spring Boot 3 no longer matches against the slash-less request, so create/update/delete 500'd with "No static resource" and the dashboard showed nothing. Now bare `@PostMapping`/`@PutMapping`/`@DeleteMapping` (same as `RoleController`); legacy `AdminController` fixed too. Standalone-MockMvc routing regression test added.
+- [x] **Projects / Tasks / Links domain (backend)** — three new user-owned, linkable entities on Postgres. `Project` (name/description/color/status), `Task` (name/description/dueDate/status/priority + optional `projectId` and self-referencing `parentTaskId` for sub-tasks), and `EntityLink` (typed directional link between any project/task/activity — `FOLLOWS`/`PART_OF`/`BLOCKS`/`RELATES_TO` — for stories/routines). Full owner-scoped CRUD (`ProjectService`/`TaskService`/`LinkService` + REST controllers using bare mappings + `/{id}` path vars), gated under `ROLE_MTM_ACTIVITY_CRUD`. Ownership is enforced in every finder (`findBy…AndOwnerAndIsActiveTrue`) via `CurrentUserProvider`. 10 new service tests; verified end-to-end incl. owner isolation (another user sees none and gets 404). Frontend pages + activity→task roll-up follow.
 - [x] **MongoDB → PostgreSQL migration** — the whole persistence layer moved to Spring Data JPA / Hibernate + PostgreSQL (Adminer added to compose for DB inspection; H2 for hermetic tests). All 7 models are JPA entities (see the data-model table); the `@DocumentReference` session→token chain became owning-`@JoinColumn` relations so the auth services were untouched; embedded `Activity` list became an owning `@OneToMany`; audit `BeforeConvertCallback`s replaced by `BaseModel` `@PrePersist`/`@PreUpdate`; repositories became `JpaRepository` (one `@Query` for the access-token→refresh-token join; dead `findByIdOrName…` dropped). API contracts unchanged. Fixed two migration-surfaced bugs: `access_token.token` widened past varchar(255), and the OSIV role-ID→name flush corruption (detach in `replaceRoleIdsWithNamesForUser`). Verified end-to-end on real Postgres: register / login ×2 (no role corruption) / profile / activity CRUD / stats / refresh / logout. Full suite: 79 tests green.
 
 ### Frontend

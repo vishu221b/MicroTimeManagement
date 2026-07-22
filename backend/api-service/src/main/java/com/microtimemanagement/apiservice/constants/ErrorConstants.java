@@ -24,6 +24,12 @@ public class ErrorConstants {
     public static final String SESSION_EXPIRED = "Your session has expired. Please login again.";
     public static final String SESSION_TOKEN_INVALID = "Invalid session token.";
     public static final String ACTIVITY_NOT_FOUND = "No activity found.";
+
+    public static final String PROJECT_NOT_FOUND = "No project found.";
+
+    public static final String TASK_NOT_FOUND = "No task found.";
+
+    public static final String LINK_NOT_FOUND = "No link found.";
     public static final String PLEASE_FIX_THE_FOLLOWING_ERRORS = "Please fix the following errors:";
     public static final String SESSION_EXPIRY_CANNOT_BE_NULL = "Session expiry date cannot be null.";
     public static final String PASSWORD_CANNOT_BE_BLANK = "Password cannot be Blank.";
