@@ -9,6 +9,8 @@ import Registration from "./Registration";
 import Dashboard from "./Dashboard";
 import Activity from "./Activity";
 import History from "./History";
+import Projects from "./Projects";
+import ProjectDetail from "./ProjectDetail";
 import Profile from "./Profile";
 import Admin from "./Admin";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -78,6 +80,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <History {...toastProps} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects"
+            element={
+              <ProtectedRoute>
+                <Projects {...toastProps} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/:id"
+            element={
+              <ProtectedRoute>
+                <ProjectDetail {...toastProps} />
               </ProtectedRoute>
             }
           />

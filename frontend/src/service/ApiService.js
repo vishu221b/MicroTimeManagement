@@ -300,5 +300,70 @@ export const removeRolesFromUsers = async (payload, callback) => {
     .catch((err) => callback(null, toErrorPayload(err)));
 };
 
+// ---- Projects ----
+export const listProjects = async (callback) => {
+  apiClient
+    .get(`/project`)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const createProject = async (payload, callback) => {
+  apiClient
+    .post(`/project`, payload)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const getProject = async (id, callback) => {
+  apiClient
+    .get(`/project/${id}`)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const updateProject = async (id, payload, callback) => {
+  apiClient
+    .put(`/project/${id}`, payload)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const deleteProject = async (id, callback) => {
+  apiClient
+    .delete(`/project/${id}`)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+// ---- Tasks ----
+export const listTasks = async (params, callback) => {
+  apiClient
+    .get(`/task`, { params })
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const createTask = async (payload, callback) => {
+  apiClient
+    .post(`/task`, payload)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const updateTask = async (id, payload, callback) => {
+  apiClient
+    .put(`/task/${id}`, payload)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const deleteTask = async (id, callback) => {
+  apiClient
+    .delete(`/task/${id}`)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
 export { getAccessToken, isAuthenticated } from "./AuthStorage";
 export default apiClient;
