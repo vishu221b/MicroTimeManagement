@@ -365,5 +365,20 @@ export const deleteTask = async (id, callback) => {
     .catch((err) => callback(null, toErrorPayload(err)));
 };
 
+// ---- Workflow links ----
+export const createLink = async (payload, callback = () => {}) => {
+  apiClient
+    .post(`/link`, payload)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const listLinks = async (params, callback = () => {}) => {
+  apiClient
+    .get(`/link`, { params })
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
 export { getAccessToken, isAuthenticated } from "./AuthStorage";
 export default apiClient;
