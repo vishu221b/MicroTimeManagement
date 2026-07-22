@@ -1,6 +1,12 @@
 package com.microtimemanagement.apiservice.model;
 
 import com.microtimemanagement.apiservice.enums.TimeMeridian;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -11,13 +17,18 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
+@Entity
+@Table(name = "mtm_activity")
 @EqualsAndHashCode(callSuper = true)
-public class Activity extends BaseModel{
+public class Activity extends BaseModel {
 
+    // Application-assigned (see ActivityRecordServiceImpl#setUniqueIdForActivity).
+    @Id
     private String id;
 
     private String activityName;
 
+    @Column(length = 2000)
     private String activityDescription;
 
     private Long startTimeEpoch;
@@ -38,8 +49,10 @@ public class Activity extends BaseModel{
 
     private String totalDurationInHours;
 
+    @Enumerated(EnumType.STRING)
     private TimeMeridian startTimeMeridian;
 
+    @Enumerated(EnumType.STRING)
     private TimeMeridian endTimeMeridian;
 
     private String activityDate;

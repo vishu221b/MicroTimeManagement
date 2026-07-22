@@ -25,15 +25,15 @@ MicroTimeManagement/
 ### Running the whole app
 
 ```
-docker compose up --build            # mongo + backend + frontend
-docker compose --profile tools up    # also starts mongo-express (DB UI on :8081)
+docker compose up --build            # postgres + backend + frontend + adminer
 ```
 
 - Frontend: http://localhost:3000
 - Backend: http://localhost:8080/mtm-dev (Swagger at `/swagger-ui.html`)
-- MongoDB: localhost:27017 (data persisted in the `mtm_mongo_data` volume)
+- Adminer (DB UI): http://localhost:8081 (System: PostgreSQL, Server: `mtm_postgres`, user/pass/db: `mtm`/`mtm`/`mtm_dev`)
+- PostgreSQL: localhost:5432 (data persisted in the `mtm_postgres_data` volume)
 
-Backend env knobs (see `docker-compose.yml`): `SPRING_DATA_MONGODB_URI`, `MTM_JWT_SECRET`, `MTM_CORS_ORIGINS`. The frontend's API base URL is baked at image-build time via the `REACT_APP_API_BASE_URL` build arg (default `http://localhost:8080/mtm-dev/api/v1`); running locally with `yarn start` it falls back to the same default.
+Backend env knobs (see `docker-compose.yml`): `SPRING_DATASOURCE_URL` / `SPRING_DATASOURCE_USERNAME` / `SPRING_DATASOURCE_PASSWORD`, `MTM_JWT_SECRET`, `MTM_CORS_ORIGINS`. The frontend's API base URL is baked at image-build time via the `REACT_APP_API_BASE_URL` build arg (default `http://localhost:8080/mtm-dev/api/v1`); running locally with `yarn start` it falls back to the same default.
 
 ---
 
@@ -44,7 +44,7 @@ Backend env knobs (see `docker-compose.yml`): `SPRING_DATA_MONGODB_URI`, `MTM_JW
 | Concern | Choice |
 |---|---|
 | Framework | Spring Boot 3.5.10, Java 17 |
-| Database | MongoDB via Spring Data MongoDB |
+| Database | PostgreSQL via Spring Data JPA / Hibernate (H2 in-memory for tests) |
 | Auth | Custom JWT (`jjwt 0.13.0`) + session-in-DB validation |
 | API Docs | springdoc-openapi 2.8.15 (Swagger UI) |
 | Security | Spring Security 6, custom `MtmSessionFilter` |
@@ -74,21 +74,21 @@ com.microtimemanagement.apiservice
 └── utils/           ApiUtils, AuthUtils, JwtUtils
 ```
 
-### Data Models & MongoDB Collections
+### Data Models & PostgreSQL Tables (JPA)
 
-All models extend `BaseModel` (`isActive: Boolean`, `createdAt: Date`, `lastUpdatedAt: Date`). These fields are auto-set by `BeforeConvertCallback` classes in `callbacks/`.
+All models extend `BaseModel` (a `@MappedSuperclass` with `isActive`, `createdAt`, `lastUpdatedAt`). These fields are maintained by JPA lifecycle callbacks (`@PrePersist`/`@PreUpdate`) **in `BaseModel` itself** — the old Mongo `BeforeConvertCallback` classes in `callbacks/` were deleted in the Postgres migration.
 
-| Model | Collection | Notes |
+| Entity | Table | Notes |
 |---|---|---|
-| `User` | `mtm_user` | Implements `UserDetails`. `roles` field stores **role IDs** (resolved to names at auth time). `uid` is a separate unique identifier used externally. |
+| `User` | `mtm_user` | Implements `UserDetails`. `roles` is a `@ElementCollection` of **role IDs** (join table `mtm_user_roles`), eager, resolved to names at auth time. `uid` assigned via `@PrePersist`. IDs are `@GeneratedValue(UUID)` strings. |
 | `Role` | `mtm_role` | Simple `id + name`. |
-| `Session` | `session` | Links a `User` to a `RefreshToken` via `@DocumentReference`. |
-| `RefreshToken` | `refresh_token` | Has a list of `AccessToken` references + back-reference to `Session`. |
-| `AccessToken` | `access_token` | Has a back-reference to `RefreshToken`. |
-| `ActivityRecord` | `micro_activity_record` | `recordDate` (String, `yyyy-MM-dd`), `createdBy` (user UID), `activities` (embedded list). |
-| `Activity` | embedded in `ActivityRecord` | Not a top-level collection. Stores epoch times + human-readable hour/minute values + meridian. |
+| `Session` | `mtm_session` | Owns the FK to `RefreshToken` (`@OneToOne`, eager) + `@ManyToOne` to the principal `User`. |
+| `RefreshToken` | `mtm_refresh_token` | `@OneToMany` to `AccessToken` — **owning side via `@JoinColumn`** (saving the token wires up children's FK, so the auth services needed no changes), eager, `orphanRemoval`. `@OneToOne(mappedBy)` back-ref to `Session`. Token/back-ref fields excluded from `equals`/`toString` to avoid cyclic recursion. |
+| `AccessToken` | `mtm_access_token` | Read-only `@ManyToOne` back-ref to `RefreshToken` (`insertable=false, updatable=false`). `token` column widened to `length=4096` (JWTs exceed varchar(255)). |
+| `ActivityRecord` | `mtm_activity_record` | `recordDate` (String, `yyyy-MM-dd`), `createdBy` (user UID), `@OneToMany` unidirectional-owning `activities` (`@JoinColumn`, eager, `orphanRemoval`, `@OrderBy startTimeEpoch`). |
+| `Activity` | `mtm_activity` | Own table. Application-assigned `@Id` (set in `setUniqueIdForActivity`). `TimeMeridian` fields are `@Enumerated(STRING)`. `activityDescription` is `length=2000`. |
 
-**Key design decision — roles as IDs:** `User.roles` stores role document IDs. `UserServiceImpl.replaceRoleIdsWithNamesForUser()` resolves them to role name strings (`ROLE_MTM_...`) before setting Spring Security authorities. This happens on every `loadUserByUsername` call (login + every authenticated request). Consider caching if performance becomes an issue.
+**Key design decision — roles as IDs:** `User.roles` stores role IDs. `UserServiceImpl.replaceRoleIdsWithNamesForUser()` resolves them to role-name strings (`ROLE_MTM_...`) before setting Spring Security authorities — on every `loadUserByUsername` and `getUserByUid` call. **JPA gotcha (fixed):** that swap mutates the loaded entity, and with `open-in-view: true` Hibernate would flush the names back over the stored IDs (corrupting them, then wiping them on the next login). `replaceRoleIdsWithNamesForUser` now `entityManager.detach(user)`s before the swap so it's never persisted; `modifyUserRoles` uses `saveAllAndFlush` so the real ID-role change lands before the detach.
 
 ### Auth & Session Flow
 
@@ -176,10 +176,11 @@ MicroTimeManagementException (base)
 
 ### Configuration
 
-- **Dev**: `application-dev.yml` — port 8080, context `/mtm-dev`, MongoDB `localhost:27017/mtm_dev`, JWT secret hardcoded (must be moved to env var before production)
+- **Dev**: `application-dev.yml` — port 8080, context `/mtm-dev`, PostgreSQL via `SPRING_DATASOURCE_URL` (default `jdbc:postgresql://localhost:5432/mtm_dev`, user/pass `mtm`/`mtm`), Hibernate `ddl-auto: update`, `open-in-view: true`, JWT secret env-overridable
+- **Test**: `src/test/resources/application.properties` — in-memory H2 (`MODE=PostgreSQL`, `ddl-auto: create-drop`) so the suite (incl. `contextLoads`) needs no external DB
 - **Prod**: `application-prod.yml` — separate config; CORS locked to `https://mtm.app`
 - **Active profile**: set via `SPRING_PROFILES_ACTIVE` env var or `application.properties`
-- **Docker Compose**: full stack — MongoDB (27017, persisted volume), backend (8080, multi-stage build, health-checked), frontend (3000, nginx-served CRA bundle). Mongo-express (8081) is opt-in via the `tools` profile. You can still run the Spring Boot app directly against a local/compose Mongo in dev.
+- **Docker Compose**: full stack — PostgreSQL (5432, persisted volume, health-checked), backend (8080, multi-stage build, health-checked), frontend (3000, nginx-served CRA bundle), Adminer (8081, DB UI). You can still run the Spring Boot app directly against a local/compose Postgres in dev.
 - **Backend Dockerfile**: multi-stage (`maven:3.9-eclipse-temurin-17` build → `eclipse-temurin:17-jre` runtime). Builds the fat jar inside the image; tests run in CI, not the image build.
 - **Frontend Dockerfile**: multi-stage (`node:18-alpine` build → `nginx:1.27-alpine` runtime) with SPA fallback in `nginx.conf`.
 
@@ -479,7 +480,9 @@ The following are not in this feature. If they become desirable later, they get 
 - [x] **`/actuator/health` opened** in both dev and prod filter chains (the rest of `/actuator/**` stays admin-gated) so orchestrators can probe liveness without credentials — required for the compose healthcheck.
 - [x] **CORS `PUT`/`OPTIONS` added** (both dev + prod) — the allowed-methods list previously omitted `PUT`, which would have blocked cross-origin activity/role/user update calls. Dev origins are now env-configurable via `MTM_CORS_ORIGINS` (`mtm.cors.origins`).
 - [x] **`SessionServiceImplTest` realigned** to the delegate-based `SessionServiceImpl` (the service was refactored to push token bookkeeping into `RefreshTokenService`; the old test still mocked removed collaborators, so 7 methods failed with Mockito NPEs). Rewritten to 8 green tests covering create / revoke-on-recreate / destroy / blank-token skip / delegate-validate / refresh / inactive-session guard / not-found propagation. **Full backend suite: 80 tests green.**
-- [x] **GitHub Actions CI** (`.github/workflows/ci.yml`) — backend job runs `mvnw test` against a `mongo:7` service container then packages; frontend job runs `yarn test` + `yarn build`. Triggers on every push and PRs to `main`.
+- [x] **GitHub Actions CI** (`.github/workflows/ci.yml`) — backend job runs `mvnw test` (against in-memory H2, no DB service needed) then packages; frontend job runs `yarn test` + `yarn build`. Triggers on every push and PRs to `main`.
+- [x] **Activity base-path routing 500 fixed** — `POST/PUT/DELETE /api/v1/activity` were mapped via `EMPTY_BASE ("/")` → `/api/v1/activity/`, which Spring Boot 3 no longer matches against the slash-less request, so create/update/delete 500'd with "No static resource" and the dashboard showed nothing. Now bare `@PostMapping`/`@PutMapping`/`@DeleteMapping` (same as `RoleController`); legacy `AdminController` fixed too. Standalone-MockMvc routing regression test added.
+- [x] **MongoDB → PostgreSQL migration** — the whole persistence layer moved to Spring Data JPA / Hibernate + PostgreSQL (Adminer added to compose for DB inspection; H2 for hermetic tests). All 7 models are JPA entities (see the data-model table); the `@DocumentReference` session→token chain became owning-`@JoinColumn` relations so the auth services were untouched; embedded `Activity` list became an owning `@OneToMany`; audit `BeforeConvertCallback`s replaced by `BaseModel` `@PrePersist`/`@PreUpdate`; repositories became `JpaRepository` (one `@Query` for the access-token→refresh-token join; dead `findByIdOrName…` dropped). API contracts unchanged. Fixed two migration-surfaced bugs: `access_token.token` widened past varchar(255), and the OSIV role-ID→name flush corruption (detach in `replaceRoleIdsWithNamesForUser`). Verified end-to-end on real Postgres: register / login ×2 (no role corruption) / profile / activity CRUD / stats / refresh / logout. Full suite: 79 tests green.
 
 ### Frontend
 - [x] Home landing page with sections
@@ -541,7 +544,9 @@ These are real correctness/security issues identified in a code review. Address 
 - [ ] Role-name cache (optional follow-up): the N+1 has been collapsed to one `$in` query per authenticated request, but that's still one DB hit per request. If profile data shows it as hot, add a short-TTL in-memory cache keyed by role-id-set.
 - [ ] Dates stored as `String` (`ActivityRecord.recordDate`, `Activity.activityDate`, `User.dateOfBirth`) — migrate to `LocalDate` for type safety and proper range queries
 - [ ] `JsonWebTokenServiceImpl` is a pointless wrapper over `JwtUtils` — every method is a direct delegate. Inject `JwtUtils` directly and remove the interface + impl.
-- [ ] **`ApiServiceApplicationTests.contextLoads` requires MongoDB** — fails with `Connection refused` to `localhost:27017` if MongoDB isn't running locally. CI now provides a `mongo:7` service container so this passes there; for a fully self-contained local `mvn test`, still consider an `application-test.yml` with embedded MongoDB (Flapdoodle).
+- [x] **`ApiServiceApplicationTests.contextLoads` no longer needs an external DB** — the test profile uses in-memory H2 (`src/test/resources/application.properties`), so `mvn test` and CI run with no database service.
+- [ ] **Postgres schema management** — dev/prod use Hibernate `ddl-auto: update`. Introduce Flyway migrations before real production so schema changes are versioned/reviewable.
+- [ ] **`open-in-view: true`** was kept for lazy-load safety during the migration; revisit tightening to `false` once fetch strategies are audited.
 - [ ] Populate `SecurityConstants.PROD` (currently empty class) and use it in prod filter chain
 - [ ] `AdminController` is legacy (predates `RoleController`) — evaluate removing or consolidating
 - [ ] Add integration tests for Activity, Role, Admin endpoints

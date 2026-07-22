@@ -7,7 +7,7 @@
 [![Java](https://img.shields.io/badge/Java-17-007396?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/17/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.10-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-7-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Maven](https://img.shields.io/badge/Build-Maven-C71A36?logo=apachemaven&logoColor=white)](https://maven.apache.org/)
 [![Status](https://img.shields.io/badge/status-active%20development-blue)](#roadmap)
 
@@ -41,7 +41,7 @@
 
 Micro Time Management is a full-stack web app for tracking how you actually spend your day. You log in, pick a date, and add **activities** — time blocks with a name, description, and start/end times. The backend rejects overlapping blocks, keeps them in chronological order, and scopes everything to the signed-in user. Admins can manage roles from a separate panel.
 
-The project started as a side-project during a Master's degree and is now being finished as a portfolio piece. It is deliberately built around **a real auth stack, a real role model, and real test coverage** rather than a toy backend, so it doubles as a reference for anyone wiring up Spring Security + JWT sessions against MongoDB.
+The project started as a side-project during a Master's degree and is now being finished as a portfolio piece. It is deliberately built around **a real auth stack, a real role model, and real test coverage** rather than a toy backend, so it doubles as a reference for anyone wiring up Spring Security + JWT sessions against PostgreSQL.
 
 ## Project journey
 
@@ -95,10 +95,10 @@ The result is an app that's mine in design and direction, built with a workflow 
 │  JWT validate + session DB check        Domain logic        │
 │                                                             │
 └────────────────────────────┬────────────────────────────────┘
-                             │ Spring Data MongoDB
+                             │ Spring Data JPA    
                              ▼
             ┌───────────────────────────────────────┐
-            │              MongoDB                  │
+            │            PostgreSQL                 │
             │  users · roles · sessions · tokens    │
             │  micro_activity_record                │
             └───────────────────────────────────────┘
@@ -107,7 +107,7 @@ The result is an app that's mine in design and direction, built with a workflow 
 ### Request lifecycle
 
 1. Client hits an endpoint with `Authorization: Bearer <jwt>`.
-2. `MtmSessionFilter` parses the JWT, calls `AuthenticationAndAuthorizationService.validateCurrentUserSessionForAccessToken`, and looks up the access token + session in MongoDB.
+2. `MtmSessionFilter` parses the JWT, calls `AuthenticationAndAuthorizationService.validateCurrentUserSessionForAccessToken`, and looks up the access token + session in PostgreSQL.
 3. Valid → the resolved `User` becomes the Spring Security principal for the rest of the request. Expired/invalid → `401`. Unexpected exception → `500` (deliberately distinct from auth failures).
 4. Controllers route to services, which return either DTOs or a `GenericMessageResponseDTO` envelope.
 
@@ -119,7 +119,7 @@ The result is an app that's mine in design and direction, built with a workflow 
 |---|---|
 | Language | Java 17 |
 | Framework | Spring Boot 3.5.10 |
-| Persistence | Spring Data MongoDB |
+| Persistence | Spring Data JPA / Hibernate → PostgreSQL (H2 in-memory for tests) |
 | Security | Spring Security 6 + custom `MtmSessionFilter` |
 | Auth tokens | `jjwt 0.13.0` (HS512) + DB-backed sessions / refresh tokens |
 | Validation | `spring-boot-starter-validation` (Bean Validation) |
@@ -145,9 +145,9 @@ The result is an app that's mine in design and direction, built with a workflow 
 
 | Concern | Choice |
 |---|---|
-| Full stack | Docker Compose (MongoDB + backend + frontend; Mongo Express behind the `tools` profile) |
+| Full stack | Docker Compose (PostgreSQL + backend + frontend + Adminer DB UI) |
 | Images | Multi-stage `Dockerfile`s — backend (Maven → JRE), frontend (Node → nginx) |
-| CI | GitHub Actions (`.github/workflows/ci.yml`) — backend tests on a `mongo:7` service + frontend build/test |
+| CI | GitHub Actions (`.github/workflows/ci.yml`) — backend tests on in-memory H2 (no DB service) + frontend build/test |
 | Profiles | `dev` (port 8080, context `/mtm-dev`) · `prod` (env-var driven, locked CORS) |
 
 ## Project layout
@@ -166,7 +166,7 @@ MicroTimeManagement/
 │   │   ├── exceptions/                 Custom hierarchy + @ControllerAdvice
 │   │   ├── filter/                     MtmSessionFilter (per-request session validation)
 │   │   ├── handler/                    Global exception handler
-│   │   ├── model/                      MongoDB documents
+│   │   ├── model/                      JPA entities (PostgreSQL)
 │   │   ├── repository/                 Spring Data interfaces
 │   │   ├── service/{,impl}             Business logic
 │   │   └── utils/                      JWT + API utilities
@@ -184,7 +184,7 @@ MicroTimeManagement/
 │   ├── Dockerfile                      Multi-stage build → nginx
 │   └── nginx.conf                      SPA fallback
 ├── .github/workflows/ci.yml            GitHub Actions CI
-├── docker-compose.yml                  Full stack: MongoDB + backend + frontend (+ mongo-express via `tools`)
+├── docker-compose.yml                  Full stack: PostgreSQL + backend + frontend + Adminer
 └── README.md                           You are here.
 ```
 
@@ -194,7 +194,7 @@ MicroTimeManagement/
 
 - **Java 17+** (Temurin / Adoptium recommended)
 - **Node.js 18+** and **npm 9+**
-- **Docker** & **Docker Compose** (for MongoDB locally)
+- **Docker** & **Docker Compose** (for PostgreSQL locally)
 - **Maven** is bundled via `./mvnw`; no global install needed
 
 ### 1. Clone
@@ -216,25 +216,20 @@ That builds and starts everything:
 |---|---|---|
 | `mtm_frontend` | `3000` | React SPA (nginx) at <http://localhost:3000> |
 | `mtm_backend` | `8080` | Spring Boot API at <http://localhost:8080/mtm-dev> |
-| `mtm_mongo` | `27017` | MongoDB (data persisted in the `mtm_mongo_data` volume) |
-
-Add the DB UI when you need it:
-
-```bash
-docker compose --profile tools up   # also starts mongo-express on :8081
-```
+| `mtm_postgres` | `5432` | PostgreSQL (data persisted in the `mtm_postgres_data` volume) |
+| `mtm_adminer` | `8081` | Adminer DB UI at <http://localhost:8081> (System: PostgreSQL, Server: `mtm_postgres`, user/pass/db: `mtm`/`mtm`/`mtm_dev`) |
 
 - Swagger UI: <http://localhost:8080/mtm-dev/swagger-ui/index.html>
 - Health endpoint (open): <http://localhost:8080/mtm-dev/actuator/health>
 
-Overridable env: `MTM_JWT_SECRET`, `MTM_CORS_ORIGINS`, `SPRING_DATA_MONGODB_URI` (backend) and the `REACT_APP_API_BASE_URL` build arg (frontend). Defaults work out of the box on `localhost`.
+Overridable env: `MTM_JWT_SECRET`, `MTM_CORS_ORIGINS`, `SPRING_DATASOURCE_URL` / `SPRING_DATASOURCE_USERNAME` / `SPRING_DATASOURCE_PASSWORD` (backend) and the `REACT_APP_API_BASE_URL` build arg (frontend). Defaults work out of the box on `localhost`.
 
 ### Option B: Local dev with hot reload
 
-Run just MongoDB in Docker, then the apps directly.
+Run just PostgreSQL in Docker, then the apps directly.
 
 ```bash
-docker compose up -d mtm_mongo        # MongoDB on :27017
+docker compose up -d mtm_postgres     # PostgreSQL on :5432
 ```
 
 ```bash
@@ -255,10 +250,9 @@ The dev profile (`application-dev.yml`) ships with sensible defaults so you can 
 |---|---|---|---|
 | `SPRING_PROFILES_ACTIVE` | both | `dev` | Switches between dev and prod config |
 | `MTM_JWT_SECRET` | dev (optional) / prod (**required**) | bundled dev fallback | Symmetric key for HS512 JWT signing |
-| `MTM_MONGO_USERNAME` | prod | — | Mongo Atlas user |
-| `MTM_MONGO_PASSWORD` | prod | — | Mongo Atlas password |
-| `MONGO_STORE_CLUSTER` | prod | — | Atlas cluster hostname segment |
-| `MONGO_STORE_DATABASE` | prod | — | Atlas database name |
+| `SPRING_DATASOURCE_URL` | prod (dev optional) | dev: local Postgres | JDBC URL, e.g. `jdbc:postgresql://host:5432/mtm` |
+| `SPRING_DATASOURCE_USERNAME` | prod (dev optional) | dev: `mtm` | Postgres user |
+| `SPRING_DATASOURCE_PASSWORD` | prod (dev optional) | dev: `mtm` | Postgres password |
 | `LOG_FILE_PROPERTIES` | prod | — | Path for rolling log file |
 
 > The dev JWT secret has been left in the repo intentionally so the app boots out of the box. **Override it in any environment you don't fully control.**
@@ -327,7 +321,7 @@ Service-layer coverage today (selected highlights):
 | `AuthenticationAndAuthorizationServiceImplTest` | Login happy + bad password |
 | `ApiUtilsTest` | Pagination sanitisation edge cases |
 
-> A small number of `SessionServiceImplTest` cases and `ApiServiceApplicationTests.contextLoads` are known-flaky (Mockito stubbing mismatch + Mongo dependency). They are tracked in `CLAUDE.md` and excluded from the green-bar definition.
+> The whole suite is green (79 tests). It runs against in-memory H2 (`MODE=PostgreSQL`), so `mvn test` and CI need no external database.
 
 ### Frontend
 

@@ -21,6 +21,8 @@ import com.microtimemanagement.apiservice.repository.UserRepository;
 import com.microtimemanagement.apiservice.service.RoleService;
 import com.microtimemanagement.apiservice.service.UserService;
 import com.microtimemanagement.apiservice.utils.ApiUtils;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -47,6 +49,9 @@ public class UserServiceImpl implements UserService {
     private final RoleService roleService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final UserDTOConverter userConverter;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public User loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -253,7 +258,10 @@ public class UserServiceImpl implements UserService {
             }
             user.setRoles(roles);
         });
-        List<User> savedUsers = userRepository.saveAll(uniqueUsers);
+        // Flush the ID-role changes to the DB *before* the return path detaches
+        // these entities to swap IDs for names — otherwise the detach would drop
+        // the pending save.
+        List<User> savedUsers = userRepository.saveAllAndFlush(uniqueUsers);
         // Resolve role IDs to names on the return path so the caller can render
         // them directly — same shape as /user/all.
         return savedUsers.stream()
@@ -381,6 +389,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public User replaceRoleIdsWithNamesForUser(User user) {
         if(null!=user){
+            // This is an in-memory swap of persisted role IDs -> role-name
+            // authorities (for Spring Security / DTO rendering). Detach first so
+            // JPA never flushes the swapped names back over the stored IDs and
+            // corrupts them. No-op outside a persistence context (unit tests).
+            if (entityManager != null) {
+                entityManager.detach(user);
+            }
             user.setRoles(roleService.getRoleNamesForIds(user.getRoles()));
             return user;
         }
