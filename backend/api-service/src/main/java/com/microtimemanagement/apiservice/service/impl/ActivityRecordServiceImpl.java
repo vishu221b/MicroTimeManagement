@@ -54,7 +54,10 @@ public class ActivityRecordServiceImpl implements ActivityRecordService {
 
     @Override
     public void saveRecordWithFirstActivity(ActivityRecord activityRecord) {
-        ActivityRecord dbActivityRecord = getByRecordDate(activityRecord.getRecordDate());
+        // Scope to the record's owner so we never merge into another user's record.
+        ActivityRecord dbActivityRecord = activityRecordRepository
+                .findByRecordDateAndCreatedBy(activityRecord.getRecordDate(), activityRecord.getCreatedBy())
+                .orElse(null);
         log.info("Record:{}", dbActivityRecord);
         if(null != dbActivityRecord){
             dbActivityRecord.getActivities().add(activityRecord.getActivities().get(0));
@@ -67,9 +70,6 @@ public class ActivityRecordServiceImpl implements ActivityRecordService {
         return activityRecordRepository.save(record);
     }
 
-    public ActivityRecord getByRecordDate(String recordDate){
-        return activityRecordRepository.findByRecordDate(recordDate).orElse(null);
-    }
     private void saveMultipleRecords(List<ActivityRecord> records){
         activityRecordRepository.saveAll(records);
     }
@@ -277,7 +277,13 @@ public class ActivityRecordServiceImpl implements ActivityRecordService {
      */
     private ActivityRecord prepareRecordFor(Activity newActivity, ActivityRecordCreationRequestDTO request) {
         log.info("Processing new activity: {}", newActivity);
-        ActivityRecord existingRecord = getByRecordDate(newActivity.getActivityDate());
+        // Scope the existing-record lookup to the current user — otherwise the
+        // pipeline would find (and append to / conflict with) another user's
+        // record for the same date, both leaking data and routing activities
+        // under the wrong owner so they never appear in the owner's history.
+        ActivityRecord existingRecord = activityRecordRepository
+                .findByRecordDateAndCreatedBy(newActivity.getActivityDate(), request.getUser().getUid())
+                .orElse(null);
 
         if (existingRecord == null) {
             return ActivityRecord.builder()
