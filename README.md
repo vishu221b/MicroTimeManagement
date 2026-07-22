@@ -26,9 +26,8 @@
 - [Getting started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [1. Clone](#1-clone)
-  - [2. Run MongoDB](#2-run-mongodb)
-  - [3. Start the backend](#3-start-the-backend)
-  - [4. Start the frontend](#4-start-the-frontend)
+  - [Option A: Run everything with Docker (recommended)](#option-a-run-everything-with-docker-recommended)
+  - [Option B: Local dev with hot reload](#option-b-local-dev-with-hot-reload)
 - [Configuration](#configuration)
 - [API surface](#api-surface)
 - [Testing](#testing)
@@ -205,7 +204,7 @@ git clone git@github.com:vishu221b/MicroTimeManagement.git
 cd MicroTimeManagement
 ```
 
-### Option A — run the whole app with Docker (recommended)
+### Option A: Run everything with Docker (recommended)
 
 ```bash
 docker compose up --build
@@ -230,7 +229,7 @@ docker compose --profile tools up   # also starts mongo-express on :8081
 
 Overridable env: `MTM_JWT_SECRET`, `MTM_CORS_ORIGINS`, `SPRING_DATA_MONGODB_URI` (backend) and the `REACT_APP_API_BASE_URL` build arg (frontend). Defaults work out of the box on `localhost`.
 
-### Option B — local dev (hot reload + breakpoints)
+### Option B: Local dev with hot reload
 
 Run just MongoDB in Docker, then the apps directly.
 
