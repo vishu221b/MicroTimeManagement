@@ -41,7 +41,10 @@ const blankForm = () => ({
   activityDescription: "",
   startTime: "",
   endTime: "",
+  imageBase64: "",
 });
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 // Turn the backend's "HH:MM:AM"/"HH:MM:PM" display time into 24h "HHMMSS".
 const displayTimeTo24 = (t) => {
@@ -172,6 +175,7 @@ function Activity({ setToastState }) {
       activityDescription: form.activityDescription,
       activityStartHourMinutes: toBackendTimeString(form.startTime),
       activityEndHourMinutes: toBackendTimeString(form.endTime),
+      imageBase64: form.imageBase64 || undefined,
     };
     createActivity(payload, (data, err) => {
       if (err) {
@@ -198,6 +202,7 @@ function Activity({ setToastState }) {
       activityEndHourMinutes: form.endTime
         ? toBackendTimeString(form.endTime)
         : undefined,
+      imageBase64: form.imageBase64,
     };
     updateActivity(date, payload, (data, err) => {
       if (err) {
@@ -232,7 +237,21 @@ function Activity({ setToastState }) {
       // Start blank so users only submit times when they want to retime.
       startTime: "",
       endTime: "",
+      imageBase64: activity.imageBase64 || "",
     });
+  };
+
+  const onPickImage = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (file.size > MAX_IMAGE_BYTES) {
+      showError("Image must be at most 5 MB.");
+      e.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setForm((s) => ({ ...s, imageBase64: reader.result }));
+    reader.readAsDataURL(file);
   };
 
   const formOpen = creating || editingId;
@@ -332,6 +351,34 @@ function Activity({ setToastState }) {
                 placeholder="Optional notes"
               />
             </div>
+            <div className="sm:mtm-col-span-2">
+              <label className="ui-label">Image (optional, ≤ 5 MB)</label>
+              <div className="mtm-flex mtm-items-center mtm-gap-3">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={onPickImage}
+                  className="mtm-text-sm ui-muted mtm-max-w-full"
+                />
+                {form.imageBase64 && (
+                  <div className="mtm-relative mtm-shrink-0">
+                    <img
+                      src={form.imageBase64}
+                      alt="preview"
+                      className="mtm-h-14 mtm-w-14 mtm-object-cover mtm-rounded-lg mtm-border mtm-border-line"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setForm((s) => ({ ...s, imageBase64: "" }))}
+                      className="mtm-absolute -mtm-top-2 -mtm-right-2 mtm-h-5 mtm-w-5 mtm-rounded-full mtm-bg-danger mtm-text-white mtm-flex mtm-items-center mtm-justify-center"
+                      aria-label="Remove image"
+                    >
+                      <FiX size={12} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
             <div>
               <label className="ui-label" htmlFor="startTime">
                 Start time{editingId ? " (leave blank to keep)" : ""}
@@ -412,6 +459,15 @@ function Activity({ setToastState }) {
                   <div className="mtm-text-sm ui-muted mtm-mt-1">
                     {activity.activityDescription}
                   </div>
+                )}
+                {activity.imageBase64 && (
+                  <a href={activity.imageBase64} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={activity.imageBase64}
+                      alt={activity.activityName}
+                      className="mtm-mt-2 mtm-h-20 mtm-rounded-lg mtm-border mtm-border-line mtm-object-cover"
+                    />
+                  </a>
                 )}
               </div>
             </div>

@@ -1,6 +1,7 @@
 package com.microtimemanagement.apiservice.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,5 +25,8 @@ public class ActivityUpdateRequestDTO {
     private String activityEndHourMinutes;
 
     private Boolean isNextDaySpan;
+
+    @Size(max = 7_000_000, message = "Image must be at most 5 MB.")
+    private String imageBase64;
 
 }

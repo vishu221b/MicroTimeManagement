@@ -57,4 +57,8 @@ public class Activity extends BaseModel {
 
     private String activityDate;
 
+    // Optional attached image, stored as a data-URL base64 string (<= 5 MB).
+    @Column(columnDefinition = "text")
+    private String imageBase64;
+
 }

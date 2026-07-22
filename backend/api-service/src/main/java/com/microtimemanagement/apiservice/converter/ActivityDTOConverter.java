@@ -31,6 +31,7 @@ public class ActivityDTOConverter implements BaseDTOConverter<Activity, Activity
                 )
                 .activityTotalDuration(activity.getTotalDurationInHours())
                 .activityDate(activity.getActivityDate())
+                .imageBase64(activity.getImageBase64())
                 .build();
     }
     private String processActivityHourMinuteValueToString(int hourMinuteValue){
