@@ -1,8 +1,17 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { FiPlus, FiEdit2, FiTrash2, FiClock, FiX, FiCalendar } from "react-icons/fi";
+import {
+  FiPlus,
+  FiEdit2,
+  FiTrash2,
+  FiClock,
+  FiX,
+  FiCalendar,
+  FiCornerDownRight,
+} from "react-icons/fi";
 import {
   createActivity,
+  createLink,
   deleteActivity,
   getActivitiesForDate,
   getActivityNames,
@@ -56,6 +65,12 @@ const displayTimeTo24 = (t) => {
   return `${pad(h)}${pad(parseInt(mStr, 10))}00`;
 };
 
+// Backend display time ("HH:MM:AM") -> a 24h "HH:MM" for the <input type=time>.
+const displayTimeToInput = (t) => {
+  const s = displayTimeTo24(t); // "HHMMSS"
+  return `${s.slice(0, 2)}:${s.slice(2, 4)}`;
+};
+
 // Build a "add to Google Calendar" link pre-filled from the activity.
 const googleCalendarUrl = (a, date) => {
   const day = (date || a.activityDate || "").replaceAll("-", "");
@@ -81,6 +96,8 @@ function Activity({ setToastState }) {
   const [form, setForm] = useState(blankForm());
   const [editingId, setEditingId] = useState(null);
   const [nameSuggestions, setNameSuggestions] = useState([]);
+  // When set, the next created activity is chain-linked (FOLLOWS) to this one.
+  const [chainFromId, setChainFromId] = useState(null);
 
   const showSuccess = (message) =>
     setToastState({
@@ -161,6 +178,19 @@ function Activity({ setToastState }) {
     setForm(blankForm());
     setEditingId(null);
     setCreating(false);
+    setChainFromId(null);
+  };
+
+  // Chain: open the create form pre-filled with the previous activity's end
+  // time as the new start time; the new activity is FOLLOWS-linked on save.
+  const startChain = (activity) => {
+    setEditingId(null);
+    setChainFromId(activity.id);
+    setForm({
+      ...blankForm(),
+      startTime: displayTimeToInput(activity.activityEndTime),
+    });
+    setCreating(true);
   };
 
   const handleCreate = (e) => {
@@ -177,12 +207,24 @@ function Activity({ setToastState }) {
       activityEndHourMinutes: toBackendTimeString(form.endTime),
       imageBase64: form.imageBase64 || undefined,
     };
+    const chainSource = chainFromId;
     createActivity(payload, (data, err) => {
       if (err) {
         showError(errorMessageFrom(err));
         return;
       }
-      showSuccess("Activity created.");
+      // Chaining: persist a FOLLOWS link from the previous activity to this one.
+      const newId = data?.activities?.[0]?.id;
+      if (chainSource && newId) {
+        createLink({
+          sourceType: "ACTIVITY",
+          sourceId: chainSource,
+          targetType: "ACTIVITY",
+          targetId: newId,
+          linkType: "FOLLOWS",
+        });
+      }
+      showSuccess(chainSource ? "Activity created and chained." : "Activity created.");
       resetForm();
       loadActivities(date);
       refreshNameSuggestions();
@@ -298,8 +340,13 @@ function Activity({ setToastState }) {
           className="ui-card mtm-p-6 mtm-mb-8"
         >
           <div className="mtm-flex mtm-items-center mtm-justify-between mtm-mb-5">
-            <h2 className="mtm-text-lg mtm-font-semibold mtm-text-content mtm-m-0">
+            <h2 className="mtm-text-lg mtm-font-semibold mtm-text-content mtm-m-0 mtm-flex mtm-items-center mtm-gap-2">
               {editingId ? "Edit activity" : "New activity"}
+              {chainFromId && (
+                <span className="ui-badge mtm-text-xs">
+                  <FiCornerDownRight size={12} /> chained
+                </span>
+              )}
             </h2>
             <button
               type="button"
@@ -472,6 +519,13 @@ function Activity({ setToastState }) {
               </div>
             </div>
             <div className="mtm-flex mtm-gap-2 mtm-shrink-0">
+              <button
+                className="ui-btn ui-btn-soft ui-btn-sm"
+                onClick={() => startChain(activity)}
+                title="Start the next activity where this one ends (chains them)"
+              >
+                <FiCornerDownRight size={14} /> Next
+              </button>
               <a
                 className="ui-btn ui-btn-ghost ui-btn-sm"
                 href={googleCalendarUrl(activity, date)}
