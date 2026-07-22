@@ -91,7 +91,7 @@ public class ActivityRecordServiceImplTest {
     @DisplayName("Should create a brand new activity record when none exists for the date.")
     void shouldCreateNewActivityRecord() throws ParseException {
         ActivityRecordCreationRequestDTO request = ActivityTestFactory.creationRequest();
-        Mockito.when(activityRecordRepository.findByRecordDate(request.getRecordDate()))
+        Mockito.when(activityRecordRepository.findByRecordDateAndCreatedBy(request.getRecordDate(), authenticatedUser.getUid()))
                 .thenReturn(Optional.empty());
 
         ActivityRecordCreationdResponseDTO response = activityRecordService.processCreateUpdateRequest(request);
@@ -121,7 +121,7 @@ public class ActivityRecordServiceImplTest {
                 ActivityTestFactory.Defaults.RECORD_DATE,
                 earlierActivity
         );
-        Mockito.when(activityRecordRepository.findByRecordDate(ActivityTestFactory.Defaults.RECORD_DATE))
+        Mockito.when(activityRecordRepository.findByRecordDateAndCreatedBy(ActivityTestFactory.Defaults.RECORD_DATE, authenticatedUser.getUid()))
                 .thenReturn(Optional.of(existingRecord));
 
         ActivityRecordCreationRequestDTO request = ActivityTestFactory.creationRequest();
@@ -146,7 +146,7 @@ public class ActivityRecordServiceImplTest {
                 ActivityTestFactory.Defaults.RECORD_DATE,
                 existingActivity
         );
-        Mockito.when(activityRecordRepository.findByRecordDate(ActivityTestFactory.Defaults.RECORD_DATE))
+        Mockito.when(activityRecordRepository.findByRecordDateAndCreatedBy(ActivityTestFactory.Defaults.RECORD_DATE, authenticatedUser.getUid()))
                 .thenReturn(Optional.of(existingRecord));
 
         ActivityRecordCreationRequestDTO request = ActivityTestFactory.creationRequest();
@@ -167,7 +167,7 @@ public class ActivityRecordServiceImplTest {
                 ActivityTestFactory.Defaults.RECORD_DATE,
                 existing
         );
-        Mockito.when(activityRecordRepository.findByRecordDate(ActivityTestFactory.Defaults.RECORD_DATE))
+        Mockito.when(activityRecordRepository.findByRecordDateAndCreatedBy(ActivityTestFactory.Defaults.RECORD_DATE, authenticatedUser.getUid()))
                 .thenReturn(Optional.of(existingRecord));
 
         // New range 10:00 - 11:00 overlaps existing 09:00-10:30 at 10:00..10:30.
@@ -198,7 +198,7 @@ public class ActivityRecordServiceImplTest {
                 ActivityTestFactory.Defaults.RECORD_DATE,
                 earlier, later
         );
-        Mockito.when(activityRecordRepository.findByRecordDate(ActivityTestFactory.Defaults.RECORD_DATE))
+        Mockito.when(activityRecordRepository.findByRecordDateAndCreatedBy(ActivityTestFactory.Defaults.RECORD_DATE, authenticatedUser.getUid()))
                 .thenReturn(Optional.of(existingRecord));
 
         // Default creation request lands at 09:00 - 10:00, which slots between
@@ -225,7 +225,7 @@ public class ActivityRecordServiceImplTest {
                 ActivityTestFactory.Defaults.RECORD_DATE,
                 later
         );
-        Mockito.when(activityRecordRepository.findByRecordDate(ActivityTestFactory.Defaults.RECORD_DATE))
+        Mockito.when(activityRecordRepository.findByRecordDateAndCreatedBy(ActivityTestFactory.Defaults.RECORD_DATE, authenticatedUser.getUid()))
                 .thenReturn(Optional.of(existingRecord));
 
         // Default 09:00 - 10:00 ends before the existing 11:00 - 12:00 starts,
@@ -254,7 +254,7 @@ public class ActivityRecordServiceImplTest {
                 ActivityTestFactory.Defaults.RECORD_DATE,
                 first, second
         );
-        Mockito.when(activityRecordRepository.findByRecordDate(ActivityTestFactory.Defaults.RECORD_DATE))
+        Mockito.when(activityRecordRepository.findByRecordDateAndCreatedBy(ActivityTestFactory.Defaults.RECORD_DATE, authenticatedUser.getUid()))
                 .thenReturn(Optional.of(existingRecord));
 
         // Default 09:00 - 10:00 starts after both existing entries end.
@@ -430,23 +430,27 @@ public class ActivityRecordServiceImplTest {
                 ActivityTestFactory.Defaults.RECORD_DATE,
                 activity
         );
+        // Model the record's DB state across the retime through the single
+        // owner-scoped finder: returns the record until it's deleted (so the
+        // re-create pipeline takes the "new record" path), then returns the
+        // freshly-persisted record so the final getActivitiesForDate succeeds.
+        java.util.concurrent.atomic.AtomicReference<Optional<ActivityRecord>> currentRecord =
+                new java.util.concurrent.atomic.AtomicReference<>(Optional.of(record));
         Mockito.when(activityRecordRepository.findByRecordDateAndCreatedBy(
                         ActivityTestFactory.Defaults.RECORD_DATE, authenticatedUser.getUid()))
-                .thenReturn(Optional.of(record));
-        // Before delete: lookup returns the (now empty) record; after delete: empty so the
-        // creation pipeline takes the "new record" path.
-        java.util.concurrent.atomic.AtomicBoolean recordDeleted = new java.util.concurrent.atomic.AtomicBoolean(false);
-        Mockito.when(activityRecordRepository.findByRecordDate(ActivityTestFactory.Defaults.RECORD_DATE))
-                .thenAnswer(invocation -> recordDeleted.get() ? Optional.empty() : Optional.of(record));
+                .thenAnswer(invocation -> currentRecord.get());
         Mockito.doAnswer(invocation -> {
-            recordDeleted.set(true);
+            currentRecord.set(Optional.empty());
             return null;
         }).when(activityRecordRepository).delete(Mockito.any(ActivityRecord.class));
-        // Save may not be invoked on the empty-record path; keep it lenient so the test
-        // doesn't fail purely on unused-stub strictness.
-        Mockito.lenient()
-                .when(activityRecordRepository.save(Mockito.any(ActivityRecord.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        Mockito.when(activityRecordRepository.saveAll(Mockito.anyList()))
+                .thenAnswer(invocation -> {
+                    List<ActivityRecord> saved = invocation.getArgument(0);
+                    if (!saved.isEmpty()) {
+                        currentRecord.set(Optional.of(saved.get(0)));
+                    }
+                    return saved;
+                });
 
         ActivityUpdateRequestDTO request = ActivityTestFactory.updateRetimeRequest(
                 activity.getId(),
@@ -518,8 +522,6 @@ public class ActivityRecordServiceImplTest {
         Mockito.when(activityRecordRepository.findByRecordDateAndCreatedBy(
                         ActivityTestFactory.Defaults.RECORD_DATE, authenticatedUser.getUid()))
                 .thenReturn(Optional.of(record));
-        Mockito.when(activityRecordRepository.findByRecordDate(ActivityTestFactory.Defaults.RECORD_DATE))
-                .thenAnswer(invocation -> Optional.of(record));
         Mockito.when(activityRecordRepository.save(Mockito.any(ActivityRecord.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
