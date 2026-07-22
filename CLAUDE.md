@@ -15,11 +15,25 @@ A time/activity tracking app. Users register, log in, and record daily "activiti
 
 ```
 MicroTimeManagement/
-├── backend/api-service/          Spring Boot 3.x REST API (Maven)
-├── frontend/                     React 18 SPA (CRA)
-├── docker-compose.yml            MongoDB + Mongo Express only (app service commented out)
+├── backend/api-service/          Spring Boot 3.x REST API (Maven) + multi-stage Dockerfile
+├── frontend/                     React 18 SPA (CRA) + Dockerfile (nginx) + nginx.conf
+├── .github/workflows/ci.yml      GitHub Actions CI (backend tests + frontend build/test)
+├── docker-compose.yml            Full stack: MongoDB + backend + frontend (+ mongo-express via `tools` profile)
 └── README.md
 ```
+
+### Running the whole app
+
+```
+docker compose up --build            # mongo + backend + frontend
+docker compose --profile tools up    # also starts mongo-express (DB UI on :8081)
+```
+
+- Frontend: http://localhost:3000
+- Backend: http://localhost:8080/mtm-dev (Swagger at `/swagger-ui.html`)
+- MongoDB: localhost:27017 (data persisted in the `mtm_mongo_data` volume)
+
+Backend env knobs (see `docker-compose.yml`): `SPRING_DATA_MONGODB_URI`, `MTM_JWT_SECRET`, `MTM_CORS_ORIGINS`. The frontend's API base URL is baked at image-build time via the `REACT_APP_API_BASE_URL` build arg (default `http://localhost:8080/mtm-dev/api/v1`); running locally with `yarn start` it falls back to the same default.
 
 ---
 
@@ -104,6 +118,8 @@ Spring Security is configured profile-specifically in `SecurityConfig`.
 
 **Note:** `SecurityConstants.PROD` is an empty stub — prod filter chain hardcodes paths directly in `SecurityConfig`. Should be refactored to match the dev pattern.
 
+**CORS:** dev allowed origins are configurable via `MTM_CORS_ORIGINS` (comma-separated; `${mtm.cors.origins:...}`, default `http://localhost:3000,http://localhost:8080`). Both dev and prod CORS configs allow `PUT` and `OPTIONS` in addition to GET/POST/PATCH/DELETE — the previous list omitted `PUT`, which would have blocked cross-origin update calls (activity/role/user updates).
+
 ### API Endpoint Map
 
 ```
@@ -163,7 +179,9 @@ MicroTimeManagementException (base)
 - **Dev**: `application-dev.yml` — port 8080, context `/mtm-dev`, MongoDB `localhost:27017/mtm_dev`, JWT secret hardcoded (must be moved to env var before production)
 - **Prod**: `application-prod.yml` — separate config; CORS locked to `https://mtm.app`
 - **Active profile**: set via `SPRING_PROFILES_ACTIVE` env var or `application.properties`
-- **Docker Compose**: spins up MongoDB (27017) + Mongo Express (8081). App service is commented out — run the Spring Boot app directly in dev.
+- **Docker Compose**: full stack — MongoDB (27017, persisted volume), backend (8080, multi-stage build, health-checked), frontend (3000, nginx-served CRA bundle). Mongo-express (8081) is opt-in via the `tools` profile. You can still run the Spring Boot app directly against a local/compose Mongo in dev.
+- **Backend Dockerfile**: multi-stage (`maven:3.9-eclipse-temurin-17` build → `eclipse-temurin:17-jre` runtime). Builds the fat jar inside the image; tests run in CI, not the image build.
+- **Frontend Dockerfile**: multi-stage (`node:18-alpine` build → `nginx:1.27-alpine` runtime) with SPA fallback in `nginx.conf`.
 
 ---
 
@@ -175,12 +193,23 @@ MicroTimeManagementException (base)
 |---|---|
 | Framework | React 18, CRA (`react-scripts 5`) |
 | Routing | React Router v6 |
-| Styling | Tailwind CSS 3.2 (prefix `mtm-`) + Bootstrap 5 + Ant Design 5 |
+| Styling | Tailwind CSS 3.2 (prefix `mtm-`) + custom CSS-variable design system (light/dark). Bootstrap/AntD remain as legacy deps but are no longer imported. |
 | HTTP Client | Axios |
 | State | `useState` local state (no global store) |
 | Icons | `react-icons` |
 
-**Tailwind prefix is `mtm-`** — all Tailwind utility classes must be prefixed (e.g. `mtm-flex`, `mtm-text-white`). Configured in `tailwind.config.js`.
+**Tailwind prefix is `mtm-`** — all Tailwind utility classes must be prefixed (e.g. `mtm-flex`, `mtm-text-content`). Configured in `tailwind.config.js`.
+
+### Design system (professional revamp)
+
+The UI was rebuilt into a cohesive emerald/teal design system with full light + dark theming:
+
+- **Theme tokens** live in `src/style/tailwind.css` as CSS custom properties (RGB triplets under `:root[data-theme="light|dark"]`). `tailwind.config.js` surfaces them as color utilities (`mtm-bg-surface`, `mtm-text-content`, `mtm-text-primary`, `mtm-border-line`, `mtm-text-muted`, `mtm-text-ok/danger/warn`, …) via `rgb(var(--token) / <alpha-value>)`, so opacity modifiers work and flipping `<html data-theme>` reskins the whole app — no per-element `dark:` variants.
+- **Component primitives** (plain CSS classes, not Tailwind): `.ui-card`, `.ui-card-flat`, `.ui-btn` (+ `ui-btn-primary/ghost/soft/danger/sm`), `.ui-input`/`.ui-select`/`.ui-textarea`, `.ui-label`, `.ui-badge`/`.ui-chip`, `.ui-stat`, `.ui-icon-tile`, `.ui-eyebrow`, `.ui-page`, `.ui-spinner`, `.ui-fade-in`.
+- **Fonts**: Inter (body) + Sora (display/headings), replacing the old comic Bangers face.
+- **Theme toggle**: `src/hooks/useTheme.js` persists the choice in `localStorage` (`mtm-theme`) and reflects it on `<html data-theme>`; a no-flash inline script in `public/index.html` applies it before first paint. `src/components/ThemeToggle.js` is the toggle button in the nav.
+- The old comic/meme aesthetic (Bangers font, meme GIFs, `Pages/sections/home/*`, `Memes`/`SingleMeme`, the `MtmForm`/`Button` component library) was removed; pages now use native inputs + the `ui-*` primitives.
+- `NavigationBar` was rewritten without react-bootstrap into a clean sticky nav with a mobile menu, active-link highlighting, and the theme toggle.
 
 ### Page / Component Map
 
@@ -446,6 +475,11 @@ The following are not in this feature. If they become desirable later, they get 
 - [x] Profile-based security config (dev vs prod)
 - [x] Docker Compose for MongoDB + Mongo Express
 - [x] Rolling file logging (Logback)
+- [x] **Full-stack Docker** — multi-stage backend `Dockerfile` (builds the fat jar in-image) + `docker-compose.yml` now runs mongo + backend + frontend end-to-end (mongo-express behind the `tools` profile). Mongo URI / JWT secret / CORS origins are env-overridable; Mongo data persists in a named volume; backend has a health-checked container.
+- [x] **`/actuator/health` opened** in both dev and prod filter chains (the rest of `/actuator/**` stays admin-gated) so orchestrators can probe liveness without credentials — required for the compose healthcheck.
+- [x] **CORS `PUT`/`OPTIONS` added** (both dev + prod) — the allowed-methods list previously omitted `PUT`, which would have blocked cross-origin activity/role/user update calls. Dev origins are now env-configurable via `MTM_CORS_ORIGINS` (`mtm.cors.origins`).
+- [x] **`SessionServiceImplTest` realigned** to the delegate-based `SessionServiceImpl` (the service was refactored to push token bookkeeping into `RefreshTokenService`; the old test still mocked removed collaborators, so 7 methods failed with Mockito NPEs). Rewritten to 8 green tests covering create / revoke-on-recreate / destroy / blank-token skip / delegate-validate / refresh / inactive-session guard / not-found propagation. **Full backend suite: 80 tests green.**
+- [x] **GitHub Actions CI** (`.github/workflows/ci.yml`) — backend job runs `mvnw test` against a `mongo:7` service container then packages; frontend job runs `yarn test` + `yarn build`. Triggers on every push and PRs to `main`.
 
 ### Frontend
 - [x] Home landing page with sections
@@ -472,6 +506,12 @@ The following are not in this feature. If they become desirable later, they get 
 - [x] **Admin bulk role assignment** — "Bulk edit" toggle on the Users tab adds per-row checkboxes + a "Select all on page" / "Clear selection" pair. Selection persists across pagination. A tri-state per-role action chip cycles `no change → + add → − remove`; Apply dispatches a single `addRolesToUsers` (all "add" roles) followed by `removeRolesFromUsers` (all "remove" roles) against the entire selection. Per-user editing is hidden while bulk mode is active and any in-progress per-user edit is cancelled when bulk mode is entered.
 - [x] `ApiService.js` extended with Admin Role API (`listRoles`, `createRole`, `updateRole`, `deleteRole`) and Admin User API (`listUsers`, `addRolesToUsers`, `removeRolesFromUsers`)
 - [x] `useAuth` extended to fetch profile + expose `roles` + `isAdmin`; nav shows Admin link only for `MTM_ADMIN_OPS` users
+- [x] **Professional UI/UX revamp** — the whole SPA was rebuilt into an emerald/teal design system with full light + dark theming (see "Design system" above). Every page (Home, Login, Registration, Dashboard, Activity, History, Profile, Admin) was restyled onto the `ui-*` primitives + theme tokens; all API wiring/logic preserved verbatim. New professional landing page (hero + features + how-it-works + CTA) replaced the comic sections.
+- [x] **Light/dark theme toggle** with `localStorage` persistence + system-preference default + no-flash boot script (`useTheme`, `ThemeToggle`).
+- [x] **Custom `NavigationBar`** (no react-bootstrap) — sticky, blurred, active-link highlighting, responsive mobile menu, theme toggle.
+- [x] **Frontend Dockerfile + nginx** — multi-stage build served by nginx with SPA fallback; API base URL is build-arg configurable (`REACT_APP_API_BASE_URL`).
+- [x] **Removed** the comic assets/components (`Pages/sections/home/*`, `Memes`/`SingleMeme`, `MtmForm`/`MtmInput`/`MtmSelect`/`MtmTextArea`/`MtmStyleWrap`, `Button`, meme GIFs) now that pages use native inputs + `ui-*` primitives.
+- [x] **`App.test.js` fixed** — was a broken CRA stub (`learn react`, wrong import path). Now a real smoke test that mocks axios (works around the axios-v1 ESM-in-Jest issue) and asserts the landing renders. `yarn test` is green.
 
 ---
 
@@ -501,8 +541,7 @@ These are real correctness/security issues identified in a code review. Address 
 - [ ] Role-name cache (optional follow-up): the N+1 has been collapsed to one `$in` query per authenticated request, but that's still one DB hit per request. If profile data shows it as hot, add a short-TTL in-memory cache keyed by role-id-set.
 - [ ] Dates stored as `String` (`ActivityRecord.recordDate`, `Activity.activityDate`, `User.dateOfBirth`) — migrate to `LocalDate` for type safety and proper range queries
 - [ ] `JsonWebTokenServiceImpl` is a pointless wrapper over `JwtUtils` — every method is a direct delegate. Inject `JwtUtils` directly and remove the interface + impl.
-- [ ] **Pre-existing flaky tests**: `SessionServiceImplTest` has 7 failing/erroring methods due to Mockito stubbing returning `null` (NPE on `validSessionTokenDTO.getIsValidSession()`). Likely mismatch between test setup arguments and actual service call signatures.
-- [ ] **`ApiServiceApplicationTests.contextLoads` requires MongoDB** — fails with `Connection refused` to `localhost:27017` if MongoDB isn't running. Add an `application-test.yml` with an embedded MongoDB (Flapdoodle) or skip the test when no Mongo is available.
+- [ ] **`ApiServiceApplicationTests.contextLoads` requires MongoDB** — fails with `Connection refused` to `localhost:27017` if MongoDB isn't running locally. CI now provides a `mongo:7` service container so this passes there; for a fully self-contained local `mvn test`, still consider an `application-test.yml` with embedded MongoDB (Flapdoodle).
 - [ ] Populate `SecurityConstants.PROD` (currently empty class) and use it in prod filter chain
 - [ ] `AdminController` is legacy (predates `RoleController`) — evaluate removing or consolidating
 - [ ] Add integration tests for Activity, Role, Admin endpoints

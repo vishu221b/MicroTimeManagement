@@ -1,5 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import Button from "react-bootstrap/Button";
+import {
+  FiPlus,
+  FiEdit2,
+  FiTrash2,
+  FiChevronLeft,
+  FiChevronRight,
+  FiShield,
+  FiUsers,
+} from "react-icons/fi";
 import {
   addRolesToUsers,
   createRole,
@@ -37,9 +45,8 @@ const extractUsersPage = (data) => {
 };
 
 // Cosmetic only — strip the Spring "ROLE_" prefix for display. The raw name
-// is what the backend stores, and what /user/addRole + /user/removeRole match
-// against, so we always send the raw name on the wire even though we render
-// the stripped form.
+// is what the backend stores and matches against, so we always send the raw
+// name on the wire even though we render the stripped form.
 const displayRoleName = (name = "") =>
   name.startsWith("ROLE_") ? name.slice("ROLE_".length) : name;
 
@@ -124,35 +131,38 @@ function RolesTab({ showSuccess, showError }) {
     <>
       <form
         onSubmit={handleCreate}
-        className="mtm-bg-white/5 mtm-border mtm-border-white/20 mtm-rounded mtm-p-6 mtm-mb-8 mtm-flex mtm-flex-col sm:mtm-flex-row mtm-gap-3 sm:mtm-items-end"
+        className="ui-card mtm-p-5 mtm-mb-6 mtm-flex mtm-flex-col sm:mtm-flex-row mtm-gap-3 sm:mtm-items-end"
       >
-        <label className="mtm-flex mtm-flex-col mtm-flex-1">
-          <span className="mtm-text-sm mtm-text-white/70 mtm-mb-1">
+        <div className="mtm-flex-1">
+          <label className="ui-label" htmlFor="newRoleName">
             New role name
-          </span>
+          </label>
           <input
+            id="newRoleName"
             type="text"
             value={newRoleName}
             placeholder="MTM_NEW_ROLE"
             onChange={(e) => setNewRoleName(e.target.value)}
-            className="mtm-bg-black mtm-border mtm-border-white/30 mtm-rounded mtm-px-3 mtm-py-2"
+            className="ui-input"
           />
-        </label>
-        <Button type="submit" variant="warning">
-          Create role
-        </Button>
+        </div>
+        <button type="submit" className="ui-btn ui-btn-primary">
+          <FiPlus size={16} /> Create role
+        </button>
       </form>
 
-      {loading && <p className="mtm-text-white/60">Loading roles…</p>}
+      {loading && (
+        <div className="ui-card mtm-p-8 mtm-text-center ui-muted">Loading roles…</div>
+      )}
       {!loading && roles.length === 0 && (
-        <p className="mtm-text-white/60">No roles defined.</p>
+        <div className="ui-card mtm-p-8 mtm-text-center ui-muted">No roles defined.</div>
       )}
 
-      <ul className="mtm-space-y-3">
+      <ul className="mtm-flex mtm-flex-col mtm-gap-3 mtm-list-none mtm-p-0 mtm-m-0">
         {roles.map((role) => (
           <li
             key={role.id}
-            className="mtm-bg-white/5 mtm-border mtm-border-white/20 mtm-rounded mtm-p-4 mtm-flex mtm-flex-col sm:mtm-flex-row sm:mtm-justify-between sm:mtm-items-center mtm-gap-3"
+            className="ui-card-flat mtm-p-4 mtm-flex mtm-flex-col sm:mtm-flex-row sm:mtm-justify-between sm:mtm-items-center mtm-gap-3"
           >
             {editing.id === role.id ? (
               <form
@@ -165,41 +175,45 @@ function RolesTab({ showSuccess, showError }) {
                   onChange={(e) =>
                     setEditing((s) => ({ ...s, name: e.target.value }))
                   }
-                  className="mtm-flex-1 mtm-bg-black mtm-border mtm-border-white/30 mtm-rounded mtm-px-3 mtm-py-2"
+                  className="ui-input mtm-flex-1"
                 />
-                <Button type="submit" size="sm" variant="warning">
+                <button type="submit" className="ui-btn ui-btn-primary ui-btn-sm">
                   Save
-                </Button>
-                <Button
+                </button>
+                <button
                   type="button"
-                  size="sm"
-                  variant="outline-light"
+                  className="ui-btn ui-btn-ghost ui-btn-sm"
                   onClick={() => setEditing({ id: null, name: "" })}
                 >
                   Cancel
-                </Button>
+                </button>
               </form>
             ) : (
               <>
-                <div>
-                  <div className="mtm-text-lg mtm-text-white">{role.name}</div>
-                  <div className="mtm-text-xs mtm-text-white/50">{role.id}</div>
+                <div className="mtm-flex mtm-items-center mtm-gap-3">
+                  <span className="ui-icon-tile mtm-h-9 mtm-w-9">
+                    <FiShield size={15} />
+                  </span>
+                  <div>
+                    <div className="mtm-text-content mtm-font-semibold">
+                      {role.name}
+                    </div>
+                    <div className="mtm-text-xs ui-muted">{role.id}</div>
+                  </div>
                 </div>
                 <div className="mtm-flex mtm-gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline-warning"
+                  <button
+                    className="ui-btn ui-btn-ghost ui-btn-sm"
                     onClick={() => setEditing({ id: role.id, name: role.name })}
                   >
-                    Rename
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline-danger"
+                    <FiEdit2 size={14} /> Rename
+                  </button>
+                  <button
+                    className="ui-btn ui-btn-danger ui-btn-sm"
                     onClick={() => handleDelete(role)}
                   >
-                    Delete
-                  </Button>
+                    <FiTrash2 size={14} /> Delete
+                  </button>
                 </div>
               </>
             )}
@@ -221,15 +235,13 @@ function UsersTab({ showSuccess, showError }) {
   const [originalRoles, setOriginalRoles] = useState(new Set());
   const [saving, setSaving] = useState(false);
   // Bulk mode lets an admin apply a set of role add/remove actions to many
-  // users in a single submit. Selection persists across page changes so a
-  // wide sweep is possible without re-checking on every page.
+  // users in a single submit. Selection persists across page changes.
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkSelectedUsernames, setBulkSelectedUsernames] = useState(new Set());
   // Map<roleName, "add"|"remove">. Absent = no change for that role.
   const [bulkRoleActions, setBulkRoleActions] = useState(new Map());
 
-  // Load the full role catalogue once so the editor can offer every option,
-  // not just whatever the user already has.
+  // Load the full role catalogue once so the editor can offer every option.
   useEffect(() => {
     listRoles((data, err) => {
       if (err) {
@@ -263,7 +275,7 @@ function UsersTab({ showSuccess, showError }) {
   }, [load]);
 
   // Use the raw role name as the canonical key. displayRoleName() is applied
-  // only at render time — see chips + checkbox labels below.
+  // only at render time.
   const allRoleNames = useMemo(
     () =>
       allRoles
@@ -442,39 +454,34 @@ function UsersTab({ showSuccess, showError }) {
   };
 
   const bulkApplyDisabled =
-    saving ||
-    bulkSelectedUsernames.size === 0 ||
-    bulkRoleActions.size === 0;
+    saving || bulkSelectedUsernames.size === 0 || bulkRoleActions.size === 0;
 
   return (
     <>
       <div className="mtm-flex mtm-flex-wrap mtm-gap-2 mtm-items-center mtm-mb-4">
-        <Button
-          size="sm"
-          variant={bulkMode ? "warning" : "outline-warning"}
+        <button
+          className={`ui-btn ui-btn-sm ${bulkMode ? "ui-btn-primary" : "ui-btn-ghost"}`}
           onClick={toggleBulkMode}
         >
           {bulkMode ? "Exit bulk edit" : "Bulk edit"}
-        </Button>
+        </button>
         {bulkMode && (
           <>
-            <Button
-              size="sm"
-              variant="outline-light"
+            <button
+              className="ui-btn ui-btn-ghost ui-btn-sm"
               disabled={loading || users.length === 0}
               onClick={selectAllOnPage}
             >
               Select all on page
-            </Button>
-            <Button
-              size="sm"
-              variant="outline-light"
+            </button>
+            <button
+              className="ui-btn ui-btn-ghost ui-btn-sm"
               disabled={bulkSelectedUsernames.size === 0}
               onClick={clearBulkSelection}
             >
               Clear selection
-            </Button>
-            <span className="mtm-text-sm mtm-text-white/60 mtm-ml-2">
+            </button>
+            <span className="mtm-text-sm ui-muted mtm-ml-1">
               {bulkSelectedUsernames.size} selected
             </span>
           </>
@@ -482,29 +489,27 @@ function UsersTab({ showSuccess, showError }) {
       </div>
 
       {bulkMode && (
-        <div className="mtm-bg-white/5 mtm-border mtm-border-white/20 mtm-rounded mtm-p-4 mtm-mb-6">
-          <div className="mtm-text-sm mtm-text-white/70 mtm-mb-2">
+        <div className="ui-card mtm-p-4 mtm-mb-6">
+          <div className="mtm-text-sm ui-muted mtm-mb-3">
             Click each role to cycle through{" "}
-            <span className="mtm-text-white/40">no change</span> →{" "}
-            <span className="mtm-text-emerald-300">+ add</span> →{" "}
-            <span className="mtm-text-rose-300">− remove</span>.
+            <span className="mtm-text-muted">no change</span> →{" "}
+            <span className="mtm-text-ok mtm-font-medium">+ add</span> →{" "}
+            <span className="mtm-text-danger mtm-font-medium">− remove</span>.
           </div>
           {allRoleNames.length === 0 ? (
-            <p className="mtm-text-white/40 mtm-mb-3">
+            <p className="ui-muted mtm-mb-3">
               No roles defined yet. Create one in the Roles tab first.
             </p>
           ) : (
-            <div className="mtm-flex mtm-flex-wrap mtm-gap-2 mtm-mb-3">
+            <div className="mtm-flex mtm-flex-wrap mtm-gap-2 mtm-mb-4">
               {allRoleNames.map((roleName) => {
                 const action = bulkRoleActions.get(roleName);
-                const base =
-                  "mtm-text-sm mtm-px-3 mtm-py-1 mtm-rounded mtm-border";
                 const styled =
                   action === "add"
-                    ? "mtm-bg-emerald-400/20 mtm-text-emerald-200 mtm-border-emerald-400/50"
+                    ? "mtm-bg-ok/15 mtm-text-ok mtm-border-ok/40"
                     : action === "remove"
-                    ? "mtm-bg-rose-400/20 mtm-text-rose-200 mtm-border-rose-400/50"
-                    : "mtm-bg-transparent mtm-text-white/70 mtm-border-white/30";
+                    ? "mtm-bg-danger/15 mtm-text-danger mtm-border-danger/40"
+                    : "mtm-bg-surface-2 mtm-text-content mtm-border-line";
                 const prefix =
                   action === "add" ? "+ " : action === "remove" ? "− " : "";
                 return (
@@ -512,7 +517,7 @@ function UsersTab({ showSuccess, showError }) {
                     key={roleName}
                     type="button"
                     onClick={() => cycleBulkRoleAction(roleName)}
-                    className={`${base} ${styled}`}
+                    className={`mtm-text-sm mtm-px-3 mtm-py-1.5 mtm-rounded-lg mtm-border mtm-font-medium mtm-transition-colors ${styled}`}
                   >
                     {prefix}
                     {displayRoleName(roleName)}
@@ -522,48 +527,45 @@ function UsersTab({ showSuccess, showError }) {
             </div>
           )}
           <div className="mtm-flex mtm-gap-2">
-            <Button
-              size="sm"
-              variant="warning"
+            <button
+              className="ui-btn ui-btn-primary ui-btn-sm"
               disabled={bulkApplyDisabled}
               onClick={handleBulkApply}
             >
               {saving ? "Applying…" : "Apply changes"}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline-light"
+            </button>
+            <button
+              className="ui-btn ui-btn-ghost ui-btn-sm"
               disabled={saving}
               onClick={resetBulkState}
             >
               Reset
-            </Button>
+            </button>
           </div>
         </div>
       )}
 
-      {loading && <p className="mtm-text-white/60">Loading users…</p>}
+      {loading && (
+        <div className="ui-card mtm-p-8 mtm-text-center ui-muted">Loading users…</div>
+      )}
       {!loading && users.length === 0 && (
-        <p className="mtm-text-white/60">No users found.</p>
+        <div className="ui-card mtm-p-8 mtm-text-center ui-muted">No users found.</div>
       )}
 
-      <ul className="mtm-space-y-3">
+      <ul className="mtm-flex mtm-flex-col mtm-gap-3 mtm-list-none mtm-p-0 mtm-m-0">
         {users.map((user) => {
           const userRoles = user.roles || [];
           const isEditing = editingUid === user.uid;
           const isBulkSelected =
             !!user.username && bulkSelectedUsernames.has(user.username);
           return (
-            <li
-              key={user.uid || user.id}
-              className="mtm-bg-white/5 mtm-border mtm-border-white/20 mtm-rounded mtm-p-4"
-            >
+            <li key={user.uid || user.id} className="ui-card-flat mtm-p-4">
               <div className="mtm-flex mtm-flex-col sm:mtm-flex-row sm:mtm-justify-between sm:mtm-items-start mtm-gap-3">
                 <div className="mtm-flex mtm-gap-3 mtm-items-start">
                   {bulkMode && (
                     <input
                       type="checkbox"
-                      className="mtm-mt-1"
+                      className="mtm-mt-1.5 mtm-h-4 mtm-w-4 mtm-accent-primary"
                       checked={isBulkSelected}
                       disabled={!user.username}
                       onChange={() =>
@@ -572,29 +574,22 @@ function UsersTab({ showSuccess, showError }) {
                     />
                   )}
                   <div>
-                    <div className="mtm-text-lg mtm-text-white">
+                    <div className="mtm-text-content mtm-font-semibold">
                       {user.firstName} {user.lastName}{" "}
-                      <span className="mtm-text-white/40 mtm-text-sm">
+                      <span className="ui-muted mtm-text-sm mtm-font-normal">
                         @{user.username}
                       </span>
                     </div>
-                    <div className="mtm-text-sm mtm-text-white/60">
-                      {user.email}
-                    </div>
-                    <div className="mtm-text-xs mtm-text-white/40 mtm-mt-1">
+                    <div className="mtm-text-sm ui-muted">{user.email}</div>
+                    <div className="mtm-text-xs ui-muted mtm-mt-1">
                       uid: {user.uid}
                     </div>
-                    <div className="mtm-flex mtm-flex-wrap mtm-gap-1 mtm-mt-2">
+                    <div className="mtm-flex mtm-flex-wrap mtm-gap-1.5 mtm-mt-2">
                       {userRoles.length === 0 ? (
-                        <span className="mtm-text-xs mtm-text-white/40">
-                          no roles
-                        </span>
+                        <span className="mtm-text-xs ui-muted">no roles</span>
                       ) : (
                         userRoles.map((r) => (
-                          <span
-                            key={r}
-                            className="mtm-text-xs mtm-px-2 mtm-py-0.5 mtm-rounded mtm-bg-sky-400/20 mtm-text-sky-200 mtm-border mtm-border-sky-400/40"
-                          >
+                          <span key={r} className="ui-chip mtm-text-xs">
                             {displayRoleName(r)}
                           </span>
                         ))
@@ -603,33 +598,30 @@ function UsersTab({ showSuccess, showError }) {
                   </div>
                 </div>
                 {!bulkMode && (
-                  <div className="mtm-flex mtm-gap-2">
+                  <div className="mtm-flex mtm-gap-2 mtm-shrink-0">
                     {!isEditing ? (
-                      <Button
-                        size="sm"
-                        variant="outline-warning"
+                      <button
+                        className="ui-btn ui-btn-ghost ui-btn-sm"
                         onClick={() => startEditing(user)}
                       >
-                        Edit roles
-                      </Button>
+                        <FiEdit2 size={14} /> Edit roles
+                      </button>
                     ) : (
                       <>
-                        <Button
-                          size="sm"
-                          variant="warning"
+                        <button
+                          className="ui-btn ui-btn-primary ui-btn-sm"
                           disabled={saving}
                           onClick={() => handleSaveRoles(user)}
                         >
                           {saving ? "Saving…" : "Save"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline-light"
+                        </button>
+                        <button
+                          className="ui-btn ui-btn-ghost ui-btn-sm"
                           disabled={saving}
                           onClick={cancelEdit}
                         >
                           Cancel
-                        </Button>
+                        </button>
                       </>
                     )}
                   </div>
@@ -637,19 +629,20 @@ function UsersTab({ showSuccess, showError }) {
               </div>
 
               {!bulkMode && isEditing && (
-                <div className="mtm-mt-4 mtm-grid sm:mtm-grid-cols-2 mtm-gap-2">
+                <div className="mtm-mt-4 mtm-pt-4 mtm-border-t mtm-border-line mtm-grid sm:mtm-grid-cols-2 mtm-gap-2">
                   {allRoleNames.length === 0 ? (
-                    <p className="mtm-text-white/40">
+                    <p className="ui-muted">
                       No roles defined yet. Create one in the Roles tab first.
                     </p>
                   ) : (
                     allRoleNames.map((roleName) => (
                       <label
                         key={roleName}
-                        className="mtm-flex mtm-items-center mtm-gap-2 mtm-text-sm mtm-text-white/80"
+                        className="mtm-flex mtm-items-center mtm-gap-2 mtm-text-sm mtm-text-content"
                       >
                         <input
                           type="checkbox"
+                          className="mtm-h-4 mtm-w-4 mtm-accent-primary"
                           checked={selectedRoles.has(roleName)}
                           onChange={() => toggleRole(roleName)}
                         />
@@ -666,32 +659,30 @@ function UsersTab({ showSuccess, showError }) {
 
       {totalPages > 1 && (
         <div className="mtm-flex mtm-gap-2 mtm-justify-center mtm-items-center mtm-mt-6">
-          <Button
-            size="sm"
-            variant="outline-light"
+          <button
+            className="ui-btn ui-btn-ghost ui-btn-sm"
             disabled={pageNumber === 0 || loading}
             onClick={() => load(pageNumber - 1)}
           >
-            Prev
-          </Button>
-          <span className="mtm-text-white/60 mtm-text-sm">
+            <FiChevronLeft size={16} /> Prev
+          </button>
+          <span className="ui-muted mtm-text-sm mtm-min-w-[92px] mtm-text-center">
             Page {pageNumber + 1} of {totalPages}
           </span>
-          <Button
-            size="sm"
-            variant="outline-light"
+          <button
+            className="ui-btn ui-btn-ghost ui-btn-sm"
             disabled={pageNumber >= totalPages - 1 || loading}
             onClick={() => load(pageNumber + 1)}
           >
-            Next
-          </Button>
+            Next <FiChevronRight size={16} />
+          </button>
         </div>
       )}
     </>
   );
 }
 
-function Admin({ toastState, setToastState }) {
+function Admin({ setToastState }) {
   const [tab, setTab] = useState("roles");
 
   const showSuccess = useCallback(
@@ -720,35 +711,40 @@ function Admin({ toastState, setToastState }) {
     [setToastState]
   );
 
-  return (
-    <div className="mtm-min-h-[80vh] mtm-bg-black mtm-text-white mtm-py-12 mtm-px-4 sm:mtm-px-12">
-      <div className="mtm-max-w-3xl mtm-mx-auto">
-        <h1 className="mtm-text-3xl mtm-tracking-wider mtm-text-sky-400 mtm-mb-6">
-          Admin
-        </h1>
-        <div className="mtm-flex mtm-gap-2 mtm-mb-6">
-          <Button
-            size="sm"
-            variant={tab === "roles" ? "warning" : "outline-light"}
-            onClick={() => setTab("roles")}
-          >
-            Roles
-          </Button>
-          <Button
-            size="sm"
-            variant={tab === "users" ? "warning" : "outline-light"}
-            onClick={() => setTab("users")}
-          >
-            Users
-          </Button>
-        </div>
+  const tabs = [
+    { id: "roles", label: "Roles", icon: <FiShield size={15} /> },
+    { id: "users", label: "Users", icon: <FiUsers size={15} /> },
+  ];
 
-        {tab === "roles" ? (
-          <RolesTab showSuccess={showSuccess} showError={showError} />
-        ) : (
-          <UsersTab showSuccess={showSuccess} showError={showError} />
-        )}
+  return (
+    <div className="ui-page ui-fade-in mtm-max-w-3xl">
+      <p className="ui-eyebrow">Administration</p>
+      <h1 className="mtm-text-3xl mtm-font-display mtm-font-bold mtm-text-content mtm-mt-1 mtm-mb-6">
+        Admin
+      </h1>
+
+      <div className="mtm-inline-flex mtm-p-1 mtm-rounded-xl mtm-bg-surface-2 mtm-border mtm-border-line mtm-mb-6">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`mtm-inline-flex mtm-items-center mtm-gap-2 mtm-px-4 mtm-py-1.5 mtm-rounded-lg mtm-text-sm mtm-font-semibold mtm-transition-colors ${
+              tab === t.id
+                ? "mtm-bg-surface mtm-text-primary mtm-shadow-sm"
+                : "mtm-text-muted hover:mtm-text-content"
+            }`}
+          >
+            {t.icon}
+            {t.label}
+          </button>
+        ))}
       </div>
+
+      {tab === "roles" ? (
+        <RolesTab showSuccess={showSuccess} showError={showError} />
+      ) : (
+        <UsersTab showSuccess={showSuccess} showError={showError} />
+      )}
     </div>
   );
 }

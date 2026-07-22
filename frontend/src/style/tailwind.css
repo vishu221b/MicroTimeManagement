@@ -2,9 +2,281 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Questrial&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Balsamiq+Sans&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Balsamiq+Sans&family=Bangers&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Lexend:wght@100;200;300;400;500&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Special+Elite&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap");
+
+/* ============================================================
+   Micro Time Management — design system
+   Theme tokens are RGB triplets so Tailwind opacity modifiers
+   (e.g. mtm-bg-surface/80) work. Flip [data-theme] on <html>
+   to reskin the entire app.
+   ============================================================ */
+
+:root,
+:root[data-theme="light"] {
+  --mtm-bg-rgb: 244 248 247;
+  --mtm-bg-grad-rgb: 232 244 240;
+  --mtm-surface-rgb: 255 255 255;
+  --mtm-surface-2-rgb: 240 245 244;
+  --mtm-border-rgb: 224 231 229;
+  --mtm-content-rgb: 15 23 42;
+  --mtm-muted-rgb: 100 116 139;
+  --mtm-primary-rgb: 5 150 105;
+  --mtm-primary-hover-rgb: 4 120 87;
+  --mtm-primary-soft-rgb: 209 250 229;
+  --mtm-accent-rgb: 13 148 136;
+  --mtm-success-rgb: 16 185 129;
+  --mtm-error-rgb: 220 38 38;
+  --mtm-warning-rgb: 217 119 6;
+  --mtm-on-primary-rgb: 255 255 255;
+  --mtm-shadow: 0 10px 30px -12px rgb(15 23 42 / 0.18);
+  --mtm-ring: 0 0 0 3px rgb(16 185 129 / 0.30);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --mtm-bg-rgb: 8 15 26;
+  --mtm-bg-grad-rgb: 11 26 33;
+  --mtm-surface-rgb: 17 26 43;
+  --mtm-surface-2-rgb: 24 35 56;
+  --mtm-border-rgb: 39 53 78;
+  --mtm-content-rgb: 226 232 240;
+  --mtm-muted-rgb: 148 163 184;
+  --mtm-primary-rgb: 16 185 129;
+  --mtm-primary-hover-rgb: 5 150 105;
+  --mtm-primary-soft-rgb: 6 78 59;
+  --mtm-accent-rgb: 20 184 166;
+  --mtm-success-rgb: 52 211 153;
+  --mtm-error-rgb: 248 113 113;
+  --mtm-warning-rgb: 251 191 36;
+  --mtm-on-primary-rgb: 6 20 16;
+  --mtm-shadow: 0 18px 40px -18px rgb(0 0 0 / 0.65);
+  --mtm-ring: 0 0 0 3px rgb(16 185 129 / 0.35);
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+  }
+  body {
+    margin: 0;
+    background-color: rgb(var(--mtm-bg-rgb));
+    color: rgb(var(--mtm-content-rgb));
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  h1, h2, h3, h4, h5 {
+    font-family: "Sora", "Inter", sans-serif;
+    letter-spacing: -0.01em;
+  }
+  * {
+    scrollbar-color: rgb(var(--mtm-border-rgb)) transparent;
+  }
+}
+
+/* App background gradient wash */
+.mtm-app-shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(1100px 520px at 85% -10%, rgb(var(--mtm-primary-rgb) / 0.10), transparent 60%),
+    radial-gradient(900px 480px at 0% 0%, rgb(var(--mtm-accent-rgb) / 0.08), transparent 55%),
+    linear-gradient(180deg, rgb(var(--mtm-bg-grad-rgb)) 0%, rgb(var(--mtm-bg-rgb)) 40%);
+}
+
+/* ---------- Component primitives ---------- */
+
+.ui-page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+.ui-card {
+  background-color: rgb(var(--mtm-surface-rgb));
+  border: 1px solid rgb(var(--mtm-border-rgb));
+  border-radius: 1rem;
+  box-shadow: var(--mtm-shadow);
+}
+
+.ui-card-flat {
+  background-color: rgb(var(--mtm-surface-rgb));
+  border: 1px solid rgb(var(--mtm-border-rgb));
+  border-radius: 1rem;
+}
+
+.ui-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgb(var(--mtm-primary-rgb));
+}
+
+.ui-muted { color: rgb(var(--mtm-muted-rgb)); }
+
+/* Buttons */
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.925rem;
+  line-height: 1;
+  padding: 0.68rem 1.15rem;
+  border-radius: 0.7rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.06s ease, background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ui-btn:active { transform: translateY(1px); }
+.ui-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.ui-btn:focus-visible { outline: none; box-shadow: var(--mtm-ring); }
+
+.ui-btn-primary {
+  background: linear-gradient(135deg, rgb(var(--mtm-primary-rgb)), rgb(var(--mtm-accent-rgb)));
+  color: rgb(var(--mtm-on-primary-rgb));
+}
+.ui-btn-primary:hover { filter: brightness(1.06); }
+
+.ui-btn-ghost {
+  background-color: transparent;
+  color: rgb(var(--mtm-content-rgb));
+  border-color: rgb(var(--mtm-border-rgb));
+}
+.ui-btn-ghost:hover { background-color: rgb(var(--mtm-surface-2-rgb)); }
+
+.ui-btn-soft {
+  background-color: rgb(var(--mtm-primary-soft-rgb));
+  color: rgb(var(--mtm-primary-hover-rgb));
+}
+.ui-btn-soft:hover { filter: brightness(0.97); }
+
+.ui-btn-danger {
+  background-color: rgb(var(--mtm-error-rgb) / 0.12);
+  color: rgb(var(--mtm-error-rgb));
+  border-color: rgb(var(--mtm-error-rgb) / 0.30);
+}
+.ui-btn-danger:hover { background-color: rgb(var(--mtm-error-rgb) / 0.20); }
+
+.ui-btn-sm { padding: 0.42rem 0.75rem; font-size: 0.82rem; border-radius: 0.55rem; }
+
+/* Inputs */
+.ui-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgb(var(--mtm-muted-rgb));
+  margin-bottom: 0.4rem;
+}
+.ui-input,
+.ui-select,
+.ui-textarea {
+  width: 100%;
+  background-color: rgb(var(--mtm-surface-2-rgb));
+  color: rgb(var(--mtm-content-rgb));
+  border: 1px solid rgb(var(--mtm-border-rgb));
+  border-radius: 0.7rem;
+  padding: 0.68rem 0.85rem;
+  font-size: 0.95rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.ui-input::placeholder,
+.ui-textarea::placeholder { color: rgb(var(--mtm-muted-rgb) / 0.7); }
+.ui-input:focus,
+.ui-select:focus,
+.ui-textarea:focus {
+  outline: none;
+  border-color: rgb(var(--mtm-primary-rgb));
+  box-shadow: var(--mtm-ring);
+}
+.ui-textarea { resize: vertical; min-height: 90px; }
+
+/* Badges / chips */
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  background-color: rgb(var(--mtm-primary-soft-rgb));
+  color: rgb(var(--mtm-primary-hover-rgb));
+  border: 1px solid rgb(var(--mtm-primary-rgb) / 0.20);
+}
+.ui-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  background-color: rgb(var(--mtm-surface-2-rgb));
+  color: rgb(var(--mtm-content-rgb));
+  border: 1px solid rgb(var(--mtm-border-rgb));
+}
+
+/* Stat card */
+.ui-stat {
+  background-color: rgb(var(--mtm-surface-rgb));
+  border: 1px solid rgb(var(--mtm-border-rgb));
+  border-radius: 1rem;
+  padding: 1.25rem 1.35rem;
+  box-shadow: var(--mtm-shadow);
+}
+.ui-stat-value {
+  font-family: "Sora", sans-serif;
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.ui-stat-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgb(var(--mtm-muted-rgb));
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Icon tile */
+.ui-icon-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 0.8rem;
+  background: linear-gradient(135deg, rgb(var(--mtm-primary-rgb) / 0.18), rgb(var(--mtm-accent-rgb) / 0.18));
+  color: rgb(var(--mtm-primary-rgb));
+}
+
+/* Divider */
+.ui-divider { height: 1px; background-color: rgb(var(--mtm-border-rgb)); border: 0; }
+
+/* Link */
+.ui-link { color: rgb(var(--mtm-primary-rgb)); font-weight: 600; text-decoration: none; }
+.ui-link:hover { text-decoration: underline; }
+
+/* Spinner */
+.ui-spinner {
+  width: 1.15rem; height: 1.15rem;
+  border: 2px solid rgb(var(--mtm-on-primary-rgb) / 0.4);
+  border-top-color: rgb(var(--mtm-on-primary-rgb));
+  border-radius: 50%;
+  animation: ui-spin 0.7s linear infinite;
+}
+@keyframes ui-spin { to { transform: rotate(360deg); } }
+
+/* Fade-in for page content */
+.ui-fade-in { animation: ui-fade 0.4s ease both; }
+@keyframes ui-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Native date/time input icons visible in dark mode */
+:root[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+:root[data-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.85);
+}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Button from "react-bootstrap/Button";
+import { FiUser, FiLock } from "react-icons/fi";
 import {
   changeUserPassword,
   getUserProfile,
@@ -23,7 +23,7 @@ const errorMessageFrom = (errorPayload) => {
   return "Something went wrong.";
 };
 
-function Profile({ toastState, setToastState }) {
+function Profile({ setToastState }) {
   const [profile, setProfile] = useState(blankProfile());
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -139,167 +139,130 @@ function Profile({ toastState, setToastState }) {
     );
   };
 
+  const initials = `${(profile.firstName || profile.username || "?")[0] || ""}${
+    (profile.lastName || "")[0] || ""
+  }`.toUpperCase();
+
   if (loading) {
     return (
-      <div className="mtm-min-h-[60vh] mtm-bg-black mtm-text-white mtm-py-20 mtm-text-center">
+      <div className="ui-page mtm-text-center ui-muted mtm-py-20">
         Loading profile…
       </div>
     );
   }
 
-  return (
-    <div className="mtm-min-h-[80vh] mtm-bg-black mtm-text-white mtm-py-12 mtm-px-4 sm:mtm-px-12">
-      <div className="mtm-max-w-3xl mtm-mx-auto">
-        <h1 className="mtm-text-3xl mtm-tracking-wider mtm-text-sky-400 mtm-mb-8">
-          My Profile
-        </h1>
+  const profileFields = [
+    { key: "username", label: "Username", type: "text" },
+    { key: "email", label: "Email", type: "email" },
+    { key: "firstName", label: "First name", type: "text" },
+    { key: "lastName", label: "Last name", type: "text" },
+  ];
 
-        <form
-          onSubmit={handleProfileSubmit}
-          className="mtm-bg-white/5 mtm-border mtm-border-white/20 mtm-rounded mtm-p-6 mtm-mb-8"
-        >
-          <h2 className="mtm-text-lg mtm-text-yellow-300 mtm-mb-4">
+  return (
+    <div className="ui-page ui-fade-in mtm-max-w-3xl">
+      <div className="mtm-flex mtm-items-center mtm-gap-4 mtm-mb-8">
+        <span className="mtm-inline-flex mtm-items-center mtm-justify-center mtm-h-14 mtm-w-14 mtm-rounded-2xl mtm-bg-gradient-to-br mtm-from-primary mtm-to-accent mtm-text-white mtm-font-display mtm-font-bold mtm-text-xl">
+          {initials || <FiUser />}
+        </span>
+        <div>
+          <p className="ui-eyebrow">Account</p>
+          <h1 className="mtm-text-3xl mtm-font-display mtm-font-bold mtm-text-content mtm-mt-1 mtm-mb-0">
+            {profile.firstName
+              ? `${profile.firstName} ${profile.lastName}`.trim()
+              : "My profile"}
+          </h1>
+          <p className="ui-muted mtm-text-sm mtm-mt-0.5 mtm-mb-0">
+            @{profile.username}
+          </p>
+        </div>
+      </div>
+
+      <form onSubmit={handleProfileSubmit} className="ui-card mtm-p-6 mtm-mb-6">
+        <div className="mtm-flex mtm-items-center mtm-gap-2 mtm-mb-5">
+          <span className="ui-icon-tile mtm-h-9 mtm-w-9">
+            <FiUser size={16} />
+          </span>
+          <h2 className="mtm-text-lg mtm-font-semibold mtm-text-content mtm-m-0">
             Account details
           </h2>
-          <div className="mtm-grid mtm-gap-4 sm:mtm-grid-cols-2">
-            <label className="mtm-flex mtm-flex-col">
-              <span className="mtm-text-sm mtm-text-white/70 mtm-mb-1">
-                Username
-              </span>
+        </div>
+        <div className="mtm-grid mtm-gap-4 sm:mtm-grid-cols-2">
+          {profileFields.map((f) => (
+            <div key={f.key}>
+              <label className="ui-label" htmlFor={f.key}>
+                {f.label}
+              </label>
               <input
-                type="text"
-                value={profile.username}
+                id={f.key}
+                type={f.type}
+                value={profile[f.key]}
                 onChange={(e) =>
-                  setProfile((p) => ({ ...p, username: e.target.value }))
+                  setProfile((p) => ({ ...p, [f.key]: e.target.value }))
                 }
-                className="mtm-bg-black mtm-border mtm-border-white/30 mtm-rounded mtm-px-3 mtm-py-2"
+                className="ui-input"
               />
+            </div>
+          ))}
+          <div>
+            <label className="ui-label" htmlFor="dateOfBirth">
+              Date of birth
             </label>
-            <label className="mtm-flex mtm-flex-col">
-              <span className="mtm-text-sm mtm-text-white/70 mtm-mb-1">
-                Email
-              </span>
-              <input
-                type="email"
-                value={profile.email}
-                onChange={(e) =>
-                  setProfile((p) => ({ ...p, email: e.target.value }))
-                }
-                className="mtm-bg-black mtm-border mtm-border-white/30 mtm-rounded mtm-px-3 mtm-py-2"
-              />
-            </label>
-            <label className="mtm-flex mtm-flex-col">
-              <span className="mtm-text-sm mtm-text-white/70 mtm-mb-1">
-                First name
-              </span>
-              <input
-                type="text"
-                value={profile.firstName}
-                onChange={(e) =>
-                  setProfile((p) => ({ ...p, firstName: e.target.value }))
-                }
-                className="mtm-bg-black mtm-border mtm-border-white/30 mtm-rounded mtm-px-3 mtm-py-2"
-              />
-            </label>
-            <label className="mtm-flex mtm-flex-col">
-              <span className="mtm-text-sm mtm-text-white/70 mtm-mb-1">
-                Last name
-              </span>
-              <input
-                type="text"
-                value={profile.lastName}
-                onChange={(e) =>
-                  setProfile((p) => ({ ...p, lastName: e.target.value }))
-                }
-                className="mtm-bg-black mtm-border mtm-border-white/30 mtm-rounded mtm-px-3 mtm-py-2"
-              />
-            </label>
-            <label className="mtm-flex mtm-flex-col">
-              <span className="mtm-text-sm mtm-text-white/70 mtm-mb-1">
-                Date of birth
-              </span>
-              <input
-                type="text"
-                placeholder="DD-MM-YYYY"
-                value={profile.dateOfBirth}
-                onChange={(e) =>
-                  setProfile((p) => ({ ...p, dateOfBirth: e.target.value }))
-                }
-                className="mtm-bg-black mtm-border mtm-border-white/30 mtm-rounded mtm-px-3 mtm-py-2"
-              />
-            </label>
+            <input
+              id="dateOfBirth"
+              type="text"
+              placeholder="DD-MM-YYYY"
+              value={profile.dateOfBirth}
+              onChange={(e) =>
+                setProfile((p) => ({ ...p, dateOfBirth: e.target.value }))
+              }
+              className="ui-input"
+            />
           </div>
-          <div className="mtm-mt-4">
-            <Button type="submit" variant="warning" disabled={savingProfile}>
-              {savingProfile ? "Saving…" : "Save changes"}
-            </Button>
-          </div>
-        </form>
+        </div>
+        <div className="mtm-mt-5">
+          <button type="submit" className="ui-btn ui-btn-primary" disabled={savingProfile}>
+            {savingProfile ? "Saving…" : "Save changes"}
+          </button>
+        </div>
+      </form>
 
-        <form
-          onSubmit={handlePasswordSubmit}
-          className="mtm-bg-white/5 mtm-border mtm-border-white/20 mtm-rounded mtm-p-6"
-        >
-          <h2 className="mtm-text-lg mtm-text-yellow-300 mtm-mb-4">
+      <form onSubmit={handlePasswordSubmit} className="ui-card mtm-p-6">
+        <div className="mtm-flex mtm-items-center mtm-gap-2 mtm-mb-5">
+          <span className="ui-icon-tile mtm-h-9 mtm-w-9">
+            <FiLock size={16} />
+          </span>
+          <h2 className="mtm-text-lg mtm-font-semibold mtm-text-content mtm-m-0">
             Change password
           </h2>
-          <div className="mtm-grid mtm-gap-4 sm:mtm-grid-cols-3">
-            <label className="mtm-flex mtm-flex-col">
-              <span className="mtm-text-sm mtm-text-white/70 mtm-mb-1">
-                Current password
-              </span>
+        </div>
+        <div className="mtm-grid mtm-gap-4 sm:mtm-grid-cols-3">
+          {[
+            { key: "oldPassword", label: "Current password" },
+            { key: "newPassword", label: "New password" },
+            { key: "confirmPassword", label: "Confirm new password" },
+          ].map((f) => (
+            <div key={f.key}>
+              <label className="ui-label" htmlFor={f.key}>
+                {f.label}
+              </label>
               <input
+                id={f.key}
                 type="password"
-                value={passwordForm.oldPassword}
+                value={passwordForm[f.key]}
                 onChange={(e) =>
-                  setPasswordForm((p) => ({
-                    ...p,
-                    oldPassword: e.target.value,
-                  }))
+                  setPasswordForm((p) => ({ ...p, [f.key]: e.target.value }))
                 }
-                className="mtm-bg-black mtm-border mtm-border-white/30 mtm-rounded mtm-px-3 mtm-py-2"
+                className="ui-input"
               />
-            </label>
-            <label className="mtm-flex mtm-flex-col">
-              <span className="mtm-text-sm mtm-text-white/70 mtm-mb-1">
-                New password
-              </span>
-              <input
-                type="password"
-                value={passwordForm.newPassword}
-                onChange={(e) =>
-                  setPasswordForm((p) => ({
-                    ...p,
-                    newPassword: e.target.value,
-                  }))
-                }
-                className="mtm-bg-black mtm-border mtm-border-white/30 mtm-rounded mtm-px-3 mtm-py-2"
-              />
-            </label>
-            <label className="mtm-flex mtm-flex-col">
-              <span className="mtm-text-sm mtm-text-white/70 mtm-mb-1">
-                Confirm new password
-              </span>
-              <input
-                type="password"
-                value={passwordForm.confirmPassword}
-                onChange={(e) =>
-                  setPasswordForm((p) => ({
-                    ...p,
-                    confirmPassword: e.target.value,
-                  }))
-                }
-                className="mtm-bg-black mtm-border mtm-border-white/30 mtm-rounded mtm-px-3 mtm-py-2"
-              />
-            </label>
-          </div>
-          <div className="mtm-mt-4">
-            <Button type="submit" variant="warning" disabled={savingPassword}>
-              {savingPassword ? "Updating…" : "Update password"}
-            </Button>
-          </div>
-        </form>
-      </div>
+            </div>
+          ))}
+        </div>
+        <div className="mtm-mt-5">
+          <button type="submit" className="ui-btn ui-btn-primary" disabled={savingPassword}>
+            {savingPassword ? "Updating…" : "Update password"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
