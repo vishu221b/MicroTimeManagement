@@ -431,5 +431,35 @@ export const cancelSubscription = async (callback = () => {}) => {
     .catch((err) => callback(null, toErrorPayload(err)));
 };
 
+// ---- Attachments ----
+export const listAttachments = async (params, callback = () => {}) => {
+  apiClient
+    .get(`/attachment`, { params })
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const createAttachment = async (payload, callback = () => {}) => {
+  apiClient
+    .post(`/attachment`, payload)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const deleteAttachment = async (id, callback = () => {}) => {
+  apiClient
+    .delete(`/attachment/${id}`)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+// ---- Profile avatar ----
+export const updateAvatar = async (payload, callback = () => {}) => {
+  apiClient
+    .put(`/user/avatar`, payload)
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
 export { getAccessToken, isAuthenticated } from "./AuthStorage";
 export default apiClient;
