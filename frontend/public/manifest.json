@@ -1,30 +1,77 @@
 {
-  "short_name": "MTM",
+  "id": "/?source=pwa",
   "name": "Micro Time Management",
-  "description": "Track your time, tasks and projects — one activity at a time.",
+  "short_name": "MTM",
+  "description": "Track your time, tasks, projects and reminders — one activity at a time.",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["productivity", "business", "utilities"],
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "theme_color": "#7c3aed",
+  "background_color": "#181320",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
     },
     {
-      "src": "logo192.png",
+      "src": "icon-192.png",
       "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "logo512.png",
+      "src": "icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "maskable-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "maskable-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "purpose": "any"
     }
   ],
-  "start_url": ".",
-  "scope": ".",
-  "display": "standalone",
-  "orientation": "portrait-primary",
-  "theme_color": "#7c3aed",
-  "background_color": "#fff7ed"
+  "shortcuts": [
+    {
+      "name": "Log an activity",
+      "short_name": "Activity",
+      "description": "Jump straight to today's activity tracker",
+      "url": "/activity?source=pwa",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "See your time at a glance",
+      "url": "/dashboard?source=pwa",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Reminders",
+      "short_name": "Reminders",
+      "description": "Check your upcoming reminders",
+      "url": "/reminders?source=pwa",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
 }
