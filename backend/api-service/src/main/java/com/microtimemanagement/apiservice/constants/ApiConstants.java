@@ -55,6 +55,10 @@ public class ApiConstants {
     public static final class AttachmentEndpoint {
         public static final String API_BASE = API_PREFIX_V1 + "/attachment";
     }
+
+    public static final class TrashEndpoint {
+        public static final String API_BASE = API_PREFIX_V1 + "/trash";
+    }
     public static final class AuthEndpoint {
         public static final String API_BASE = API_PREFIX_V1 + "/auth";
         public static final String LOGIN = "/login";

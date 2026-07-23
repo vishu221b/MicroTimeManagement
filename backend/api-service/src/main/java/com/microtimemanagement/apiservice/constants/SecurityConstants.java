@@ -78,6 +78,9 @@ public class SecurityConstants {
                 ),
                 ApiUtils.getRequestMatcherPatternForBase(
                         ApiConstants.AttachmentEndpoint.API_BASE
+                ),
+                ApiUtils.getRequestMatcherPatternForBase(
+                        ApiConstants.TrashEndpoint.API_BASE
                 )
         };
 

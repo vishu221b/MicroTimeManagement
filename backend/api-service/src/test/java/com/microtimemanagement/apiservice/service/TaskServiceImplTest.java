@@ -64,7 +64,7 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("listByProject is scoped to the current user")
     void listByProjectScoped() {
-        Mockito.when(taskRepository.findByProjectIdAndOwnerAndIsActiveTrueOrderByCreatedAtDesc("proj-1", UID))
+        Mockito.when(taskRepository.findActiveByProject("proj-1", UID))
                 .thenReturn(List.of(Task.builder().id("t1").name("A").owner(UID).build()));
 
         assertThat(taskService.listByProject("proj-1")).extracting(TaskDTO::getId).containsExactly("t1");
@@ -73,7 +73,7 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("listSubtasks is scoped to the current user")
     void listSubtasksScoped() {
-        Mockito.when(taskRepository.findByParentTaskIdAndOwnerAndIsActiveTrueOrderByCreatedAtDesc("t1", UID))
+        Mockito.when(taskRepository.findActiveSubtasks("t1", UID))
                 .thenReturn(List.of(Task.builder().id("t2").name("sub").parentTaskId("t1").owner(UID).build()));
 
         assertThat(taskService.listSubtasks("t1")).extracting(TaskDTO::getParentTaskId).containsExactly("t1");

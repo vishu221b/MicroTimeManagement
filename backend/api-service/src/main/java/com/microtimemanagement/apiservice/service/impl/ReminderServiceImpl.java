@@ -38,7 +38,7 @@ public class ReminderServiceImpl implements ReminderService {
     @Override
     public List<ReminderDTO> listForCurrentUser() {
         return reminderRepository
-                .findByOwnerAndIsActiveTrueOrderByRemindAtAsc(currentUserProvider.currentUid())
+                .findActiveForOwner(currentUserProvider.currentUid())
                 .stream().map(this::toDTO).toList();
     }
 

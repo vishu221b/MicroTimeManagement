@@ -13,7 +13,9 @@ import {
   deleteReminder,
   listReminders,
   updateReminder,
+  archiveItem,
 } from "../service/ApiService";
+import { FiArchive } from "react-icons/fi";
 import { useConfirm } from "../components/ConfirmProvider";
 import Modal from "../components/Modal";
 import AttachmentPanel from "../components/AttachmentPanel";
@@ -87,6 +89,14 @@ function Reminders({ setToastState }) {
   const setStatus = (r, status) => {
     updateReminder(r.id, { status }, (data, err) => {
       if (err) return showError(errorMessageFrom(err));
+      load();
+    });
+  };
+
+  const archive = (r) => {
+    archiveItem("REMINDER", r.id, (data, err) => {
+      if (err) return showError(errorMessageFrom(err));
+      showSuccess("Reminder archived. Find it under Trash → Archive.");
       load();
     });
   };
@@ -198,6 +208,9 @@ function Reminders({ setToastState }) {
                     </button>
                   </>
                 )}
+                <button className="ui-btn ui-btn-ghost ui-btn-sm" onClick={() => archive(r)} aria-label="Archive" title="Archive">
+                  <FiArchive size={14} />
+                </button>
                 <button className="ui-btn ui-btn-danger ui-btn-sm" onClick={() => remove(r)} aria-label="Delete">
                   <FiTrash2 size={14} />
                 </button>
