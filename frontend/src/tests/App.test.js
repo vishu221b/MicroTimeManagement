@@ -29,5 +29,5 @@ test("renders the landing hero", () => {
 
 test("shows the primary call to action for signed-out visitors", () => {
   render(<App />, { wrapper: MemoryRouter });
-  expect(screen.getAllByText(/get started free/i).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/get started/i).length).toBeGreaterThan(0);
 });

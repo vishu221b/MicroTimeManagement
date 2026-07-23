@@ -1,11 +1,8 @@
-// jest-dom adds custom jest matchers for asserting on DOM nodes.
-// allows you to do things like:
-// expect(element).toHaveTextContent(/react/i)
-// learn more: https://github.com/testing-library/jest-dom
+// CRA loads this file (src/setupTests.js) before the test suite.
 import "@testing-library/jest-dom";
 
-// jsdom lacks these browser APIs that framer-motion (whileInView / layout) and
-// some hooks rely on. Provide no-op polyfills so component tests can render.
+// jsdom lacks these browser APIs that framer-motion (whileInView / layout)
+// relies on. Provide no-op polyfills so component tests can render.
 class MockObserver {
   observe() {}
   unobserve() {}
