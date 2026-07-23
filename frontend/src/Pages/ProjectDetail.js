@@ -104,6 +104,8 @@ function ProjectDetail({ setToastState }) {
   const [creating, setCreating] = useState(false);
   const [expanded, setExpanded] = useState(null);
   const [form, setForm] = useState({ name: "", description: "", dueDate: "", priority: "MEDIUM" });
+  const [draggingId, setDraggingId] = useState(null);
+  const [dragOverCol, setDragOverCol] = useState(null);
 
   const showError = (m) =>
     setToastState({ display: true, variant: "error", messages: [m], includePrefix: true });
@@ -139,11 +141,36 @@ function ProjectDetail({ setToastState }) {
   };
 
   const move = (task, status) => {
-    if (!status) return;
+    if (!status || (task.status || "TODO") === status) return;
+    // Optimistic: reflect the move immediately, reconcile with the server after.
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, status } : t)));
     updateTask(task.id, { status }, (d, err) => {
-      if (err) return showError(errorMessageFrom(err));
+      if (err) {
+        showError(errorMessageFrom(err));
+        loadTasks();
+        return;
+      }
       loadTasks();
     });
+  };
+
+  const onDragStart = (e, task) => {
+    setDraggingId(task.id);
+    e.dataTransfer.effectAllowed = "move";
+    // Some browsers require data to be set for a drag to start.
+    try {
+      e.dataTransfer.setData("text/plain", task.id);
+    } catch (_) {
+      /* ignore */
+    }
+  };
+
+  const onColumnDrop = (e, colKey) => {
+    e.preventDefault();
+    setDragOverCol(null);
+    setDraggingId(null);
+    const task = tasks.find((t) => t.id === draggingId);
+    if (task) move(task, colKey);
   };
 
   const remove = async (task) => {
@@ -216,15 +243,42 @@ function ProjectDetail({ setToastState }) {
         <div className="mtm-grid mtm-gap-4 md:mtm-grid-cols-3">
           {COLUMNS.map((col) => {
             const colTasks = tasks.filter((t) => (t.status || "TODO") === col.key);
+            const isOver = dragOverCol === col.key;
             return (
-              <div key={col.key} className="ui-card-flat mtm-p-4">
+              <div
+                key={col.key}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                  if (dragOverCol !== col.key) setDragOverCol(col.key);
+                }}
+                onDragLeave={(e) => {
+                  // Only clear when leaving the column, not when moving over a child.
+                  if (!e.currentTarget.contains(e.relatedTarget)) setDragOverCol(null);
+                }}
+                onDrop={(e) => onColumnDrop(e, col.key)}
+                className={`ui-card-flat mtm-p-4 mtm-transition-all ${
+                  isOver ? "mtm-ring-2 mtm-ring-primary mtm-bg-primary/5" : ""
+                }`}
+              >
                 <div className="mtm-flex mtm-items-center mtm-justify-between mtm-mb-3">
                   <h3 className="mtm-font-semibold mtm-text-content mtm-m-0">{col.label}</h3>
                   <span className="ui-chip mtm-text-xs">{colTasks.length}</span>
                 </div>
-                <div className="mtm-flex mtm-flex-col mtm-gap-2.5">
+                <div className="mtm-flex mtm-flex-col mtm-gap-2.5 mtm-min-h-[3rem]">
                   {colTasks.map((t) => (
-                    <div key={t.id} className="ui-card mtm-p-3.5">
+                    <div
+                      key={t.id}
+                      draggable={expanded !== t.id}
+                      onDragStart={(e) => onDragStart(e, t)}
+                      onDragEnd={() => {
+                        setDraggingId(null);
+                        setDragOverCol(null);
+                      }}
+                      className={`ui-card mtm-p-3.5 mtm-cursor-grab active:mtm-cursor-grabbing mtm-transition-opacity ${
+                        draggingId === t.id ? "mtm-opacity-40" : ""
+                      }`}
+                    >
                       <div className="mtm-flex mtm-items-start mtm-justify-between mtm-gap-2">
                         <button
                           type="button"
