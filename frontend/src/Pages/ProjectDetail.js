@@ -18,6 +18,9 @@ import {
   updateTask,
 } from "../service/ApiService";
 import { useConfirm } from "../components/ConfirmProvider";
+import Modal from "../components/Modal";
+import AttachmentPanel from "../components/AttachmentPanel";
+import { FiPaperclip } from "react-icons/fi";
 
 const COLUMNS = [
   { key: "TODO", label: "To do" },
@@ -94,6 +97,7 @@ function ProjectDetail({ setToastState }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const confirm = useConfirm();
+  const [viewingTask, setViewingTask] = useState(null);
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -222,9 +226,14 @@ function ProjectDetail({ setToastState }) {
                   {colTasks.map((t) => (
                     <div key={t.id} className="ui-card mtm-p-3.5">
                       <div className="mtm-flex mtm-items-start mtm-justify-between mtm-gap-2">
-                        <span className={`mtm-font-medium ${t.status === "DONE" ? "mtm-line-through ui-muted" : "mtm-text-content"}`}>
+                        <button
+                          type="button"
+                          onClick={() => setViewingTask(t)}
+                          title="View details & files"
+                          className={`mtm-font-medium mtm-text-left hover:mtm-underline ${t.status === "DONE" ? "mtm-line-through ui-muted" : "mtm-text-content"}`}
+                        >
                           {t.name}
-                        </span>
+                        </button>
                         <button className="mtm-text-muted hover:mtm-text-danger mtm-shrink-0" onClick={() => remove(t)} aria-label="Delete">
                           <FiTrash2 size={14} />
                         </button>
@@ -267,6 +276,43 @@ function ProjectDetail({ setToastState }) {
           })}
         </div>
       )}
+
+      <Modal
+        open={!!viewingTask}
+        onClose={() => setViewingTask(null)}
+        title={viewingTask ? viewingTask.name : ""}
+        icon={<FiPaperclip />}
+        footer={<button className="ui-btn ui-btn-primary" onClick={() => setViewingTask(null)}>Done</button>}
+      >
+        {viewingTask && (
+          <div className="mtm-flex mtm-flex-col mtm-gap-4">
+            <div className="mtm-flex mtm-flex-wrap mtm-gap-2">
+              <span className="ui-chip">{(viewingTask.status || "TODO").replace("_", " ")}</span>
+              <span className={`mtm-text-xs mtm-px-2 mtm-py-0.5 mtm-rounded-full mtm-border ${PRIORITY_CLASS[viewingTask.priority] || PRIORITY_CLASS.LOW}`}>
+                {viewingTask.priority}
+              </span>
+              {viewingTask.dueDate && (
+                <span className="ui-chip"><FiCalendar size={12} /> {viewingTask.dueDate}</span>
+              )}
+            </div>
+            {viewingTask.description && (
+              <p className="mtm-text-content mtm-font-medium mtm-m-0">{viewingTask.description}</p>
+            )}
+            <div>
+              <h3 className="mtm-font-comic mtm-text-lg mtm-text-content mtm-mb-2 mtm-flex mtm-items-center mtm-gap-2">
+                <FiChevronDown /> Sub-tasks
+              </h3>
+              <SubTasks parentId={viewingTask.id} showError={showError} />
+            </div>
+            <div>
+              <h3 className="mtm-font-comic mtm-text-lg mtm-text-content mtm-mb-2 mtm-flex mtm-items-center mtm-gap-2">
+                <FiPaperclip /> Files &amp; images
+              </h3>
+              <AttachmentPanel parentType="TASK" parentId={viewingTask.id} onError={showError} />
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
