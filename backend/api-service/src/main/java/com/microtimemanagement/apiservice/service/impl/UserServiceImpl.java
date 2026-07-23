@@ -322,6 +322,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserDTO updateAvatar(String avatarBase64) {
+        User user = userRepository.findByUidAndIsActiveTrue(currentAuthenticatedUid());
+        if (user == null) {
+            throw new MicroTimeManagementBadRequestException(ErrorConstants.INVALID_USER_IDENTIFIER_VALUE);
+        }
+        user.setAvatarBase64(avatarBase64);
+        return userConverter.toDTO(saveUserEntity(user));
+    }
+
+    @Override
     public String deleteUserByUsername(String username) {
         User user = findByUsername(username);
         user.setIsActive(Boolean.FALSE);

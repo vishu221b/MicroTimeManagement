@@ -81,6 +81,23 @@ public class UserController {
     }
 
     /**
+     * Updates the current user's profile picture (data-URL base64, <= 5 MB).
+     */
+    @RequestMapping(value = ApiConstants.UserEndpoint.UPDATE_AVATAR, method = RequestMethod.PUT)
+    @ResponseBody
+    @SecurityRequirement(name = "MTM Auth")
+    public GenericMessageResponseDTO<UserDTO> updateAvatar(
+            @Valid @RequestBody com.microtimemanagement.apiservice.dto.request.AvatarUpdateRequestDTO request,
+            BindingResult bindingResult
+    ) {
+        ApiUtils.handleValidationErrors(bindingResult);
+        return ApiUtils.buildResponseDTO(
+                ResponseMessages.USER_DETAILS_UPDATED,
+                userService.updateAvatar(request.getAvatarBase64())
+        );
+    }
+
+    /**
      * Deletes the currently logged-in user
      * */
     @RequestMapping(value = ApiConstants.UserEndpoint.DELETE_CURRENT_USER, method = RequestMethod.DELETE)

@@ -38,6 +38,7 @@ public class UserDTOConverter implements BaseDTOConverter<User, UserDTO> {
                     .password(user.getPassword())
                     .dateOfBirth(user.getDateOfBirth())
                     .roles(user.getRoles())
+                    .avatarBase64(user.getAvatarBase64())
                     .build();
         return null;
     }
