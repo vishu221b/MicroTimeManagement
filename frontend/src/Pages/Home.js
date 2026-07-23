@@ -30,12 +30,12 @@ const Reveal = ({ children, delay = 0, className = "" }) => (
 );
 
 const FEATURES = [
-  { icon: <FiClock />, title: "Log in a snap", text: "Name it, time it, done. Overlaps are auto-rejected and everything stays in order.", c: "from-primary to-accent" },
-  { icon: <FiBarChart2 />, title: "See the story", text: "A live dashboard with a time-per-day chart and your top activities, at a glance.", c: "from-accent to-accent2" },
-  { icon: <FiFolder />, title: "Projects & tasks", text: "Group work into projects with a To-do / Doing / Done board and nested sub-tasks.", c: "from-accent2 to-primary" },
-  { icon: <FiBell />, title: "Never forget", text: "Schedule reminders with in-app + browser notifications (email optional).", c: "from-highlight to-accent" },
-  { icon: <FiImage />, title: "Pin proof", text: "Attach an image to any activity — receipts, screenshots, whatever you need.", c: "from-primary to-accent2" },
-  { icon: <FiLink2 />, title: "Chain it up", text: "Link activities, tasks and projects into custom stories & routines.", c: "from-accent to-highlight" },
+  { icon: <FiClock />, title: "Log in a snap", text: "Name it, time it, done. Overlaps are auto-rejected and everything stays in order.", c: "mtm-from-primary mtm-to-accent" },
+  { icon: <FiBarChart2 />, title: "See the story", text: "A live dashboard with a time-per-day chart and your top activities, at a glance.", c: "mtm-from-accent mtm-to-accent2" },
+  { icon: <FiFolder />, title: "Projects & tasks", text: "Group work into projects with a To-do / Doing / Done board and nested sub-tasks.", c: "mtm-from-accent2 mtm-to-primary" },
+  { icon: <FiBell />, title: "Never forget", text: "Schedule reminders with in-app + browser notifications (email optional).", c: "mtm-from-highlight mtm-to-accent" },
+  { icon: <FiImage />, title: "Pin proof", text: "Attach files & images to any activity — receipts, screenshots, whatever you need.", c: "mtm-from-primary mtm-to-accent2" },
+  { icon: <FiLink2 />, title: "Chain it up", text: "Link activities, tasks and projects into custom stories & routines.", c: "mtm-from-accent mtm-to-highlight" },
 ];
 
 const STEPS = [

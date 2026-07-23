@@ -17,6 +17,7 @@ import {
   removeRolesFromUsers,
   updateRole,
 } from "../service/ApiService";
+import { useConfirm } from "../components/ConfirmProvider";
 
 const errorMessageFrom = (errorPayload) => {
   if (!errorPayload) return "Something went wrong.";
@@ -55,6 +56,7 @@ function RolesTab({ showSuccess, showError }) {
   const [loading, setLoading] = useState(false);
   const [newRoleName, setNewRoleName] = useState("");
   const [editing, setEditing] = useState({ id: null, name: "" });
+  const confirm = useConfirm();
 
   const load = useCallback(() => {
     setLoading(true);
@@ -110,13 +112,12 @@ function RolesTab({ showSuccess, showError }) {
     );
   };
 
-  const handleDelete = (role) => {
-    if (
-      !window.confirm(
-        `Soft-delete role "${role.name}"? Users with this role will lose it.`
-      )
-    )
-      return;
+  const handleDelete = async (role) => {
+    const ok = await confirm({
+      title: "Delete role?",
+      message: `Soft-delete "${role.name}"? Users with this role will lose it.`,
+    });
+    if (!ok) return;
     deleteRole(role.id, (data, err) => {
       if (err) {
         showError(errorMessageFrom(err));

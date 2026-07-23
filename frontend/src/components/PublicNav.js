@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FiZap, FiMenu, FiX } from "react-icons/fi";
 import useAuth from "../hooks/useAuth";
 import ThemeToggle from "./ThemeToggle";
+import InstallButton from "./InstallButton";
 
 function PublicNav() {
   const { isAuthenticated } = useAuth();
@@ -33,6 +34,7 @@ function PublicNav() {
         </div>
 
         <div className="mtm-hidden md:mtm-flex mtm-items-center mtm-gap-2">
+          <InstallButton className="ui-btn ui-btn-ghost ui-btn-sm" label="Install" />
           <ThemeToggle />
           {isAuthenticated ? (
             <Link to="/dashboard" className="ui-btn ui-btn-primary ui-btn-sm">Open app</Link>

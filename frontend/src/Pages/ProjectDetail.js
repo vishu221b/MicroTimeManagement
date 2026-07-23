@@ -17,6 +17,7 @@ import {
   listTasks,
   updateTask,
 } from "../service/ApiService";
+import { useConfirm } from "../components/ConfirmProvider";
 
 const COLUMNS = [
   { key: "TODO", label: "To do" },
@@ -92,6 +93,7 @@ function SubTasks({ parentId, showError }) {
 function ProjectDetail({ setToastState }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const confirm = useConfirm();
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -140,8 +142,9 @@ function ProjectDetail({ setToastState }) {
     });
   };
 
-  const remove = (task) => {
-    if (!window.confirm(`Delete task "${task.name}"?`)) return;
+  const remove = async (task) => {
+    const ok = await confirm({ title: "Delete task?", message: `"${task.name}" will be removed.` });
+    if (!ok) return;
     deleteTask(task.id, (d, err) => {
       if (err) return showError(errorMessageFrom(err));
       showSuccess("Task deleted.");

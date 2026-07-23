@@ -14,6 +14,7 @@ import {
   listReminders,
   updateReminder,
 } from "../service/ApiService";
+import { useConfirm } from "../components/ConfirmProvider";
 
 const errorMessageFrom = (e) =>
   (e && e.error && e.error.message) || (e && e.message) || "Something went wrong.";
@@ -42,6 +43,7 @@ function Reminders({ setToastState }) {
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ title: "", remindAtLocal: "", notes: "", emailReminder: false });
+  const confirm = useConfirm();
 
   const showError = (m) =>
     setToastState({ display: true, variant: "error", messages: [m], includePrefix: true });
@@ -85,8 +87,9 @@ function Reminders({ setToastState }) {
     });
   };
 
-  const remove = (r) => {
-    if (!window.confirm(`Delete reminder "${r.title}"?`)) return;
+  const remove = async (r) => {
+    const ok = await confirm({ title: "Delete reminder?", message: `"${r.title}" will be removed.` });
+    if (!ok) return;
     deleteReminder(r.id, (data, err) => {
       if (err) return showError(errorMessageFrom(err));
       showSuccess("Reminder deleted.");

@@ -37,10 +37,10 @@
 }
 
 :root[data-theme="dark"] {
-  --mtm-bg-rgb: 20 16 34;
-  --mtm-bg-grad-rgb: 34 22 58;
-  --mtm-surface-rgb: 32 25 54;
-  --mtm-surface-2-rgb: 45 36 74;
+  --mtm-bg-rgb: 24 19 32;
+  --mtm-bg-grad-rgb: 38 30 48;
+  --mtm-surface-rgb: 34 27 48;
+  --mtm-surface-2-rgb: 48 40 62;
   --mtm-border-rgb: 12 10 20;
   --mtm-content-rgb: 245 243 255;
   --mtm-muted-rgb: 170 160 200;
@@ -87,16 +87,19 @@
   background-image:
     radial-gradient(1100px 520px at 88% -8%, rgb(var(--mtm-accent-rgb) / 0.16), transparent 60%),
     radial-gradient(900px 480px at -5% 5%, rgb(var(--mtm-primary-rgb) / 0.16), transparent 55%),
+    radial-gradient(820px 460px at 50% 112%, rgb(var(--mtm-highlight-rgb) / 0.16), transparent 60%),
+    radial-gradient(620px 380px at 15% 90%, rgb(var(--mtm-accent2-rgb) / 0.12), transparent 60%),
     radial-gradient(rgb(var(--mtm-ink-rgb) / 0.06) 1.4px, transparent 1.6px);
-  background-size: auto, auto, 18px 18px;
+  background-size: auto, auto, auto, auto, 18px 18px;
+  background-attachment: fixed, fixed, fixed, fixed, scroll;
 }
 
 /* ---------- Component primitives (comic) ---------- */
 
 .ui-page {
-  max-width: 1120px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 2rem 1.25rem 4rem;
+  padding: 2rem 1.75rem 4rem;
 }
 
 .ui-card {

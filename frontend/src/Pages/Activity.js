@@ -8,6 +8,7 @@ import {
   FiX,
   FiCalendar,
   FiCornerDownRight,
+  FiPaperclip,
 } from "react-icons/fi";
 import {
   createActivity,
@@ -17,6 +18,9 @@ import {
   getActivityNames,
   updateActivity,
 } from "../service/ApiService";
+import Modal from "../components/Modal";
+import AttachmentPanel from "../components/AttachmentPanel";
+import { useConfirm } from "../components/ConfirmProvider";
 
 // Backend expects time strings shaped "HH:MM:M" where the final digit is
 // 0 for AM and 1 for PM, with HH in the 1..12 range. The HTML <input type="time">
@@ -50,10 +54,7 @@ const blankForm = () => ({
   activityDescription: "",
   startTime: "",
   endTime: "",
-  imageBase64: "",
 });
-
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 // Turn the backend's "HH:MM:AM"/"HH:MM:PM" display time into 24h "HHMMSS".
 const displayTimeTo24 = (t) => {
@@ -98,6 +99,9 @@ function Activity({ setToastState }) {
   const [nameSuggestions, setNameSuggestions] = useState([]);
   // When set, the next created activity is chain-linked (FOLLOWS) to this one.
   const [chainFromId, setChainFromId] = useState(null);
+  // The activity whose rich detail modal is open (with its files/images).
+  const [viewing, setViewing] = useState(null);
+  const confirm = useConfirm();
 
   const showSuccess = (message) =>
     setToastState({
@@ -205,7 +209,6 @@ function Activity({ setToastState }) {
       activityDescription: form.activityDescription,
       activityStartHourMinutes: toBackendTimeString(form.startTime),
       activityEndHourMinutes: toBackendTimeString(form.endTime),
-      imageBase64: form.imageBase64 || undefined,
     };
     const chainSource = chainFromId;
     createActivity(payload, (data, err) => {
@@ -244,7 +247,6 @@ function Activity({ setToastState }) {
       activityEndHourMinutes: form.endTime
         ? toBackendTimeString(form.endTime)
         : undefined,
-      imageBase64: form.imageBase64,
     };
     updateActivity(date, payload, (data, err) => {
       if (err) {
@@ -258,8 +260,12 @@ function Activity({ setToastState }) {
     });
   };
 
-  const handleDelete = (recordId) => {
-    if (!window.confirm("Delete this activity?")) return;
+  const handleDelete = async (recordId) => {
+    const ok = await confirm({
+      title: "Delete activity?",
+      message: "This activity will be removed from this day.",
+    });
+    if (!ok) return;
     deleteActivity(date, recordId, (data, err) => {
       if (err) {
         showError(errorMessageFrom(err));
@@ -273,27 +279,14 @@ function Activity({ setToastState }) {
   const startEditing = (activity) => {
     setEditingId(activity.id);
     setCreating(false);
+    setViewing(null);
     setForm({
       activityName: activity.activityName || "",
       activityDescription: activity.activityDescription || "",
       // Start blank so users only submit times when they want to retime.
       startTime: "",
       endTime: "",
-      imageBase64: activity.imageBase64 || "",
     });
-  };
-
-  const onPickImage = (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    if (file.size > MAX_IMAGE_BYTES) {
-      showError("Image must be at most 5 MB.");
-      e.target.value = "";
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => setForm((s) => ({ ...s, imageBase64: reader.result }));
-    reader.readAsDataURL(file);
   };
 
   const formOpen = creating || editingId;
@@ -398,34 +391,6 @@ function Activity({ setToastState }) {
                 placeholder="Optional notes"
               />
             </div>
-            <div className="sm:mtm-col-span-2">
-              <label className="ui-label">Image (optional, ≤ 5 MB)</label>
-              <div className="mtm-flex mtm-items-center mtm-gap-3">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={onPickImage}
-                  className="mtm-text-sm ui-muted mtm-max-w-full"
-                />
-                {form.imageBase64 && (
-                  <div className="mtm-relative mtm-shrink-0">
-                    <img
-                      src={form.imageBase64}
-                      alt="preview"
-                      className="mtm-h-14 mtm-w-14 mtm-object-cover mtm-rounded-lg mtm-border mtm-border-line"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setForm((s) => ({ ...s, imageBase64: "" }))}
-                      className="mtm-absolute -mtm-top-2 -mtm-right-2 mtm-h-5 mtm-w-5 mtm-rounded-full mtm-bg-danger mtm-text-white mtm-flex mtm-items-center mtm-justify-center"
-                      aria-label="Remove image"
-                    >
-                      <FiX size={12} />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
             <div>
               <label className="ui-label" htmlFor="startTime">
                 Start time{editingId ? " (leave blank to keep)" : ""}
@@ -488,13 +453,21 @@ function Activity({ setToastState }) {
             key={activity.id}
             className="ui-card-flat mtm-p-4 mtm-flex mtm-flex-col sm:mtm-flex-row sm:mtm-justify-between sm:mtm-items-center mtm-gap-3"
           >
-            <div className="mtm-flex mtm-items-start mtm-gap-3 mtm-min-w-0">
+            <button
+              type="button"
+              onClick={() => setViewing(activity)}
+              title="View details & files"
+              className="mtm-flex mtm-items-start mtm-gap-3 mtm-min-w-0 mtm-flex-1 mtm-text-left hover:mtm-opacity-90 mtm-transition-opacity"
+            >
               <span className="ui-icon-tile mtm-shrink-0 mtm-mt-0.5">
                 <FiClock size={17} />
               </span>
               <div className="mtm-min-w-0">
-                <div className="mtm-text-content mtm-font-semibold">
+                <div className="mtm-text-content mtm-font-semibold mtm-flex mtm-items-center mtm-gap-2">
                   {activity.activityName}
+                  {activity.imageBase64 && (
+                    <FiPaperclip size={13} className="mtm-text-primary" />
+                  )}
                 </div>
                 <div className="mtm-text-sm ui-muted">
                   {activity.activityStartTime} → {activity.activityEndTime} ·{" "}
@@ -503,21 +476,13 @@ function Activity({ setToastState }) {
                   </span>
                 </div>
                 {activity.activityDescription && (
-                  <div className="mtm-text-sm ui-muted mtm-mt-1">
+                  <div className="mtm-text-sm ui-muted mtm-mt-1 mtm-line-clamp-1">
                     {activity.activityDescription}
                   </div>
                 )}
-                {activity.imageBase64 && (
-                  <a href={activity.imageBase64} target="_blank" rel="noopener noreferrer">
-                    <img
-                      src={activity.imageBase64}
-                      alt={activity.activityName}
-                      className="mtm-mt-2 mtm-h-20 mtm-rounded-lg mtm-border mtm-border-line mtm-object-cover"
-                    />
-                  </a>
-                )}
+                <span className="ui-link mtm-text-xs">View details &amp; files →</span>
               </div>
-            </div>
+            </button>
             <div className="mtm-flex mtm-gap-2 mtm-shrink-0">
               <button
                 className="ui-btn ui-btn-soft ui-btn-sm"
@@ -551,6 +516,51 @@ function Activity({ setToastState }) {
           </li>
         ))}
       </ul>
+
+      <Modal
+        open={!!viewing}
+        onClose={() => setViewing(null)}
+        title={viewing ? viewing.activityName : ""}
+        icon={<FiClock />}
+        footer={
+          <>
+            <button className="ui-btn ui-btn-ghost" onClick={() => startEditing(viewing)}>
+              <FiEdit2 size={14} /> Edit
+            </button>
+            <button className="ui-btn ui-btn-primary" onClick={() => setViewing(null)}>
+              Done
+            </button>
+          </>
+        }
+      >
+        {viewing && (
+          <div className="mtm-flex mtm-flex-col mtm-gap-4">
+            <div className="mtm-flex mtm-flex-wrap mtm-gap-2">
+              <span className="ui-chip">
+                <FiClock size={12} /> {viewing.activityStartTime} → {viewing.activityEndTime}
+              </span>
+              <span className="ui-chip mtm-text-primary">{viewing.activityTotalDuration}</span>
+              <span className="ui-chip">
+                <FiCalendar size={12} /> {viewing.activityDate}
+              </span>
+            </div>
+            {viewing.activityDescription && (
+              <p className="mtm-text-content mtm-font-medium mtm-m-0">{viewing.activityDescription}</p>
+            )}
+            <div>
+              <h3 className="mtm-font-comic mtm-text-lg mtm-text-content mtm-mb-2 mtm-flex mtm-items-center mtm-gap-2">
+                <FiPaperclip /> Files &amp; images
+              </h3>
+              <AttachmentPanel
+                parentType="ACTIVITY"
+                parentId={viewing.id}
+                legacyImage={viewing.imageBase64}
+                onError={showError}
+              />
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

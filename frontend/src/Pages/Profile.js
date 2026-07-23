@@ -8,6 +8,7 @@ import {
   startCheckout,
   updateUserDetails,
 } from "../service/ApiService";
+import { useConfirm } from "../components/ConfirmProvider";
 
 const blankProfile = () => ({
   uid: "",
@@ -38,6 +39,7 @@ function Profile({ setToastState }) {
   });
   const [billing, setBilling] = useState(null);
   const [billingBusy, setBillingBusy] = useState(false);
+  const confirm = useConfirm();
 
   const showSuccess = (message) =>
     setToastState({
@@ -164,8 +166,13 @@ function Profile({ setToastState }) {
     });
   };
 
-  const handleCancelPlan = () => {
-    if (!window.confirm("Cancel Pro and return to the Free plan?")) return;
+  const handleCancelPlan = async () => {
+    const ok = await confirm({
+      title: "Cancel Pro?",
+      message: "You'll return to the Free plan.",
+      confirmLabel: "Cancel plan",
+    });
+    if (!ok) return;
     setBillingBusy(true);
     cancelSubscription((data, err) => {
       setBillingBusy(false);

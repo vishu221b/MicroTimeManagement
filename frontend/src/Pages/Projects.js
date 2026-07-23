@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { FiPlus, FiFolder, FiTrash2, FiArrowRight, FiX } from "react-icons/fi";
 import {
   createProject,
   deleteProject,
   listProjects,
 } from "../service/ApiService";
+import { useConfirm } from "../components/ConfirmProvider";
 
 const SWATCHES = ["#10b981", "#14b8a6", "#6366f1", "#f59e0b", "#ef4444", "#ec4899"];
 
@@ -18,6 +20,7 @@ function Projects({ setToastState }) {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", color: SWATCHES[0] });
   const navigate = useNavigate();
+  const confirm = useConfirm();
 
   const showError = (m) =>
     setToastState({ display: true, variant: "error", messages: [m], includePrefix: true });
@@ -50,8 +53,12 @@ function Projects({ setToastState }) {
     });
   };
 
-  const handleDelete = (project) => {
-    if (!window.confirm(`Delete project "${project.name}"?`)) return;
+  const handleDelete = async (project) => {
+    const ok = await confirm({
+      title: "Delete project?",
+      message: `"${project.name}" and its board view will be removed.`,
+    });
+    if (!ok) return;
     deleteProject(project.id, (data, err) => {
       if (err) return showError(errorMessageFrom(err));
       showSuccess("Project deleted.");
@@ -123,22 +130,23 @@ function Projects({ setToastState }) {
         </div>
       )}
 
-      <div className="mtm-grid mtm-gap-4 sm:mtm-grid-cols-2 lg:mtm-grid-cols-3">
+      <div className="mtm-grid mtm-gap-6 sm:mtm-grid-cols-2 xl:mtm-grid-cols-3">
         {projects.map((p) => (
-          <div key={p.id} className="ui-card mtm-p-5 mtm-flex mtm-flex-col mtm-cursor-pointer hover:mtm-border-primary/50 mtm-transition-colors"
+          <motion.div key={p.id} whileHover={{ y: -4, rotate: -0.5 }}
+            className="ui-card mtm-p-7 mtm-flex mtm-flex-col mtm-cursor-pointer hover:mtm-border-primary/60 mtm-transition-colors"
             onClick={() => navigate(`/projects/${p.id}`)}>
-            <div className="mtm-flex mtm-items-start mtm-justify-between mtm-mb-3">
-              <span className="mtm-inline-flex mtm-items-center mtm-justify-center mtm-h-10 mtm-w-10 mtm-rounded-xl mtm-text-white"
-                style={{ backgroundColor: p.color || "#10b981" }}>
-                <FiFolder size={18} />
+            <div className="mtm-flex mtm-items-start mtm-justify-between mtm-mb-4">
+              <span className="mtm-inline-flex mtm-items-center mtm-justify-center mtm-h-12 mtm-w-12 mtm-rounded-xl mtm-text-white mtm-border-[3px] mtm-border-ink mtm-shadow-comic-sm"
+                style={{ backgroundColor: p.color || "#7c3aed" }}>
+                <FiFolder size={20} />
               </span>
               <span className={`ui-chip mtm-text-xs ${p.status === "ARCHIVED" ? "" : "mtm-text-primary"}`}>
                 {p.status}
               </span>
             </div>
-            <div className="mtm-font-semibold mtm-text-content mtm-text-lg">{p.name}</div>
-            {p.description && <div className="ui-muted mtm-text-sm mtm-mt-1 mtm-line-clamp-2">{p.description}</div>}
-            <div className="mtm-flex mtm-items-center mtm-justify-between mtm-mt-4">
+            <div className="mtm-font-comic mtm-text-2xl mtm-text-content">{p.name}</div>
+            {p.description && <div className="ui-muted mtm-text-sm mtm-mt-1.5 mtm-line-clamp-2">{p.description}</div>}
+            <div className="mtm-flex mtm-items-center mtm-justify-between mtm-mt-5">
               <span className="ui-link mtm-text-sm mtm-inline-flex mtm-items-center mtm-gap-1">
                 Open <FiArrowRight size={14} />
               </span>
@@ -147,7 +155,7 @@ function Projects({ setToastState }) {
                 <FiTrash2 size={16} />
               </button>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>

@@ -17,6 +17,7 @@ import {
 import useAuth from "../hooks/useAuth";
 import { logoutUser } from "../service/ApiService";
 import ThemeToggle from "./ThemeToggle";
+import InstallButton from "./InstallButton";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: <FiGrid /> },
@@ -72,11 +73,14 @@ function Sidebar() {
   };
 
   const Footer = (
-    <div className="mtm-flex mtm-items-center mtm-justify-between mtm-gap-2 mtm-pt-3 mtm-mt-3 mtm-border-t-2 mtm-border-ink/15">
-      <ThemeToggle />
-      <button onClick={handleLogout} className="ui-btn ui-btn-danger ui-btn-sm">
-        <FiLogOut size={14} /> Logout
-      </button>
+    <div className="mtm-pt-3 mtm-mt-3 mtm-border-t-2 mtm-border-ink/15">
+      <InstallButton className="ui-btn ui-btn-soft ui-btn-sm mtm-w-full mtm-mb-2" />
+      <div className="mtm-flex mtm-items-center mtm-justify-between mtm-gap-2">
+        <ThemeToggle />
+        <button onClick={handleLogout} className="ui-btn ui-btn-danger ui-btn-sm">
+          <FiLogOut size={14} /> Logout
+        </button>
+      </div>
     </div>
   );
 
