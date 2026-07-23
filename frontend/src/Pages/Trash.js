@@ -76,7 +76,7 @@ function Trash({ setToastState }) {
       : "Nothing archived. Archive items from their pages to tuck them away without deleting.";
 
   return (
-    <div className="ui-page ui-fade-in mtm-max-w-4xl">
+    <div className="ui-page ui-fade-in">
       <div className="mtm-mb-8">
         <p className="ui-eyebrow">Cleanup</p>
         <h1 className="mtm-text-3xl mtm-font-display mtm-font-bold mtm-text-content mtm-mt-1 mtm-mb-0">

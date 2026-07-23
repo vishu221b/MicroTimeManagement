@@ -104,9 +104,16 @@
 /* ---------- Component primitives (comic) ---------- */
 
 .ui-page {
-  max-width: 1600px;
+  max-width: 1920px;
   margin: 0 auto;
   padding: 2rem 1.75rem 4rem;
+}
+
+@media (min-width: 1280px) {
+  .ui-page {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
 }
 
 .ui-card {
