@@ -52,6 +52,10 @@ public class User extends BaseModel implements UserDetails {
 
     private String uid;
 
+    // Optional profile picture, data-URL base64 (<= 5 MB).
+    @Column(columnDefinition = "text")
+    private String avatarBase64;
+
     // Role IDs, resolved to role-name authorities at auth time. Kept as a
     // simple string collection (join table) to preserve the "roles as IDs"
     // design. Eager so getAuthorities() works outside an open session.

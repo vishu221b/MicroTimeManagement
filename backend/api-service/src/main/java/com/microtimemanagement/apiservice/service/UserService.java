@@ -32,6 +32,8 @@ public interface UserService extends UserDetailsService {
 
     UserDTO updateUserDetails(UserDetailsUpdateRequestDTO userDetailsUpdateRequestDTO);
 
+    UserDTO updateAvatar(String avatarBase64);
+
     String deleteUserByUsername(String userId);
 
     String changeUserPassword(PasswordChangeRequestDTO passwordChangeRequestDTO);

@@ -301,11 +301,15 @@
   background-clip: content-box;
 }
 
-/* Native date/time icons visible in dark mode */
-:root[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
-:root[data-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator,
-:root[data-theme="dark"] input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.9);
+/* Native date/time inputs: let the browser theme them per color-scheme so the
+   text + picker icon stay visible in dark mode (no manual invert, which would
+   double-darken the already-light icon into invisibility). */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"] {
+  color-scheme: light dark;
 }
 
 @media (prefers-reduced-motion: reduce) {

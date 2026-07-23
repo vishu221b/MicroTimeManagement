@@ -17,6 +17,7 @@ public class ApiConstants {
         public static final String ADD_ROLE_TO_USER = "/addRole";
         public static final String REMOVE_ROLE_FOR_USER = "/removeRole";
         public static final String GET_ALL_USERS = "/all";
+        public static final String UPDATE_AVATAR = "/avatar";
     }
 
     public static final class AdminEndpoint {
@@ -49,6 +50,10 @@ public class ApiConstants {
 
     public static final class BillingEndpoint {
         public static final String API_BASE = API_PREFIX_V1 + "/billing";
+    }
+
+    public static final class AttachmentEndpoint {
+        public static final String API_BASE = API_PREFIX_V1 + "/attachment";
     }
     public static final class AuthEndpoint {
         public static final String API_BASE = API_PREFIX_V1 + "/auth";
