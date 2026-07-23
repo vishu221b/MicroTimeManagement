@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="MTM">
+  <defs>
+    <linearGradient id="bgm" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7c3aed"/>
+      <stop offset="0.55" stop-color="#a21caf"/>
+      <stop offset="1" stop-color="#ec4899"/>
+    </linearGradient>
+    <radialGradient id="glowm" cx="30%" cy="22%" r="85%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.34"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="boltm" x1="256" y1="126" x2="256" y2="386" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#fde68a"/>
+    </linearGradient>
+    <filter id="shm" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#3b0764" flood-opacity="0.38"/>
+    </filter>
+  </defs>
+  <!-- Full-bleed: launcher applies its own mask. Bolt sits inside the 80% safe zone. -->
+  <rect x="0" y="0" width="512" height="512" fill="url(#bgm)"/>
+  <rect x="0" y="0" width="512" height="512" fill="url(#glowm)"/>
+  <polygon filter="url(#shm)" points="269,126 139,282 256,282 243,386 373,230 256,230 269,126" fill="url(#boltm)"/>
+</svg>

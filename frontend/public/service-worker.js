@@ -1,8 +1,16 @@
 /* Minimal PWA service worker for Micro Time Management.
    - App-shell precache + offline navigation fallback.
    - Same-origin GETs are cache-first; API / cross-origin requests pass through. */
-const CACHE = "mtm-cache-v1";
-const APP_SHELL = ["/", "/index.html", "/manifest.json"];
+const CACHE = "mtm-cache-v2";
+const APP_SHELL = [
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/favicon.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/apple-touch-icon.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
