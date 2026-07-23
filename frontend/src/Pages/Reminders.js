@@ -15,6 +15,9 @@ import {
   updateReminder,
 } from "../service/ApiService";
 import { useConfirm } from "../components/ConfirmProvider";
+import Modal from "../components/Modal";
+import AttachmentPanel from "../components/AttachmentPanel";
+import { FiPaperclip } from "react-icons/fi";
 
 const errorMessageFrom = (e) =>
   (e && e.error && e.error.message) || (e && e.message) || "Something went wrong.";
@@ -43,6 +46,7 @@ function Reminders({ setToastState }) {
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ title: "", remindAtLocal: "", notes: "", emailReminder: false });
+  const [viewing, setViewing] = useState(null);
   const confirm = useConfirm();
 
   const showError = (m) =>
@@ -158,7 +162,12 @@ function Reminders({ setToastState }) {
           const overdue = r.status === "PENDING" && r.remindAt && r.remindAt <= Date.now();
           return (
             <li key={r.id} className="ui-card-flat mtm-p-4 mtm-flex mtm-flex-col sm:mtm-flex-row sm:mtm-justify-between sm:mtm-items-center mtm-gap-3">
-              <div className="mtm-flex mtm-items-start mtm-gap-3 mtm-min-w-0">
+              <button
+                type="button"
+                onClick={() => setViewing(r)}
+                title="View details & files"
+                className="mtm-flex mtm-items-start mtm-gap-3 mtm-min-w-0 mtm-flex-1 mtm-text-left hover:mtm-opacity-90 mtm-transition-opacity"
+              >
                 <span className={`ui-icon-tile mtm-shrink-0 mtm-mt-0.5 ${overdue ? "mtm-text-danger" : ""}`}>
                   <FiBell size={17} />
                 </span>
@@ -175,9 +184,9 @@ function Reminders({ setToastState }) {
                       <span className="mtm-inline-flex mtm-items-center mtm-gap-1"><FiMail size={12} /> email</span>
                     )}
                   </div>
-                  {r.notes && <div className="mtm-text-sm ui-muted mtm-mt-1">{r.notes}</div>}
+                  {r.notes && <div className="mtm-text-sm ui-muted mtm-mt-1 mtm-line-clamp-1">{r.notes}</div>}
                 </div>
-              </div>
+              </button>
               <div className="mtm-flex mtm-gap-2 mtm-shrink-0">
                 {r.status === "PENDING" && (
                   <>
@@ -197,6 +206,32 @@ function Reminders({ setToastState }) {
           );
         })}
       </ul>
+
+      <Modal
+        open={!!viewing}
+        onClose={() => setViewing(null)}
+        title={viewing ? viewing.title : ""}
+        icon={<FiBell />}
+        footer={<button className="ui-btn ui-btn-primary" onClick={() => setViewing(null)}>Done</button>}
+      >
+        {viewing && (
+          <div className="mtm-flex mtm-flex-col mtm-gap-4">
+            <div className="mtm-flex mtm-flex-wrap mtm-gap-2">
+              <span className="ui-chip"><FiClock size={12} /> {fmt(viewing.remindAt)}</span>
+              <span className={`ui-chip ${STATUS_CHIP[viewing.status]}`}>{viewing.status}</span>
+              <span className="ui-chip">{relative(viewing.remindAt)}</span>
+              {viewing.emailReminder && <span className="ui-chip"><FiMail size={12} /> email</span>}
+            </div>
+            {viewing.notes && <p className="mtm-text-content mtm-font-medium mtm-m-0">{viewing.notes}</p>}
+            <div>
+              <h3 className="mtm-font-comic mtm-text-lg mtm-text-content mtm-mb-2 mtm-flex mtm-items-center mtm-gap-2">
+                <FiPaperclip /> Files &amp; images
+              </h3>
+              <AttachmentPanel parentType="REMINDER" parentId={viewing.id} onError={showError} />
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

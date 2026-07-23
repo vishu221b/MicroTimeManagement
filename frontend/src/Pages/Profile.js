@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
-import { FiUser, FiLock, FiStar, FiCheck } from "react-icons/fi";
+import React, { useEffect, useRef, useState } from "react";
+import { FiUser, FiLock, FiStar, FiCheck, FiCamera } from "react-icons/fi";
 import {
   cancelSubscription,
   changeUserPassword,
   getBilling,
   getUserProfile,
   startCheckout,
+  updateAvatar,
   updateUserDetails,
 } from "../service/ApiService";
 import { useConfirm } from "../components/ConfirmProvider";
@@ -17,6 +18,7 @@ const blankProfile = () => ({
   firstName: "",
   lastName: "",
   dateOfBirth: "",
+  avatarBase64: "",
 });
 
 const errorMessageFrom = (errorPayload) => {
@@ -77,6 +79,7 @@ function Profile({ setToastState }) {
           firstName: payload.firstName || "",
           lastName: payload.lastName || "",
           dateOfBirth: payload.dateOfBirth || "",
+          avatarBase64: payload.avatarBase64 || "",
         });
       }
     });
@@ -182,6 +185,28 @@ function Profile({ setToastState }) {
     });
   };
 
+  const avatarInputRef = useRef(null);
+
+  const onPickAvatar = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      showError("Image must be at most 5 MB.");
+      e.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      updateAvatar({ avatarBase64: dataUrl }, (data, err) => {
+        if (err) return showError(errorMessageFrom(err));
+        setProfile((p) => ({ ...p, avatarBase64: dataUrl }));
+        showSuccess("Profile picture updated.");
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
   const initials = `${(profile.firstName || profile.username || "?")[0] || ""}${
     (profile.lastName || "")[0] || ""
   }`.toUpperCase();
@@ -204,9 +229,25 @@ function Profile({ setToastState }) {
   return (
     <div className="ui-page ui-fade-in mtm-max-w-3xl">
       <div className="mtm-flex mtm-items-center mtm-gap-4 mtm-mb-8">
-        <span className="mtm-inline-flex mtm-items-center mtm-justify-center mtm-h-14 mtm-w-14 mtm-rounded-2xl mtm-bg-gradient-to-br mtm-from-primary mtm-to-accent mtm-text-white mtm-font-display mtm-font-bold mtm-text-xl">
-          {initials || <FiUser />}
-        </span>
+        <div className="mtm-relative mtm-shrink-0">
+          <span className="mtm-inline-flex mtm-items-center mtm-justify-center mtm-h-16 mtm-w-16 mtm-rounded-2xl mtm-overflow-hidden mtm-bg-gradient-to-br mtm-from-primary mtm-to-accent mtm-text-white mtm-font-comic mtm-text-2xl mtm-border-[3px] mtm-border-ink mtm-shadow-comic-sm">
+            {profile.avatarBase64 ? (
+              <img src={profile.avatarBase64} alt="avatar" className="mtm-h-full mtm-w-full mtm-object-cover" />
+            ) : (
+              initials || <FiUser />
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={() => avatarInputRef.current && avatarInputRef.current.click()}
+            className="mtm-absolute -mtm-bottom-1.5 -mtm-right-1.5 mtm-h-8 mtm-w-8 mtm-rounded-full mtm-bg-highlight mtm-border-2 mtm-border-ink mtm-flex mtm-items-center mtm-justify-center mtm-text-ink mtm-shadow-comic-sm hover:mtm-scale-110 mtm-transition-transform"
+            aria-label="Change photo"
+            title="Change photo"
+          >
+            <FiCamera size={14} />
+          </button>
+          <input ref={avatarInputRef} type="file" accept="image/*" className="mtm-hidden" onChange={onPickAvatar} />
+        </div>
         <div>
           <p className="ui-eyebrow">Account</p>
           <h1 className="mtm-text-3xl mtm-font-display mtm-font-bold mtm-text-content mtm-mt-1 mtm-mb-0">
