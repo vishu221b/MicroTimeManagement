@@ -70,7 +70,8 @@ function Profile({ setToastState }) {
         showError(errorMessageFrom(err));
         return;
       }
-      const payload = (data && data.data) || data;
+      // /user/profile returns GenericMessageResponseDTO → { payload, message }.
+      const payload = (data && data.payload) || data;
       if (payload) {
         setProfile({
           uid: payload.uid || "",

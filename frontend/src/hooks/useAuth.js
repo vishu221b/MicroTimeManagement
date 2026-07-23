@@ -31,7 +31,8 @@ export default function useAuth() {
         setRoles([]);
         return;
       }
-      const payload = (data && data.data) || data || {};
+      // /user/profile returns GenericMessageResponseDTO → { payload, message }.
+      const payload = (data && data.payload) || data || {};
       const incomingRoles = Array.isArray(payload.roles)
         ? payload.roles
         : payload.roles

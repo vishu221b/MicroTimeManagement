@@ -28,20 +28,28 @@ const errorMessageFrom = (errorPayload) => {
 };
 
 const extractRoles = (data) => {
-  // GenericMessageResponseDTO wraps the payload under `data`.
-  const payload = (data && data.data) || data || [];
+  // GenericMessageResponseDTO serializes as { payload, message }. The roles
+  // endpoint returns the list directly under `payload`; if it ever paginates,
+  // the list is under payload.results (PaginationResultResponseDTO @JsonProperty).
+  const payload = (data && data.payload !== undefined ? data.payload : data) || [];
   if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload.results)) return payload.results;
   if (Array.isArray(payload.content)) return payload.content;
   return [];
 };
 
 const extractUsersPage = (data) => {
-  // PaginationResultResponseDTO is wrapped in GenericMessageResponseDTO.data.
-  const payload = (data && data.data) || {};
+  // { payload: PaginationResultResponseDTO } where the page is serialized as
+  // { results, page, size, totalPages } via @JsonProperty on the DTO.
+  const page = (data && data.payload) || {};
   return {
-    users: Array.isArray(payload.payload) ? payload.payload : [],
-    pageNumber: payload.pageNumber ?? 0,
-    totalPages: payload.totalPages ?? 1,
+    users: Array.isArray(page.results)
+      ? page.results
+      : Array.isArray(page.payload)
+      ? page.payload
+      : [],
+    pageNumber: page.page ?? page.pageNumber ?? 0,
+    totalPages: page.totalPages ?? 1,
   };
 };
 
