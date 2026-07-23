@@ -28,6 +28,11 @@ public class BaseModel {
     @Column(name = "is_active")
     Boolean isActive;
 
+    // Archived items stay in the DB (isActive stays true) but are hidden from the
+    // primary lists and surfaced in the Archive view — restorable, not deleted.
+    @Column(name = "archived")
+    Boolean archived;
+
     @Column(name = "created_at")
     @Temporal(TemporalType.TIMESTAMP)
     Date createdAt;
@@ -45,6 +50,9 @@ public class BaseModel {
         lastUpdatedAt = now;
         if (isActive == null) {
             isActive = Boolean.TRUE;
+        }
+        if (archived == null) {
+            archived = Boolean.FALSE;
         }
     }
 

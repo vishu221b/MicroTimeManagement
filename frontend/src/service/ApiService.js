@@ -453,6 +453,36 @@ export const deleteAttachment = async (id, callback = () => {}) => {
     .catch((err) => callback(null, toErrorPayload(err)));
 };
 
+// ---- Trash / Archive ----
+// state: "DELETED" (soft-deleted) or "ARCHIVED".
+export const listTrash = async (state = "DELETED", callback = () => {}) => {
+  apiClient
+    .get(`/trash`, { params: { state } })
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const archiveItem = async (type, id, callback = () => {}) => {
+  apiClient
+    .put(`/trash/archive`, null, { params: { type, id } })
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const restoreItem = async (type, id, callback = () => {}) => {
+  apiClient
+    .put(`/trash/restore`, null, { params: { type, id } })
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
+export const purgeItem = async (type, id, callback = () => {}) => {
+  apiClient
+    .delete(`/trash`, { params: { type, id } })
+    .then((response) => callback(response.data, null))
+    .catch((err) => callback(null, toErrorPayload(err)));
+};
+
 // ---- Profile avatar ----
 export const updateAvatar = async (payload, callback = () => {}) => {
   apiClient

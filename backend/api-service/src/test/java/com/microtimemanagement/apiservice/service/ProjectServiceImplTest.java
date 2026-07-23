@@ -61,7 +61,7 @@ class ProjectServiceImplTest {
     @Test
     @DisplayName("list returns only the current user's active projects")
     void listScopedToOwner() {
-        Mockito.when(projectRepository.findByOwnerAndIsActiveTrueOrderByCreatedAtDesc(UID))
+        Mockito.when(projectRepository.findActiveForOwner(UID))
                 .thenReturn(List.of(
                         Project.builder().id("p1").name("A").owner(UID).build(),
                         Project.builder().id("p2").name("B").owner(UID).build()));

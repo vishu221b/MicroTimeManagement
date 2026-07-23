@@ -14,6 +14,7 @@ import History from "./History";
 import Projects from "./Projects";
 import ProjectDetail from "./ProjectDetail";
 import Reminders from "./Reminders";
+import Trash from "./Trash";
 import Profile from "./Profile";
 import Admin from "./Admin";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -90,6 +91,7 @@ function App() {
           <Route path="/projects" element={<ProtectedRoute><Projects {...toastProps} /></ProtectedRoute>} />
           <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetail {...toastProps} /></ProtectedRoute>} />
           <Route path="/reminders" element={<ProtectedRoute><Reminders {...toastProps} /></ProtectedRoute>} />
+          <Route path="/trash" element={<ProtectedRoute><Trash {...toastProps} /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile {...toastProps} /></ProtectedRoute>} />
           <Route path="/admin" element={<AdminRoute><Admin {...toastProps} /></AdminRoute>} />
         </Routes>

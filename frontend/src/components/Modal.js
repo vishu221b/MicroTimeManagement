@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiX } from "react-icons/fi";
 
@@ -20,7 +21,10 @@ function Modal({ open, onClose, title, icon, children, footer, maxWidth = "mtm-m
     };
   }, [open, onClose]);
 
-  return (
+  // Portal to <body> so the modal escapes the sidebar-padded, framer-motion
+  // transformed <main> — a transformed ancestor would otherwise become the
+  // containing block for our fixed overlay and shift it off-center.
+  return createPortal(
     <AnimatePresence>
       {open && (
         <div className="mtm-fixed mtm-inset-0 mtm-z-[80] mtm-flex mtm-items-center mtm-justify-center mtm-p-4">
@@ -58,7 +62,8 @@ function Modal({ open, onClose, title, icon, children, footer, maxWidth = "mtm-m
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
 

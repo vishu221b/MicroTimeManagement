@@ -35,7 +35,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public List<ProjectDTO> listForCurrentUser() {
         return projectRepository
-                .findByOwnerAndIsActiveTrueOrderByCreatedAtDesc(currentUserProvider.currentUid())
+                .findActiveForOwner(currentUserProvider.currentUid())
                 .stream()
                 .map(this::toDTO)
                 .toList();

@@ -63,7 +63,7 @@ class ReminderServiceImplTest {
     @Test
     @DisplayName("list is scoped to the current user, ordered by remindAt")
     void listScoped() {
-        Mockito.when(reminderRepository.findByOwnerAndIsActiveTrueOrderByRemindAtAsc(UID))
+        Mockito.when(reminderRepository.findActiveForOwner(UID))
                 .thenReturn(List.of(Reminder.builder().id("r1").title("A").owner(UID).build()));
 
         assertThat(reminderService.listForCurrentUser()).extracting(ReminderDTO::getId).containsExactly("r1");

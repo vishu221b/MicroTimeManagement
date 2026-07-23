@@ -9,6 +9,7 @@ import {
   FiChevronDown,
   FiChevronUp,
   FiCalendar,
+  FiArchive,
 } from "react-icons/fi";
 import {
   createTask,
@@ -16,6 +17,7 @@ import {
   getProject,
   listTasks,
   updateTask,
+  archiveItem,
 } from "../service/ApiService";
 import { useConfirm } from "../components/ConfirmProvider";
 import Modal from "../components/Modal";
@@ -173,6 +175,14 @@ function ProjectDetail({ setToastState }) {
     if (task) move(task, colKey);
   };
 
+  const archive = (task) => {
+    archiveItem("TASK", task.id, (d, err) => {
+      if (err) return showError(errorMessageFrom(err));
+      showSuccess("Task archived. Find it under Trash → Archive.");
+      loadTasks();
+    });
+  };
+
   const remove = async (task) => {
     const ok = await confirm({ title: "Delete task?", message: `"${task.name}" will be removed.` });
     if (!ok) return;
@@ -288,9 +298,14 @@ function ProjectDetail({ setToastState }) {
                         >
                           {t.name}
                         </button>
-                        <button className="mtm-text-muted hover:mtm-text-danger mtm-shrink-0" onClick={() => remove(t)} aria-label="Delete">
-                          <FiTrash2 size={14} />
-                        </button>
+                        <div className="mtm-flex mtm-items-center mtm-gap-2 mtm-shrink-0">
+                          <button className="mtm-text-muted hover:mtm-text-primary" onClick={() => archive(t)} aria-label="Archive" title="Archive">
+                            <FiArchive size={14} />
+                          </button>
+                          <button className="mtm-text-muted hover:mtm-text-danger" onClick={() => remove(t)} aria-label="Delete" title="Delete">
+                            <FiTrash2 size={14} />
+                          </button>
+                        </div>
                       </div>
                       <div className="mtm-flex mtm-flex-wrap mtm-items-center mtm-gap-2 mtm-mt-2">
                         <span className={`mtm-text-xs mtm-px-2 mtm-py-0.5 mtm-rounded-full mtm-border ${PRIORITY_CLASS[t.priority] || PRIORITY_CLASS.LOW}`}>

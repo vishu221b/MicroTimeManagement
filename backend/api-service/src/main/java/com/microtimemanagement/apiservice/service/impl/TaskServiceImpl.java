@@ -39,21 +39,21 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public List<TaskDTO> listForCurrentUser() {
         return taskRepository
-                .findByOwnerAndIsActiveTrueOrderByCreatedAtDesc(currentUserProvider.currentUid())
+                .findActiveForOwner(currentUserProvider.currentUid())
                 .stream().map(this::toDTO).toList();
     }
 
     @Override
     public List<TaskDTO> listByProject(String projectId) {
         return taskRepository
-                .findByProjectIdAndOwnerAndIsActiveTrueOrderByCreatedAtDesc(projectId, currentUserProvider.currentUid())
+                .findActiveByProject(projectId, currentUserProvider.currentUid())
                 .stream().map(this::toDTO).toList();
     }
 
     @Override
     public List<TaskDTO> listSubtasks(String parentTaskId) {
         return taskRepository
-                .findByParentTaskIdAndOwnerAndIsActiveTrueOrderByCreatedAtDesc(parentTaskId, currentUserProvider.currentUid())
+                .findActiveSubtasks(parentTaskId, currentUserProvider.currentUid())
                 .stream().map(this::toDTO).toList();
     }
 

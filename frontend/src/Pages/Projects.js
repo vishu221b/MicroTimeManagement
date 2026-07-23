@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FiPlus, FiFolder, FiTrash2, FiArrowRight, FiX } from "react-icons/fi";
+import { FiPlus, FiFolder, FiTrash2, FiArrowRight, FiX, FiArchive } from "react-icons/fi";
 import {
   createProject,
   deleteProject,
   listProjects,
+  archiveItem,
 } from "../service/ApiService";
 import { useConfirm } from "../components/ConfirmProvider";
 
@@ -49,6 +50,14 @@ function Projects({ setToastState }) {
       showSuccess("Project created.");
       setForm({ name: "", description: "", color: SWATCHES[0] });
       setCreating(false);
+      load();
+    });
+  };
+
+  const handleArchive = (project) => {
+    archiveItem("PROJECT", project.id, (data, err) => {
+      if (err) return showError(errorMessageFrom(err));
+      showSuccess("Project archived. Find it under Trash → Archive.");
       load();
     });
   };
@@ -150,10 +159,16 @@ function Projects({ setToastState }) {
               <span className="ui-link mtm-text-sm mtm-inline-flex mtm-items-center mtm-gap-1">
                 Open <FiArrowRight size={14} />
               </span>
-              <button className="mtm-text-muted hover:mtm-text-danger mtm-transition-colors"
-                onClick={(e) => { e.stopPropagation(); handleDelete(p); }} aria-label="Delete">
-                <FiTrash2 size={16} />
-              </button>
+              <div className="mtm-flex mtm-items-center mtm-gap-3">
+                <button className="mtm-text-muted hover:mtm-text-primary mtm-transition-colors"
+                  onClick={(e) => { e.stopPropagation(); handleArchive(p); }} aria-label="Archive" title="Archive">
+                  <FiArchive size={16} />
+                </button>
+                <button className="mtm-text-muted hover:mtm-text-danger mtm-transition-colors"
+                  onClick={(e) => { e.stopPropagation(); handleDelete(p); }} aria-label="Delete" title="Delete">
+                  <FiTrash2 size={16} />
+                </button>
+              </div>
             </div>
           </motion.div>
         ))}
