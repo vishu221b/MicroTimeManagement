@@ -30,6 +30,10 @@
   --mtm-warning-rgb: 217 119 6;
   --mtm-on-primary-rgb: 255 255 255;
   --mtm-ink-rgb: 17 17 24;
+  /* Gantt/timeline categorical hues — validated (dataviz skill) against the
+     white card surface: Task violet + Reminder teal, ΔE-safe for CVD. */
+  --mtm-gantt-task-rgb: 124 58 237;
+  --mtm-gantt-reminder-rgb: 13 148 136;
   --mtm-shadow-hard: 4px 4px 0 rgb(17 17 24 / 0.90);
   --mtm-shadow-hard-sm: 2px 2px 0 rgb(17 17 24 / 0.90);
   --mtm-ring: 0 0 0 3px rgb(124 58 237 / 0.35);
@@ -55,6 +59,9 @@
   --mtm-warning-rgb: 251 191 36;
   --mtm-on-primary-rgb: 20 16 34;
   --mtm-ink-rgb: 12 10 20;
+  /* Validated against the dark card surface (#221b30). */
+  --mtm-gantt-task-rgb: 139 92 246;
+  --mtm-gantt-reminder-rgb: 13 148 136;
   --mtm-shadow-hard: 4px 4px 0 rgb(0 0 0 / 0.85);
   --mtm-shadow-hard-sm: 2px 2px 0 rgb(0 0 0 / 0.85);
   --mtm-ring: 0 0 0 3px rgb(167 139 250 / 0.45);
