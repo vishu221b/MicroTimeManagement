@@ -14,6 +14,7 @@ import {
   FiX,
   FiZap,
   FiTrash2,
+  FiBarChart2,
 } from "react-icons/fi";
 import useAuth from "../hooks/useAuth";
 import { logoutUser } from "../service/ApiService";
@@ -25,6 +26,7 @@ const NAV = [
   { to: "/activity", label: "Activity", icon: <FiClock /> },
   { to: "/projects", label: "Projects", icon: <FiFolder /> },
   { to: "/reminders", label: "Reminders", icon: <FiBell /> },
+  { to: "/gantt", label: "Gantt", icon: <FiBarChart2 /> },
   { to: "/history", label: "History", icon: <FiCalendar /> },
   { to: "/trash", label: "Trash", icon: <FiTrash2 /> },
   { to: "/profile", label: "Profile", icon: <FiUser /> },
